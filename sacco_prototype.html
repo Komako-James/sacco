@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>SACCO Prototype (LocalStorage)</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body{padding-top:56px}
+    .nav-link {cursor:pointer}
+    .mono {font-family: monospace}
+    .small-muted{font-size:.9rem;color:#6c757d}
+  </style>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top">
+  <div class="container-fluid">
+    <a class="navbar-brand" id="appName">SACCO Prototype</a>
+    <div class="collapse navbar-collapse" id="navbarsExampleDefault">
+      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+        <li class="nav-item"><a class="nav-link active" data-view="dashboard">Dashboard</a></li>
+        <li class="nav-item"><a class="nav-link" data-view="members">Members</a></li>
+        <li class="nav-item"><a class="nav-link" data-view="loans">Loans</a></li>
+        <li class="nav-item"><a class="nav-link" data-view="savings">Savings</a></li>
+        <li class="nav-item"><a class="nav-link" data-view="reports">Reports</a></li>
+      </ul>
+      <div class="d-flex align-items-center">
+        <span class="me-3 text-white" id="currentUser"></span>
+        <button class="btn btn-outline-light btn-sm" id="btnLogout">Logout</button>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<div class="container mt-4" id="app">
+  <!-- Login -->
+  <div id="view-login" class="d-none">
+    <div class="row justify-content-center">
+      <div class="col-md-6">
+        <div class="card">
+          <div class="card-header">Login</div>
+          <div class="card-body">
+            <div id="loginAlert"></div>
+            <form id="loginForm">
+              <div class="mb-3"><label>Username</label><input class="form-control" id="loginUser" required></div>
+              <div class="mb-3"><label>Password</label><input type="password" class="form-control" id="loginPass" required></div>
+              <button class="btn btn-primary">Login</button>
+            </form>
+            <hr>
+            <p class="small-muted">Prototype stores data in browser LocalStorage. No server DB.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dashboard -->
+  <div id="view-dashboard" class="d-none">
+    <div class="row mb-3">
+      <div class="col-md-3">
+        <div class="card text-white bg-primary mb-3"><div class="card-body"><h6>Total Members</h6><h3 id="statMembers">0</h3></div></div>
+      </div>
+      <div class="col-md-3">
+        <div class="card text-white bg-success mb-3"><div class="card-body"><h6>Total Savings</h6><h3 id="statSavings">UGX 0.00</h3></div></div>
+      </div>
+      <div class="col-md-3">
+        <div class="card text-white bg-info mb-3"><div class="card-body"><h6>Active Loans</h6><h3 id="statActiveLoans">0</h3></div></div>
+      </div>
+      <div class="col-md-3">
+        <div class="card text-white bg-warning mb-3"><div class="card-body"><h6>Loan Portfolio</h6><h3 id="statLoanPortfolio">UGX 0.00</h3></div></div>
+      </div>
+    </div>
+
+    <div class="card mb-3"><div class="card-header">Recent Members</div><div class="card-body"><ul id="recentMembers"></ul></div></div>
+    <div class="card"><div class="card-header">Recent Transactions</div><div class="card-body"><ul id="recentTx"></ul></div></div>
+  </div>
+
+  <!-- Members -->
+  <div id="view-members" class="d-none">
+    <div class="d-flex mb-2"><h3 class="me-auto">Members</h3><button class="btn btn-success" id="btnNewMember">+ New Member</button></div>
+    <input class="form-control mb-2" id="memberSearch" placeholder="Search by name or membership no">
+    <div class="table-responsive"><table class="table table-sm"><thead><tr><th>Membership No</th><th>Name</th><th>Phone</th><th>Join Date</th><th>Actions</th></tr></thead><tbody id="membersTable"></tbody></table></div>
+  </div>
+
+  <!-- Loans -->
+  <div id="view-loans" class="d-none">
+    <div class="d-flex mb-2"><h3 class="me-auto">Loans</h3><button class="btn btn-primary" id="btnApplyLoan">Apply Loan</button></div>
+    <div class="table-responsive"><table class="table table-sm"><thead><tr><th>Ref</th><th>Member</th><th>Amount</th><th>Outstanding</th><th>Status</th><th>Actions</th></tr></thead><tbody id="loansTable"></tbody></table></div>
+  </div>
+
+  <!-- Savings -->
+  <div id="view-savings" class="d-none">
+    <div class="d-flex mb-2"><h3 class="me-auto">Savings</h3></div>
+    <div class="table-responsive"><table class="table table-sm"><thead><tr><th>Account No</th><th>Member</th><th>Type</th><th>Balance</th><th>Actions</th></tr></thead><tbody id="savingsTable"></tbody></table></div>
+  </div>
+
+  <!-- Reports -->
+  <div id="view-reports" class="d-none">
+    <h3>Reports (Prototype)</h3>
+    <pre id="rawDB" class="mono small-muted" style="white-space:pre-wrap;max-height:400px;overflow:auto"></pre>
+  </div>
+</div>
+
+<!-- Modals -->
+<div class="modal" tabindex="-1" id="modalMember"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Member</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><form id="memberForm"><input type="hidden" id="m_id"><div class="mb-3"><label>Full Name</label><input id="m_name" class="form-control" required></div><div class="mb-3"><label>Phone</label><input id="m_phone" class="form-control" required></div><div class="mb-3"><label>National ID</label><input id="m_nid" class="form-control"></div></form></div><div class="modal-footer"><button class="btn btn-secondary" data-bs-dismiss="modal">Close</button><button class="btn btn-primary" id="saveMember">Save</button></div></div></div></div>
+
+<div class="modal" tabindex="-1" id="modalLoan"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Apply Loan</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><form id="loanForm"><div class="mb-3"><label>Member</label><select id="loan_member" class="form-select" required></select></div><div class="mb-3"><label>Product</label><select id="loan_product" class="form-select" required></select></div><div class="mb-3"><label>Amount</label><input id="loan_amount" type="number" class="form-control" required></div><div class="mb-3"><label>Period (months)</label><input id="loan_period" type="number" class="form-control" required></div><div class="mb-3"><label>Purpose</label><textarea id="loan_purpose" class="form-control"></textarea></div></form></div><div class="modal-footer"><button class="btn btn-secondary" data-bs-dismiss="modal">Close</button><button class="btn btn-primary" id="saveLoan">Submit</button></div></div></div></div>
+
+<div class="modal" tabindex="-1" id="modalTx"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Transaction</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><form id="txForm"><div class="mb-3"><label>Account</label><select id="tx_account" class="form-select" required></select></div><div class="mb-3"><label>Type</label><select id="tx_type" class="form-select"><option value="deposit">Deposit</option><option value="withdrawal">Withdrawal</option></select></div><div class="mb-3"><label>Amount</label><input id="tx_amount" type="number" class="form-control" required></div></form></div><div class="modal-footer"><button class="btn btn-secondary" data-bs-dismiss="modal">Close</button><button class="btn btn-primary" id="saveTx">Save</button></div></div></div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+// Simple prototype DB in localStorage keyed 'sacco_db'
+const DB_KEY = 'sacco_db_v1';
+let db = JSON.parse(localStorage.getItem(DB_KEY) || 'null');
+const nowDate = ()=>new Date().toISOString();
+
+function seedDB(){
+  if (db) return;
+  db = {
+    users: [{user_id:1,username:'admin',password:'Admin@1234',full_name:'System Administrator',role:'admin'}],
+    members: [
+      {member_id:1,membership_no:'SAC202600001',national_id:'1001001',full_name:'Alice A',phone:'+256700000001',join_date: '2026-01-10',status:'active'},
+      {member_id:2,membership_no:'SAC202600002',national_id:'1001002',full_name:'Bob B',phone:'+256700000002',join_date: '2026-02-15',status:'active'}
+    ],
+    savings_accounts:[
+      {account_id:1,member_id:1,account_number:'SV1001',account_type:'monthly_savings',balance:500000,interest_rate:5,status:'active'},
+      {account_id:2,member_id:2,account_number:'SV1002',account_type:'monthly_savings',balance:200000,interest_rate:5,status:'active'}
+    ],
+    savings_transactions:[],
+    loan_products:[
+      {product_id:1,product_name:'Emergency Loan',min_amount:50000,max_amount:500000,default_interest_rate:12,min_repayment_months:1,max_repayment_months:6}
+    ],
+    loans:[],
+    loan_repayments:[],
+    settings:{company:'Your SACCO Limited'}
+  };
+  saveDB();
+}
+
+function saveDB(){ localStorage.setItem(DB_KEY, JSON.stringify(db)); renderAll(); }
+
+// Auth
+let currentUser = JSON.parse(sessionStorage.getItem('sacco_user')||'null');
+function login(u,p){
+  const user = db.users.find(x=>x.username===u && x.password===p);
+  if(user){ currentUser=user; sessionStorage.setItem('sacco_user', JSON.stringify(user)); return true;} return false;
+}
+function logout(){ currentUser=null; sessionStorage.removeItem('sacco_user'); renderAll(); }
+
+// Utils
+function fmtMoney(v){ return 'UGX '+Number(v||0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function nextId(arr, field){ return (arr.reduce((m,i)=>Math.max(m, i[field]||0),0)||0)+1; }
+
+// Render
+function showView(name){ document.querySelectorAll('[id^="view-"]').forEach(el=>el.classList.add('d-none')); document.getElementById('view-'+name).classList.remove('d-none'); document.querySelectorAll('.nav-link').forEach(a=>a.classList.toggle('active', a.dataset.view===name)); }
+
+function renderDashboard(){
+  document.getElementById('statMembers').innerText = db.members.length;
+  const totalSavings = db.savings_accounts.reduce((s,a)=>s+(a.balance||0),0);
+  document.getElementById('statSavings').innerText = fmtMoney(totalSavings);
+  const activeLoans = db.loans.filter(l=>l.status==='disbursed').length;
+  document.getElementById('statActiveLoans').innerText = activeLoans;
+  const loanPortfolio = db.loans.reduce((s,l)=>s + (l.outstanding_balance||0),0);
+  document.getElementById('statLoanPortfolio').innerText = fmtMoney(loanPortfolio);
+  // recent
+  const recent = db.members.slice(-5).reverse();
+  const rm = document.getElementById('recentMembers'); rm.innerHTML=''; recent.forEach(m=>{ const li=document.createElement('li'); li.innerText=`${m.membership_no} - ${m.full_name}`; rm.appendChild(li); });
+  const tx = document.getElementById('recentTx'); tx.innerHTML=''; db.savings_transactions.slice(-10).reverse().forEach(t=>{ const li=document.createElement('li'); li.innerText=`${t.transaction_date} - ${t.transaction_type} - ${fmtMoney(t.amount)}`; tx.appendChild(li); });
+}
+
+function renderMembers(){
+  const tbody = document.getElementById('membersTable'); tbody.innerHTML='';
+  const q = document.getElementById('memberSearch').value.toLowerCase();
+  db.members.filter(m=>!q||m.full_name.toLowerCase().includes(q)||m.membership_no.toLowerCase().includes(q)).forEach(m=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td>${m.membership_no}</td><td>${m.full_name}</td><td>${m.phone}</td><td>${m.join_date}</td><td><button class='btn btn-sm btn-primary' data-id='${m.member_id}' onclick='viewMember(this)'>View</button></td>`;
+    tbody.appendChild(tr);
+  });
+}
+function viewMember(btn){ const id=Number(btn.dataset.id); const m=db.members.find(x=>x.member_id===id); alert(JSON.stringify(m,null,2)); }
+
+function renderLoans(){ const tbody=document.getElementById('loansTable'); tbody.innerHTML=''; db.loans.forEach(l=>{ const mem=db.members.find(m=>m.member_id===l.member_id)||{full_name:'-'}; const tr=document.createElement('tr'); tr.innerHTML=`<td>${l.loan_ref_no}</td><td>${mem.full_name}</td><td>${fmtMoney(l.amount_approved||l.amount_requested)}</td><td>${fmtMoney(l.outstanding_balance||0)}</td><td>${l.status}</td><td>${l.status==='application'?"<button class='btn btn-sm btn-success' onclick='approveLoan(${l.loan_id})'>Approve</button>":""} <button class='btn btn-sm btn-info' onclick='repayLoan(${l.loan_id})'>Repay</button></td>`; tbody.appendChild(tr); }); }
+
+function renderSavings(){ const tbody=document.getElementById('savingsTable'); tbody.innerHTML=''; db.savings_accounts.forEach(a=>{ const mem=db.members.find(m=>m.member_id===a.member_id)||{}; const tr=document.createElement('tr'); tr.innerHTML=`<td>${a.account_number}</td><td>${mem.full_name||'-'}</td><td>${a.account_type}</td><td>${fmtMoney(a.balance)}</td><td><button class='btn btn-sm btn-primary' onclick='openTx(${a.account_id})'>Transact</button></td>`; tbody.appendChild(tr); }); }
+
+function renderReports(){ document.getElementById('rawDB').innerText = JSON.stringify(db,null,2); }
+
+function renderAll(){ if(!currentUser){ showView('login'); document.getElementById('currentUser').innerText=''; } else { document.getElementById('currentUser').innerText = currentUser.full_name + ' ('+currentUser.role+')'; showView('dashboard'); renderDashboard(); renderMembers(); renderLoans(); renderSavings(); renderReports(); } }
+
+// Actions
+function addMember(data){ data.member_id = nextId(db.members,'member_id'); data.membership_no = 'SAC'+(new Date()).getFullYear()+String(data.member_id).padStart(5,'0'); data.join_date=new Date().toISOString().slice(0,10); data.status='active'; db.members.push(data); saveDB(); }
+
+document.getElementById('btnNewMember').addEventListener('click',()=>{ const modal=new bootstrap.Modal(document.getElementById('modalMember')); document.getElementById('m_id').value=''; document.getElementById('m_name').value=''; document.getElementById('m_phone').value=''; document.getElementById('m_nid').value=''; modal.show(); });
+document.getElementById('saveMember').addEventListener('click',()=>{ const id=document.getElementById('m_id').value; const name=document.getElementById('m_name').value.trim(); const phone=document.getElementById('m_phone').value.trim(); const nid=document.getElementById('m_nid').value.trim(); if(!name||!phone){ alert('Name and phone required'); return; } addMember({full_name:name,phone:phone,national_id:nid}); bootstrap.Modal.getInstance(document.getElementById('modalMember')).hide(); });
+
+// Loan apply
+document.getElementById('btnApplyLoan').addEventListener('click',()=>{
+  const modal=new bootstrap.Modal(document.getElementById('modalLoan'));
+  const selMember=document.getElementById('loan_member'); selMember.innerHTML=''; db.members.forEach(m=>{ const opt=document.createElement('option'); opt.value=m.member_id; opt.text=`${m.membership_no} - ${m.full_name}`; selMember.appendChild(opt); });
+  const selProd=document.getElementById('loan_product'); selProd.innerHTML=''; db.loan_products.forEach(p=>{ const opt=document.createElement('option'); opt.value=p.product_id; opt.text=`${p.product_name} (${fmtMoney(p.min_amount)} - ${fmtMoney(p.max_amount)})`; selProd.appendChild(opt); });
+  modal.show();
+});
+
+function saveLoanData(){ const member_id=Number(document.getElementById('loan_member').value); const product_id=Number(document.getElementById('loan_product').value); const amount=Number(document.getElementById('loan_amount').value); const period=Number(document.getElementById('loan_period').value); const purpose=document.getElementById('loan_purpose').value; if(!member_id||!product_id||!amount||!period){ alert('Fill required'); return; } const loan_id = nextId(db.loans,'loan_id'); const ref='LN'+(new Date()).toISOString().slice(0,10).replace(/-/g,'')+String(loan_id).padStart(4,'0'); const product = db.loan_products.find(p=>p.product_id===product_id);
+ db.loans.push({loan_id,loan_ref_no:ref,member_id,product_id,amount_requested:amount,interest_rate:product.default_interest_rate,repayment_period_months:period,purpose,application_date:new Date().toISOString().slice(0,10),applied_by:currentUser.user_id,status:'application',outstanding_balance:amount}); saveDB(); bootstrap.Modal.getInstance(document.getElementById('modalLoan')).hide(); }
+
+document.getElementById('saveLoan').addEventListener('click', saveLoanData);
+
+function approveLoan(id){ const loan=db.loans.find(l=>l.loan_id===id); if(!loan) return; loan.status='disbursed'; loan.approved_by=currentUser.user_id; loan.approved_date=nowDate(); loan.disbursement_date=nowDate(); loan.amount_approved = loan.amount_requested; loan.outstanding_balance = loan.amount_approved; // create savings/transfer if needed
+ saveDB(); }
+
+function repayLoan(id){ const amount=Number(prompt('Enter payment amount')); if(!amount||amount<=0) return; const loan=db.loans.find(l=>l.loan_id===id); if(!loan) return; loan.outstanding_balance = Math.max(0,(loan.outstanding_balance||0)-amount); db.loan_repayments.push({repayment_id:nextId(db.loan_repayments,'repayment_id'),loan_id:id,amount_paid:amount,payment_date:nowDate(),posted_by:currentUser.user_id}); if(loan.outstanding_balance<=0) loan.status='completed'; saveDB(); }
+
+function openTx(accId){ const modal=new bootstrap.Modal(document.getElementById('modalTx')); const sel=document.getElementById('tx_account'); sel.innerHTML=''; db.savings_accounts.forEach(a=>{ const opt=document.createElement('option'); opt.value=a.account_id; opt.text=`${a.account_number} - ${fmtMoney(a.balance)}`; if(a.account_id===accId) opt.selected=true; sel.appendChild(opt); }); modal.show(); }
+
+document.getElementById('saveTx').addEventListener('click',()=>{ const accId=Number(document.getElementById('tx_account').value); const type=document.getElementById('tx_type').value; const amt=Number(document.getElementById('tx_amount').value); if(!accId||!amt) return alert('Select account and amount'); const acc=db.savings_accounts.find(a=>a.account_id===accId); if(type==='withdrawal' && acc.balance<amt) return alert('Insufficient balance'); acc.balance = type==='deposit'?acc.balance+amt:acc.balance-amt; db.savings_transactions.push({trans_id:nextId(db.savings_transactions,'trans_id'),account_id:accId,transaction_type:type,amount:amt,balance_after:acc.balance,payment_method:'cash',transaction_date:nowDate()}); saveDB(); bootstrap.Modal.getInstance(document.getElementById('modalTx')).hide(); });
+
+// Approve via button
+window.approveLoan = approveLoan; window.repayLoan = repayLoan; window.viewMember = viewMember; window.openTx = openTx;
+
+// Navigation
+document.querySelectorAll('.nav-link').forEach(a=>a.addEventListener('click', e=>{ const view=a.dataset.view; if(!currentUser && view!=='login'){ showView('login'); return; } showView(view); if(view==='dashboard') renderDashboard(); if(view==='members') renderMembers(); if(view==='loans') renderLoans(); if(view==='savings') renderSavings(); if(view==='reports') renderReports(); }));
+
+document.getElementById('btnLogout').addEventListener('click', ()=>{ logout(); });
+
+document.getElementById('memberSearch').addEventListener('input', renderMembers);
+
+// Login form
+document.getElementById('loginForm').addEventListener('submit', e=>{ e.preventDefault(); const u=document.getElementById('loginUser').value; const p=document.getElementById('loginPass').value; if(login(u,p)){ document.getElementById('loginAlert').innerHTML=''; renderAll(); } else { document.getElementById('loginAlert').innerHTML='<div class="alert alert-danger">Invalid credentials</div>'; } });
+
+// Init
+seedDB(); renderAll();
+
+</script>
+</body>
+</html>
