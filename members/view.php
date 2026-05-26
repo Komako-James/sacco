@@ -98,8 +98,9 @@ $loans = $stmt->fetchAll();
 
                 <!-- Savings Accounts -->
                 <div class="card mb-3">
-                    <div class="card-header bg-primary text-white">
+                    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
                         <h5 class="mb-0">Savings Accounts</h5>
+                        <a href="../savings/open.php?membership_no=<?php echo urlencode($member['membership_no']); ?>" class="btn btn-sm btn-success">Open Savings Account</a>
                     </div>
                     <div class="card-body">
                         <?php if (!empty($accounts)): ?>

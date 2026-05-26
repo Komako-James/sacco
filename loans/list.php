@@ -95,7 +95,7 @@ $loans = $stmt->fetchAll();
                         </select>
                     </div>
                     <div class="col-md-3">
-                        <a href="../members/list.php" class="btn btn-primary w-100">Apply Loan</a>
+                        <a href="../loans/apply.php" class="btn btn-primary w-100">Apply Loan</a>
                     </div>
                 </div>
 

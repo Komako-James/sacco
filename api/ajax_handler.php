@@ -29,6 +29,12 @@ try {
         case 'calculate_repayment':
             calculateRepayment();
             break;
+        case 'search_member':
+            searchMember();
+            break;
+        case 'get_notifications':
+            getNotifications();
+            break;
         default:
             throw new Exception('Invalid action');
     }
@@ -71,8 +77,11 @@ function getMemberAccounts() {
     ");
     $stmt->execute([$memberId]);
     $accounts = $stmt->fetchAll();
-    
-    echo json_encode(['success' => true, 'accounts' => $accounts]);
+        if (empty($accounts)) {
+        echo json_encode(['success' => false, 'message' => 'No active savings accounts found for this member.']);
+        return;
+    }
+        echo json_encode(['success' => true, 'accounts' => $accounts]);
 }
 
 function checkLoanEligibility() {
@@ -126,5 +135,38 @@ function calculateRepayment() {
             'monthly_payment' => round($totalPayment / $months, 2)
         ]
     ]);
+}
+
+function searchMember() {
+    global $db;
+    $query = trim($_GET['q'] ?? '');
+
+    if ($query === '') {
+        echo json_encode(['success' => true, 'members' => []]);
+        return;
+    }
+
+    $stmt = $db->prepare("SELECT member_id, membership_no, full_name, phone, email
+        FROM members
+        WHERE membership_no LIKE :query
+           OR full_name LIKE :query
+           OR phone LIKE :query
+           OR email LIKE :query
+        LIMIT 20");
+    $stmt->execute([':query' => "%{$query}%"]);
+    $members = $stmt->fetchAll();
+
+    echo json_encode(['success' => true, 'members' => $members]);
+}
+
+function getNotifications() {
+    global $db;
+
+    // Basic notification count placeholder; extend with real alerts for pending loans, approvals, audits
+    $stmt = $db->prepare("SELECT COUNT(*) as count FROM loan_applications WHERE status = 'pending'");
+    $stmt->execute();
+    $pendingLoans = (int) $stmt->fetchColumn();
+
+    echo json_encode(['success' => true, 'count' => $pendingLoans]);
 }
 ?>

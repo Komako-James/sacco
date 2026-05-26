@@ -115,6 +115,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 <select class="form-select" id="account_id" name="account_id" required>
                                     <option value="">Select account</option>
                                 </select>
+                                <div id="account_feedback" class="form-text text-muted"></div>
                             </div>
 
                             <div class="mb-3">
@@ -151,22 +152,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         function searchMember() {
-            const membershipNo = document.getElementById('membership_no').value;
+            const membershipNo = document.getElementById('membership_no').value.trim();
+            const feedback = document.getElementById('account_feedback');
+            const select = document.getElementById('account_id');
+            feedback.textContent = '';
+            select.innerHTML = '<option value="">Select account</option>';
+
             if (!membershipNo) return;
-            
-            fetch(`../api/ajax_handler.php?action=get_member_accounts&membership_no=${membershipNo}`)
+
+            fetch(`../api/ajax_handler.php?action=check_membership&membership_no=${encodeURIComponent(membershipNo)}`)
                 .then(r => r.json())
-                .then(data => {
-                    if (data.success && data.accounts) {
-                        const select = document.getElementById('account_id');
-                        select.innerHTML = '<option value="">Select account</option>';
-                        data.accounts.forEach(acc => {
-                            const opt = document.createElement('option');
-                            opt.value = acc.account_id;
-                            opt.text = `${acc.account_number} (${acc.account_type}) - Balance: ${acc.balance}`;
-                            select.appendChild(opt);
-                        });
+                .then(res => {
+                    if (!res.success || !res.member) {
+                        feedback.textContent = 'Member not found. Please verify the membership number.';
+                        return;
                     }
+
+                    const memberId = res.member.member_id;
+                    fetch(`../api/ajax_handler.php?action=get_member_accounts&member_id=${memberId}`)
+                        .then(r => r.json())
+                        .then(data => {
+                            if (data.success && data.accounts && data.accounts.length) {
+                                select.innerHTML = '<option value="">Select account</option>';
+                                data.accounts.forEach(acc => {
+                                    const opt = document.createElement('option');
+                                    opt.value = acc.account_id;
+                                    opt.text = `${acc.account_number} (${acc.account_type}) - Balance: ${acc.balance}`;
+                                    select.appendChild(opt);
+                                });
+                            } else {
+                                feedback.textContent = data.message || 'No active savings accounts found for this member.';
+                            }
+                        })
+                        .catch(() => {
+                            feedback.textContent = 'Unable to load accounts right now. Please try again.';
+                        });
+                })
+                .catch(() => {
+                    feedback.textContent = 'Unable to verify member right now. Please try again.';
                 });
         }
     </script>

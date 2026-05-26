@@ -53,167 +53,231 @@ $recent_transactions = $stmt->fetchAll();
     <link rel="stylesheet" href="assets/css/style.css">
 </head>
 <body>
-    <nav class="navbar navbar-dark bg-dark">
+    <!-- Mobile Sidebar Toggle -->
+    <button class="sidebar-toggle" id="sidebarToggle">
+        <i class="bi bi-list"></i>
+    </button>
+
+    <!-- Include Sidebar -->
+    <?php include 'includes/sidebar.php'; ?>
+
+    <!-- Main Content -->
+    <div class="main-content">
         <div class="container-fluid">
-            <a class="navbar-brand" href="#"><?php echo APP_NAME; ?></a>
-            <div class="dropdown">
-                <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                    <?php echo htmlspecialchars($_SESSION['full_name']); ?> (<?php echo $_SESSION['role']; ?>)
-                </button>
-                <ul class="dropdown-menu">
-                    <li><a class="dropdown-item" href="logout.php">Logout</a></li>
-                </ul>
+            <!-- Page Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="h2 mb-1">Dashboard</h1>
+                    <p class="text-muted mb-0">Welcome back, <?php echo htmlspecialchars($user['full_name']); ?>!</p>
+                </div>
+                <div class="text-end">
+                    <small class="text-muted">Last login: <?php echo $user['last_login'] ? date('M j, Y g:i A', strtotime($user['last_login'])) : 'First time'; ?></small>
+                </div>
             </div>
-        </div>
-    </nav>
-    
-    <div class="container-fluid">
-        <div class="row">
-            <!-- Sidebar -->
-            <nav class="col-md-2 d-md-block bg-light sidebar">
-                <div class="position-sticky pt-3">
-                    <ul class="nav flex-column">
-                        <li class="nav-item">
-                            <a class="nav-link active" href="dashboard.php">
-                                <i class="bi bi-speedometer2"></i> Dashboard
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="members/list.php">
-                                <i class="bi bi-people"></i> Members
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="members/register.php">
-                                <i class="bi bi-person-plus"></i> Register Member
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="savings/deposit.php">
-                                <i class="bi bi-cash-stack"></i> Savings Deposit
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="loans/apply.php">
-                                <i class="bi bi-file-text"></i> Loan Application
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="loans/approve.php">
-                                <i class="bi bi-check-circle"></i> Approve Loans
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="loans/repay.php">
-                                <i class="bi bi-currency-dollar"></i> Loan Repayment
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="reports/portfolio.php">
-                                <i class="bi bi-graph-up"></i> Reports
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-            </nav>
-            
-            <!-- Main content -->
-            <main class="col-md-10 ms-sm-auto px-md-4">
-                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                    <h1 class="h2">Dashboard</h1>
-                </div>
-                
-                <!-- Stats Cards -->
-                <div class="row mb-4">
-                    <div class="col-md-3">
-                        <div class="card text-white bg-primary">
-                            <div class="card-body">
-                                <h5 class="card-title">Total Members</h5>
-                                <h2><?php echo number_format($stats['total_members']); ?></h2>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="card text-white bg-success">
-                            <div class="card-body">
-                                <h5 class="card-title">Total Savings</h5>
-                                <h2><?php echo formatMoney($stats['total_savings']); ?></h2>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="card text-white bg-warning">
-                            <div class="card-body">
-                                <h5 class="card-title">Active Loans</h5>
-                                <h2><?php echo number_format($stats['active_loans']); ?></h2>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="card text-white bg-info">
-                            <div class="card-body">
-                                <h5 class="card-title">Loan Portfolio</h5>
-                                <h2><?php echo formatMoney($stats['loan_portfolio']); ?></h2>
+
+            <!-- Statistics Cards -->
+            <div class="row mb-4">
+                <div class="col-xl-3 col-md-6">
+                    <div class="card dashboard-card text-white bg-primary border-0">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h6 class="card-title mb-1">Total Members</h6>
+                                    <h2 class="mb-0"><?php echo number_format($stats['total_members']); ?></h2>
+                                </div>
+                                <div class="align-self-center">
+                                    <i class="bi bi-people fs-1"></i>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
-                
-                <!-- Recent Members -->
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="card">
-                            <div class="card-header">
-                                Recent Members
+                <div class="col-xl-3 col-md-6">
+                    <div class="card dashboard-card text-white bg-success border-0">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h6 class="card-title mb-1">Total Savings</h6>
+                                    <h2 class="mb-0"><?php echo formatMoney($stats['total_savings']); ?></h2>
+                                </div>
+                                <div class="align-self-center">
+                                    <i class="bi bi-piggy-bank fs-1"></i>
+                                </div>
                             </div>
-                            <div class="card-body">
-                                <table class="table table-sm">
-                                    <thead>
-                                        <tr><th>Membership No</th><th>Name</th><th>Phone</th></tr>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-md-6">
+                    <div class="card dashboard-card text-white bg-warning border-0">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h6 class="card-title mb-1">Active Loans</h6>
+                                    <h2 class="mb-0"><?php echo number_format($stats['active_loans']); ?></h2>
+                                </div>
+                                <div class="align-self-center">
+                                    <i class="bi bi-cash-coin fs-1"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-md-6">
+                    <div class="card dashboard-card text-white bg-info border-0">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h6 class="card-title mb-1">Loan Portfolio</h6>
+                                    <h2 class="mb-0"><?php echo formatMoney($stats['loan_portfolio']); ?></h2>
+                                </div>
+                                <div class="align-self-center">
+                                    <i class="bi bi-graph-up fs-1"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions Section -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header bg-primary text-white d-flex align-items-center">
+                            <i class="bi bi-lightning me-2"></i>
+                            <h5 class="mb-0">Quick Actions</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <div class="col-lg-2 col-md-4 col-6">
+                                    <a href="<?php echo APP_URL; ?>/members/register.php" class="btn btn-outline-primary d-block text-center py-3">
+                                        <i class="bi bi-person-plus fs-3 d-block mb-2"></i>
+                                        <small>Register Member</small>
+                                    </a>
+                                </div>
+                                <div class="col-lg-2 col-md-4 col-6">
+                                    <a href="<?php echo APP_URL; ?>/savings/deposit.php" class="btn btn-outline-success d-block text-center py-3">
+                                        <i class="bi bi-arrow-down-circle fs-3 d-block mb-2"></i>
+                                        <small>Make Deposit</small>
+                                    </a>
+                                </div>
+                                <div class="col-lg-2 col-md-4 col-6">
+                                    <a href="<?php echo APP_URL; ?>/savings/withdraw.php" class="btn btn-outline-warning d-block text-center py-3">
+                                        <i class="bi bi-arrow-up-circle fs-3 d-block mb-2"></i>
+                                        <small>Withdrawal</small>
+                                    </a>
+                                </div>
+                                <div class="col-lg-2 col-md-4 col-6">
+                                    <a href="<?php echo APP_URL; ?>/loans/apply.php" class="btn btn-outline-info d-block text-center py-3">
+                                        <i class="bi bi-file-earmark-plus fs-3 d-block mb-2"></i>
+                                        <small>Apply Loan</small>
+                                    </a>
+                                </div>
+                                <div class="col-lg-2 col-md-4 col-6">
+                                    <a href="<?php echo APP_URL; ?>/loans/repay.php" class="btn btn-outline-secondary d-block text-center py-3">
+                                        <i class="bi bi-arrow-repeat fs-3 d-block mb-2"></i>
+                                        <small>Loan Payment</small>
+                                    </a>
+                                </div>
+                                <div class="col-lg-2 col-md-4 col-6">
+                                    <a href="<?php echo APP_URL; ?>/reports/portfolio.php" class="btn btn-outline-dark d-block text-center py-3">
+                                        <i class="bi bi-graph-up fs-3 d-block mb-2"></i>
+                                        <small>View Reports</small>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Data Section -->
+            <div class="row g-4">
+                <div class="col-lg-6">
+                    <div class="card h-100">
+                        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">Recent Members</h5>
+                            <a href="<?php echo APP_URL; ?>/members/list.php" class="btn btn-sm btn-outline-primary">View All</a>
+                        </div>
+                        <div class="card-body p-0">
+                            <?php if (!empty($recent_members)): ?>
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Member No</th>
+                                            <th>Name</th>
+                                            <th>Phone</th>
+                                            <th>Joined</th>
+                                        </tr>
                                     </thead>
                                     <tbody>
                                         <?php foreach ($recent_members as $member): ?>
                                         <tr>
-                                            <td><?php echo htmlspecialchars($member['membership_no']); ?></td>
+                                            <td><strong><?php echo htmlspecialchars($member['membership_no']); ?></strong></td>
                                             <td><?php echo htmlspecialchars($member['full_name']); ?></td>
                                             <td><?php echo htmlspecialchars($member['phone']); ?></td>
+                                            <td><small><?php echo date('M j', strtotime($member['created_at'])); ?></small></td>
                                         </tr>
                                         <?php endforeach; ?>
                                     </tbody>
                                 </table>
                             </div>
+                            <?php else: ?>
+                            <div class="text-center py-4">
+                                <i class="bi bi-people text-muted" style="font-size: 3rem;"></i>
+                                <p class="text-muted mt-2">No recent members</p>
+                            </div>
+                            <?php endif; ?>
                         </div>
                     </div>
-                    
-                    <!-- Recent Transactions -->
-                    <div class="col-md-6">
-                        <div class="card">
-                            <div class="card-header">
-                                Recent Transactions
-                            </div>
-                            <div class="card-body">
-                                <table class="table table-sm">
-                                    <thead>
-                                        <tr><th>Receipt</th><th>Member</th><th>Amount</th></tr>
+                </div>
+
+                <div class="col-lg-6">
+                    <div class="card h-100">
+                        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">Recent Transactions</h5>
+                            <a href="<?php echo APP_URL; ?>/reports/transactions.php" class="btn btn-sm btn-outline-primary">View All</a>
+                        </div>
+                        <div class="card-body p-0">
+                            <?php if (!empty($recent_transactions)): ?>
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Receipt</th>
+                                            <th>Member</th>
+                                            <th>Amount</th>
+                                            <th>Date</th>
+                                        </tr>
                                     </thead>
                                     <tbody>
                                         <?php foreach ($recent_transactions as $trans): ?>
                                         <tr>
-                                            <td><?php echo htmlspecialchars($trans['receipt_no']); ?></td>
+                                            <td><strong><?php echo htmlspecialchars($trans['receipt_no']); ?></strong></td>
                                             <td><?php echo htmlspecialchars($trans['full_name']); ?></td>
-                                            <td><?php echo formatMoney($trans['amount']); ?></td>
+                                            <td>
+                                                <span class="text-success fw-bold"><?php echo formatMoney($trans['amount']); ?></span>
+                                            </td>
+                                            <td><small><?php echo date('M j', strtotime($trans['transaction_date'])); ?></small></td>
                                         </tr>
                                         <?php endforeach; ?>
                                     </tbody>
                                 </table>
                             </div>
+                            <?php else: ?>
+                            <div class="text-center py-4">
+                                <i class="bi bi-receipt text-muted" style="font-size: 3rem;"></i>
+                                <p class="text-muted mt-2">No recent transactions</p>
+                            </div>
+                            <?php endif; ?>
                         </div>
                     </div>
                 </div>
-            </main>
+            </div>
         </div>
     </div>
-    
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="assets/js/main.js"></script>
 </body>

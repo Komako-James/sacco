@@ -206,6 +206,11 @@ CREATE TABLE users (
     branch_id INT,
     status ENUM('active','inactive','suspended') DEFAULT 'active',
     last_login DATETIME,
+    login_attempts INT DEFAULT 0,
+    locked_until TIMESTAMP NULL,
+    last_failed_login TIMESTAMP NULL,
+    password_changed_at TIMESTAMP NULL,
+    last_login_ip VARCHAR(45) DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     INDEX idx_username (username),
     INDEX idx_role (role)

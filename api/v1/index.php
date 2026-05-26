@@ -15,10 +15,54 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit;
 }
 
+/**
+ * Handle standing orders requests
+ */
+function handleStandingOrdersRequest($method, $action, $id) {
+    global $response;
+    $db = Database::getInstance()->getConnection();
+    $service = new \SACCO\Services\StandingOrderService();
+
+    // POST /standing-orders -> create
+    if ($method === 'POST' && $action === null) {
+        $input = json_decode(file_get_contents('php://input'), true);
+        $required = ['member_id','amount','frequency','next_run_date'];
+        foreach ($required as $r) if (empty($input[$r])) { http_response_code(400); $response['message'] = "$r is required"; return; }
+        $id = $service->createStandingOrder($input['member_id'],$input['amount'],$input['frequency'],$input['next_run_date'],$input['savings_account_id'] ?? null,$input['loan_id'] ?? null,$input['end_date'] ?? null,$_SESSION['user_id']);
+        http_response_code(201); $response['status']='success'; $response['data']=['standing_order_id'=>$id]; $response['message']='Standing order created'; return;
+    }
+
+    // POST /standing-orders/{id}/cancel
+    if ($method === 'POST' && $action === 'cancel' && is_numeric($id)) {
+        $ok = $service->cancelStandingOrder((int)$id);
+        if ($ok) { $response['status']='success'; $response['message']='Standing order cancelled'; } else { http_response_code(400); $response['message']='Failed to cancel'; }
+        return;
+    }
+
+    // GET /standing-orders/due
+    if ($method === 'GET' && $action === 'due') {
+        $date = $_GET['date'] ?? date('Y-m-d');
+        $res = $service->getDueOrders($date);
+        $response['status']='success'; $response['data']=$res; return;
+    }
+
+    // POST /standing-orders/run -> trigger processing (admin)
+    if ($method === 'POST' && $action === 'run') {
+        $date = $_POST['date'] ?? date('Y-m-d');
+        $res = $service->processDueOrders($date, $_SESSION['user_id']);
+        $response['status']='success'; $response['data']=$res; return;
+    }
+
+    http_response_code(404); $response['message']='Standing orders endpoint not found';
+}
+
 require_once __DIR__ . '/../../config/db_connection.php';
 require_once __DIR__ . '/../../config/session_config.php';
 require_once __DIR__ . '/../../app/Services/LoanService.php';
 require_once __DIR__ . '/../../app/Services/LedgerService.php';
+require_once __DIR__ . '/../../app/Services/SavingsService.php';
+require_once __DIR__ . '/../../app/Services/AuditAuthNotificationServices.php';
+require_once __DIR__ . '/../../app/Services/StandingOrderService.php';
 
 session_start();
 
@@ -91,6 +135,10 @@ try {
         case 'savings':
             handleSavingsRequest($method, $action, $id);
             break;
+
+        case 'standing-orders':
+            handleStandingOrdersRequest($method, $action, $id);
+            break;
             
         case 'reports':
             handleReportsRequest($method, $action);
@@ -117,85 +165,62 @@ echo json_encode($response);
  */
 function handleAuthRequest($method, $action) {
     global $response;
-    
     $input = json_decode(file_get_contents('php://input'), true);
-    
+    $db = Database::getInstance()->getConnection();
+    $auth = new \SACCO\Services\AuthenticationService($db);
+
     switch ($action) {
         case 'login':
-            if ($method !== 'POST') {
-                http_response_code(405);
-                $response['message'] = 'Method not allowed';
-                break;
-            }
-            
-            $username = $input['username'] ?? null;
-            $password = $input['password'] ?? null;
-            
-            if (!$username || !$password) {
-                http_response_code(400);
-                $response['message'] = 'Username and password required';
-                break;
-            }
-            
-            $db = Database::getInstance()->getConnection();
-            $stmt = $db->prepare("SELECT * FROM users WHERE username = ? AND status = 'Active'");
-            $stmt->execute([$username]);
-            $user = $stmt->fetch();
-            
-            if ($user && password_verify($password, $user['password_hash'])) {
-                $_SESSION['user_id'] = $user['user_id'];
-                $_SESSION['username'] = $user['username'];
-                $_SESSION['role'] = $user['role'];
-                
+            if ($method !== 'POST') { http_response_code(405); $response['message']='Method not allowed'; break; }
+            $username = $input['username'] ?? null; $password = $input['password'] ?? null;
+            if (!$username || !$password) { http_response_code(400); $response['message']='Username and password required'; break; }
+
+            $res = $auth->login($username, $password);
+            if ($res['success']) {
+                // Provide session id to client (use token header in real clients)
                 $response['status'] = 'success';
                 $response['data'] = [
-                    'user_id' => $user['user_id'],
-                    'username' => $user['username'],
-                    'full_name' => $user['full_name'],
-                    'role' => $user['role']
+                    'user_id' => $res['user_id'] ?? null,
+                    'session_id' => $res['session_id'] ?? null,
+                    'requires_2fa' => $res['requires_2fa'] ?? false
                 ];
-                $response['message'] = 'Login successful';
+                $response['message'] = $res['message'] ?? 'Login processed';
             } else {
                 http_response_code(401);
-                $response['message'] = 'Invalid credentials';
+                $response['message'] = $res['message'] ?? 'Invalid credentials';
             }
             break;
-            
+
+        case 'verify-otp':
+            if ($method !== 'POST') { http_response_code(405); $response['message']='Method not allowed'; break; }
+            $userId = $input['user_id'] ?? null; $otp = $input['otp'] ?? null; $sessionId = $input['session_id'] ?? null;
+            if (!$userId || !$otp || !$sessionId) { http_response_code(400); $response['message']='user_id, otp and session_id required'; break; }
+            $ok = $auth->verifyOTP($userId, $otp);
+            if ($ok) {
+                // activate session by returning success
+                $response['status'] = 'success';
+                $response['data'] = ['session_id' => $sessionId];
+                $response['message'] = 'OTP verified';
+            } else { http_response_code(400); $response['message']='Invalid or expired OTP'; }
+            break;
+
         case 'logout':
-            if ($method !== 'POST') {
-                http_response_code(405);
-                $response['message'] = 'Method not allowed';
-                break;
-            }
-            
-            session_destroy();
-            $response['status'] = 'success';
-            $response['message'] = 'Logout successful';
+            if ($method !== 'POST') { http_response_code(405); $response['message']='Method not allowed'; break; }
+            $sessionId = $input['session_id'] ?? null;
+            if ($sessionId) { $auth->logout($sessionId); session_destroy(); }
+            $response['status']='success'; $response['message']='Logout successful';
             break;
-            
+
         case 'session':
-            if ($method !== 'GET') {
-                http_response_code(405);
-                $response['message'] = 'Method not allowed';
-                break;
-            }
-            
-            if (isset($_SESSION['user_id'])) {
-                $response['status'] = 'success';
-                $response['data'] = [
-                    'user_id' => $_SESSION['user_id'],
-                    'username' => $_SESSION['username'],
-                    'role' => $_SESSION['role']
-                ];
-            } else {
-                http_response_code(401);
-                $response['message'] = 'No active session';
-            }
+            if ($method !== 'GET') { http_response_code(405); $response['message']='Method not allowed'; break; }
+            $sessionId = $_GET['session_id'] ?? ($_SERVER['HTTP_AUTHORIZATION'] ?? null);
+            if (!$sessionId) { http_response_code(401); $response['message']='No session token provided'; break; }
+            $session = $auth->validateSession($sessionId);
+            if ($session) { $response['status']='success'; $response['data']=$session; } else { http_response_code(401); $response['message']='Invalid or expired session'; }
             break;
-            
+
         default:
-            http_response_code(404);
-            $response['message'] = 'Auth endpoint not found';
+            http_response_code(404); $response['message']='Auth endpoint not found';
     }
 }
 
@@ -414,32 +439,95 @@ function handleSavingsRequest($method, $action, $id) {
     global $response;
     
     $db = Database::getInstance()->getConnection();
-    
-    if ($method === 'GET' && is_numeric($action)) {
-        // Get savings account details
-        $stmt = $db->prepare("SELECT * FROM savings_accounts WHERE savings_account_id = ?");
-        $stmt->execute([$action]);
-        $account = $stmt->fetch();
-        
-        if ($account) {
-            // Get transactions
-            $txStmt = $db->prepare("
-                SELECT * FROM savings_transactions
-                WHERE savings_account_id = ?
-                ORDER BY transaction_date DESC
-                LIMIT 50
-            ");
-            $txStmt->execute([$action]);
-            
+    // Normalize path possibilities: support both /savings/{id} and /savings/{id}/transactions
+    $savingsService = new \SACCO\Services\SavingsService();
+
+    // 1) POST /api/v1/savings/deposit
+    if ($method === 'POST' && $action === 'deposit') {
+        $input = json_decode(file_get_contents('php://input'), true);
+        $memberId = $input['member_id'] ?? null;
+        $accountId = $input['savings_account_id'] ?? null;
+        $amount = $input['amount'] ?? null;
+        $paymentMethod = $input['method'] ?? 'Cash';
+        $reference = $input['reference'] ?? null;
+
+        if (!$memberId || !$accountId || !$amount) {
+            http_response_code(400);
+            $response['message'] = 'member_id, savings_account_id and amount are required';
+            return;
+        }
+
+        $result = $savingsService->deposit((int)$memberId, (int)$accountId, (float)$amount, $paymentMethod, $_SESSION['user_id'], $reference);
+        if ($result['success']) {
+            http_response_code(201);
             $response['status'] = 'success';
-            $response['data'] = [
-                'account' => $account,
-                'transactions' => $txStmt->fetchAll()
-            ];
+            $response['data'] = ['new_balance' => $result['new_balance']];
+            $response['message'] = 'Deposit posted';
         } else {
+            http_response_code(400);
+            $response['message'] = $result['message'];
+        }
+        return;
+    }
+
+    // 2) POST /api/v1/savings/withdraw
+    if ($method === 'POST' && $action === 'withdraw') {
+        $input = json_decode(file_get_contents('php://input'), true);
+        $memberId = $input['member_id'] ?? null;
+        $accountId = $input['savings_account_id'] ?? null;
+        $amount = $input['amount'] ?? null;
+        $paymentMethod = $input['method'] ?? 'Cash';
+        $reference = $input['reference'] ?? null;
+
+        if (!$memberId || !$accountId || !$amount) {
+            http_response_code(400);
+            $response['message'] = 'member_id, savings_account_id and amount are required';
+            return;
+        }
+
+        $result = $savingsService->withdraw((int)$memberId, (int)$accountId, (float)$amount, $paymentMethod, $_SESSION['user_id'], $reference);
+        if ($result['success']) {
+            $response['status'] = 'success';
+            $response['data'] = ['new_balance' => $result['new_balance']];
+            $response['message'] = 'Withdrawal processed';
+        } else {
+            http_response_code(400);
+            $response['message'] = $result['message'];
+        }
+        return;
+    }
+
+    // 3) GET account details and transactions - support either mapping (action is id) or (id is id)
+    $accountId = null;
+    if (is_numeric($action) && ($id === null || $id === '')) {
+        $accountId = (int)$action; // /savings/{id}
+        $subAction = null;
+    } elseif (is_numeric($id)) {
+        $accountId = (int)$id; // /savings/{id}/{sub}
+        $subAction = $action; // maybe 'transactions'
+    }
+
+    if ($method === 'GET' && $accountId !== null) {
+        $account = $savingsService->getAccount($accountId);
+        if (!$account) {
             http_response_code(404);
             $response['message'] = 'Account not found';
+            return;
         }
+
+        if ($subAction === 'transactions') {
+            $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 50;
+            $txs = $savingsService->listTransactions($accountId, $limit);
+            $response['status'] = 'success';
+            $response['data'] = ['transactions' => $txs];
+            return;
+        }
+
+        // Default: return account summary + recent transactions
+        $txs = $savingsService->listTransactions($accountId, 50);
+        $response['status'] = 'success';
+        $response['data'] = ['account' => $account, 'transactions' => $txs];
+        return;
     }
 }
 

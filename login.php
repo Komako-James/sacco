@@ -4,7 +4,7 @@ require_once 'includes/auth.php';
 require_once 'config/constants.php';
 
 if ($auth->isLoggedIn()) {
-    header('Location: dashboard.php');
+    header('Location: ' . APP_URL . '/dashboard.php');
     exit();
 }
 
@@ -13,12 +13,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $username = $_POST['username'] ?? '';
     $password = $_POST['password'] ?? '';
     
-    if ($auth->login($username, $password)) {
-        header('Location: dashboard.php');
+    $loginResult = $auth->login($username, $password);
+    if (!empty($loginResult['success'])) {
+        $redirectUrl = $_SESSION['redirect_after_login'] ?? APP_URL . '/dashboard.php';
+        unset($_SESSION['redirect_after_login']);
+
+        // Ensure redirect URL uses APP_URL base
+        if (!preg_match('#^https?://#', $redirectUrl) && strpos($redirectUrl, APP_URL) !== 0) {
+            $redirectUrl = APP_URL . '/dashboard.php';
+        }
+
+        if (!preg_match('#^https?://#', $redirectUrl)) {
+            $redirectUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' ? 'https' : 'http') . '://' . ($_SERVER['HTTP_HOST'] ?? 'localhost') . $redirectUrl;
+        }
+
+        header('Location: ' . $redirectUrl);
         exit();
-    } else {
-        $error = 'Invalid username or password';
     }
+
+    $error = $loginResult['message'] ?? 'Invalid username or password';
 }
 ?>
 <!DOCTYPE html>
@@ -28,7 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo APP_NAME; ?> - Login</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="stylesheet" href="<?php echo APP_URL; ?>/assets/css/style.css">
 </head>
 <body class="bg-light">
     <div class="container">
@@ -43,7 +56,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <?php if ($error): ?>
                             <div class="alert alert-danger"><?php echo $error; ?></div>
                         <?php endif; ?>
-                        <form method="POST">
+                        <form method="POST" action="<?php echo (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' ? 'https' : 'http') . '://' . ($_SERVER['HTTP_HOST'] ?? 'localhost') . APP_URL . '/login.php'; ?>">
                             <div class="mb-3">
                                 <label for="username" class="form-label">Username</label>
                                 <input type="text" class="form-control" id="username" name="username" required>
