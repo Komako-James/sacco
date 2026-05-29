@@ -1,5 +1,11 @@
 {
     "chat.tools.terminal.autoApprove": {
-        "&": true
-    }
+        "&": true,
+        "/^php -l app/Services/ShareService\\.php app/Services/LedgerService\\.php$/": {
+            "approve": true,
+            "matchCommandLine": true
+        },
+        "Get-Command": true
+    },
+    "CodeGPT.apiKey": "Ollama"
 }

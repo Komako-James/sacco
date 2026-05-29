@@ -58,10 +58,10 @@ function exportLoans($db, $format) {
     $stmt = $db->query("
         SELECT 
             l.loan_id,
-            l.loan_reference,
+            l.loan_ref_no AS loan_reference,
             m.membership_no,
             m.full_name,
-            l.loan_amount,
+            l.amount_requested AS loan_amount,
             l.outstanding_balance,
             l.interest_rate,
             l.repayment_period,

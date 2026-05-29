@@ -4,10 +4,10 @@
 <nav class="navbar navbar-expand-lg navbar-dark bg-primary sticky-top shadow-sm">
     <div class="container-fluid">
         <a class="navbar-brand d-flex align-items-center" href="<?php echo APP_URL; ?>/dashboard.php">
-            <img src="images/rakai.jpg" class="me-2 logo-sm">
+            <img src="<?php echo COMPANY_LOGO; ?>" class="me-2 logo-sm" alt="<?php echo htmlspecialchars(COMPANY_NAME); ?>">
             <div>
                 <div class="fw-bold small mb-0">Rakai District SACCO</div>
-                <div class="small opacity-75">P.O. Box 21 Kyotera | +256787187693 | +256702617840</div>
+                <div class="small opacity-75"><?php echo COMPANY_ADDRESS; ?> | <?php echo COMPANY_PHONE; ?></div>
             </div>
         </a>
 

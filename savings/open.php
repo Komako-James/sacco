@@ -110,20 +110,27 @@ $accountTypes = [
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Open Savings Account - <?php echo APP_NAME; ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css" rel="stylesheet">
     <link rel="stylesheet" href="../assets/css/style.css">
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="../dashboard.php"><?php echo APP_NAME; ?></a>
-            <div class="collapse navbar-collapse ms-auto">
-                <a href="../logout.php" class="nav-link">Logout</a>
-            </div>
-        </div>
-    </nav>
+    <button class="sidebar-toggle" id="sidebarToggle">
+        <i class="bi bi-list"></i>
+    </button>
 
-    <div class="container mt-5">
-        <div class="row justify-content-center">
+    <?php include '../includes/sidebar.php'; ?>
+
+    <div class="main-content">
+        <div class="container-fluid mt-4">
+            <nav aria-label="breadcrumb" class="mb-4">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="<?php echo APP_URL; ?>/dashboard.php">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="<?php echo APP_URL; ?>/savings/accounts.php">Savings</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Open Account</li>
+                </ol>
+            </nav>
+
+            <div class="row justify-content-center">
             <div class="col-md-8">
                 <div class="card">
                     <div class="card-header bg-primary text-white">
@@ -194,6 +201,7 @@ $accountTypes = [
             </div>
         </div>
     </div>
+</div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>

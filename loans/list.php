@@ -17,7 +17,7 @@ $status = $_GET['status'] ?? '';
 $search = $_GET['search'] ?? '';
 
 $query = "
-    SELECT l.*, m.full_name, m.membership_no
+    SELECT l.*, l.loan_ref_no AS loan_reference, l.amount_requested AS loan_amount, m.full_name, m.membership_no
     FROM loans l
     JOIN members m ON l.member_id = m.member_id
     WHERE 1=1
@@ -30,13 +30,13 @@ if (!empty($status)) {
 }
 
 if (!empty($search)) {
-    $query .= " AND (m.full_name LIKE ? OR m.membership_no LIKE ? OR l.loan_reference LIKE ?)";
+    $query .= " AND (m.full_name LIKE ? OR m.membership_no LIKE ? OR l.loan_ref_no LIKE ?)";
     $searchTerm = "%$search%";
     $params = array_merge($params, [$searchTerm, $searchTerm, $searchTerm]);
 }
 
 // Count total
-$countStmt = $db->prepare("SELECT COUNT(*) as total FROM loans l JOIN members m ON l.member_id = m.member_id WHERE 1=1" . ($status ? " AND l.status = ?" : "") . ($search ? " AND (m.full_name LIKE ? OR m.membership_no LIKE ? OR l.loan_reference LIKE ?)" : ""));
+$countStmt = $db->prepare("SELECT COUNT(*) as total FROM loans l JOIN members m ON l.member_id = m.member_id WHERE 1=1" . ($status ? " AND l.status = ?" : "") . ($search ? " AND (m.full_name LIKE ? OR m.membership_no LIKE ? OR l.loan_ref_no LIKE ?)" : ""));
 $countStmt->execute($params);
 $total = $countStmt->fetch()['total'];
 $totalPages = ceil($total / ITEMS_PER_PAGE);
@@ -87,7 +87,7 @@ $loans = $stmt->fetchAll();
                     <div class="col-md-4">
                         <select class="form-select" id="status">
                             <option value="">All Status</option>
-                            <option value="application">Application</option>
+                            <option value="applied">Application</option>
                             <option value="approved">Approved</option>
                             <option value="disbursed">Disbursed</option>
                             <option value="completed">Completed</option>
@@ -121,7 +121,7 @@ $loans = $stmt->fetchAll();
                                 <td><?php echo formatMoney($loan['outstanding_balance']); ?></td>
                                 <td>
                                     <span class="badge bg-<?php echo match($loan['status']) {
-                                        'application' => 'warning',
+                                        'applied' => 'warning',
                                         'approved' => 'info',
                                         'disbursed' => 'primary',
                                         'completed' => 'success',
@@ -133,10 +133,10 @@ $loans = $stmt->fetchAll();
                                 </td>
                                 <td><?php echo date('M d, Y', strtotime($loan['created_at'])); ?></td>
                                 <td>
-                                    <?php if ($loan['status'] === 'application'): ?>
+                                    <?php if ($loan['status'] === 'applied'): ?>
                                     <a href="approve.php?id=<?php echo $loan['loan_id']; ?>" class="btn btn-sm btn-success">Approve</a>
                                     <?php elseif ($loan['status'] === 'approved'): ?>
-                                    <button class="btn btn-sm btn-primary" disabled>Disburse</button>
+                                    <a href="disburse.php?id=<?php echo $loan['loan_id']; ?>" class="btn btn-sm btn-primary">Disburse</a>
                                     <?php elseif ($loan['status'] === 'disbursed'): ?>
                                     <a href="repay.php?id=<?php echo $loan['loan_id']; ?>" class="btn btn-sm btn-warning">Repay</a>
                                     <?php endif; ?>

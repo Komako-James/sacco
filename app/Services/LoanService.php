@@ -60,7 +60,7 @@ class LoanService
             // Insert loan application
             $stmt = $this->db->prepare("
                 INSERT INTO loans (
-                    loan_reference_number, member_id, product_id, amount_requested,
+                    loan_ref_no, member_id, product_id, amount_requested,
                     annual_interest_rate, monthly_interest_rate, repayment_period_months,
                     loan_purpose, application_date, status, applied_by
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), 'applied', ?)
@@ -630,7 +630,7 @@ class LoanService
     public function getDefaulters($status = 'active', $limit = 100)
     {
         $stmt = $this->db->prepare("
-            SELECT d.*, l.loan_reference_number, m.full_name, m.membership_number,
+            SELECT d.*, l.loan_ref_no AS loan_reference, m.full_name, m.membership_number,
                    m.phone, l.amount_approved, l.outstanding_balance
             FROM defaulters_list d
             JOIN loans l ON d.loan_id = l.loan_id

@@ -1,0 +1,85 @@
+<?php
+/**
+ * Member Loans Page
+ */
+
+require_once '../member/auth-middleware.php';
+require_once '../config/constants.php';
+require_once '../includes/functions.php';
+
+requireMemberLogin();
+
+$member = getMemberData();
+$loans = getMemberLoans();
+
+$db = getDB();
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Loans - Member Portal</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+    <div class="member-content">
+        <div class="container-fluid p-4">
+            <div class="mb-4">
+                <a href="dashboard.php" class="btn btn-sm btn-outline-secondary mb-3">
+                    <i class="bi bi-arrow-left me-1"></i> Back
+                </a>
+                <h2>My Loans</h2>
+            </div>
+
+            <?php if (!empty($loans)): ?>
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Loan Reference</th>
+                            <th>Product</th>
+                            <th>Amount</th>
+                            <th>Outstanding</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($loans as $loan): ?>
+                        <tr>
+                            <td><?php echo htmlspecialchars($loan['loan_reference']); ?></td>
+                            <td><?php echo htmlspecialchars($loan['product_id']); ?></td>
+                            <td><?php echo formatMoney($loan['loan_amount']); ?></td>
+                            <td><?php echo formatMoney($loan['outstanding_balance']); ?></td>
+                            <td>
+                                <span class="badge bg-<?php echo $loan['status'] === 'disbursed' ? 'success' : 'info'; ?>">
+                                    <?php echo ucfirst($loan['status']); ?>
+                                </span>
+                            </td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-primary" onclick="showLoanDetails(<?php echo $loan['loan_id']; ?>)">
+                                    View Details
+                                </button>
+                            </td>
+                        </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+            <?php else: ?>
+            <div class="alert alert-info">You have no active loans.</div>
+            <?php endif; ?>
+        </div>
+    </div>
+
+    <script>
+    function showLoanDetails(loanId) {
+        // Placeholder for loan details modal
+        alert('Loan details for ID: ' + loanId);
+    }
+    </script>
+</body>
+</html>

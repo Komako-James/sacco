@@ -22,12 +22,12 @@ CREATE TABLE IF NOT EXISTS sessions (
 
 -- Extend users table for 2FA and lockouts
 ALTER TABLE users
-  ADD COLUMN IF NOT EXISTS two_factor_enabled TINYINT(1) DEFAULT 0,
-  ADD COLUMN IF NOT EXISTS two_factor_method VARCHAR(20) DEFAULT 'sms',
-  ADD COLUMN IF NOT EXISTS two_factor_code VARCHAR(128) DEFAULT NULL,
-  ADD COLUMN IF NOT EXISTS two_factor_expires DATETIME DEFAULT NULL,
-  ADD COLUMN IF NOT EXISTS login_attempts INT DEFAULT 0,
-  ADD COLUMN IF NOT EXISTS locked_until DATETIME DEFAULT NULL;
+  ADD COLUMN two_factor_enabled TINYINT(1) DEFAULT 0,
+  ADD COLUMN two_factor_method VARCHAR(20) DEFAULT 'sms',
+  ADD COLUMN two_factor_code VARCHAR(128) DEFAULT NULL,
+  ADD COLUMN two_factor_expires DATETIME DEFAULT NULL,
+  ADD COLUMN login_attempts INT DEFAULT 0,
+  ADD COLUMN locked_until DATETIME DEFAULT NULL;
 
 -- Standing orders
 CREATE TABLE IF NOT EXISTS standing_orders (

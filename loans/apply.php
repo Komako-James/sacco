@@ -109,15 +109,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['member_id'])) {
     <title>Loan Application - <?php echo APP_NAME; ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/css/style.css">
 </head>
 <body>
     <?php include '../includes/navbar.php'; ?>
-    
-    <div class="container-fluid">
-        <div class="row">
-            <?php include '../includes/sidebar.php'; ?>
-            
-            <main class="col-md-10 ms-sm-auto px-md-4">
+
+    <button class="sidebar-toggle" id="sidebarToggle">
+        <i class="bi bi-list"></i>
+    </button>
+
+    <?php include '../includes/sidebar.php'; ?>
+
+    <div class="main-content">
+        <div class="container-fluid">
                 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
                     <h1 class="h2">Loan Application</h1>
                 </div>
@@ -243,24 +247,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['member_id'])) {
                     </div>
                 </div>
                 <?php endif; ?>
-            </main>
         </div>
     </div>
     
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../assets/js/main.js"></script>
     <script>
-    document.getElementById('product_id').addEventListener('change', function() {
-        var option = this.options[this.selectedIndex];
-        var min = option.getAttribute('data-min');
-        var max = option.getAttribute('data-max');
-        var minMonths = option.getAttribute('data-min-months');
-        var maxMonths = option.getAttribute('data-max-months');
-        
-        document.getElementById('amount').min = min;
-        document.getElementById('amount').max = max;
-        document.getElementById('period').min = minMonths;
-        document.getElementById('period').max = maxMonths;
-    });
+    var productSelect = document.getElementById('product_id');
+    if (productSelect) {
+        productSelect.addEventListener('change', function() {
+            var option = this.options[this.selectedIndex];
+            var min = option.getAttribute('data-min');
+            var max = option.getAttribute('data-max');
+            var minMonths = option.getAttribute('data-min-months');
+            var maxMonths = option.getAttribute('data-max-months');
+            
+            document.getElementById('amount').min = min;
+            document.getElementById('amount').max = max;
+            document.getElementById('period').min = minMonths;
+            document.getElementById('period').max = maxMonths;
+        });
+    }
     </script>
 </body>
 </html>

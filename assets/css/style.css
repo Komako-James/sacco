@@ -283,6 +283,11 @@
     background: #f8f9fa;
 }
 
+/* Small wrapper to ensure table content isn't hidden behind the fixed sidebar */
+.members-table-wrapper {
+    padding-left: 0.5rem;
+}
+
 /* Mobile Responsive */
 @media (max-width: 768px) {
     .sidebar {

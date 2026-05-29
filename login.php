@@ -48,10 +48,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <div class="row justify-content-center mt-5">
             <div class="col-md-4">
                 <div class="card shadow">
-                    <div class="card-header bg-primary text-white text-center">
-                        <h4><?php echo APP_NAME; ?></h4>
-                        <small>Login to your account</small>
-                    </div>
+                            <div class="card-header bg-primary text-white text-center">
+                            <img src="<?php echo COMPANY_LOGO; ?>" alt="<?php echo htmlspecialchars(COMPANY_NAME); ?>" class="img-fluid mx-auto d-block" style="max-height: 120px;">
+                        </div>
                     <div class="card-body">
                         <?php if ($error): ?>
                             <div class="alert alert-danger"><?php echo $error; ?></div>

@@ -80,7 +80,7 @@ class LedgerService
             ]
         ];
 
-        self::postJournalEntries($entries, $receiptNumber, "Loan Disbursement", $loanId, $postedBy);
+        self::postJournalEntries($entries, $receiptNumber, "Loan Disbursement", $postedBy);
     }
 
     /**
@@ -137,7 +137,7 @@ class LedgerService
             ];
         }
 
-        self::postJournalEntries($entries, $receiptNumber, "Loan Repayment", null, $postedBy);
+        self::postJournalEntries($entries, $receiptNumber, "Loan Repayment", $postedBy);
     }
 
     /**
@@ -171,7 +171,7 @@ class LedgerService
             ]
         ];
 
-        self::postJournalEntries($entries, $receiptNumber, "Savings Deposit", $memberId, $postedBy);
+        self::postJournalEntries($entries, $receiptNumber, "Savings Deposit", $postedBy);
     }
 
     /**
@@ -205,7 +205,7 @@ class LedgerService
             ]
         ];
 
-        self::postJournalEntries($entries, $receiptNumber, "Savings Withdrawal", $memberId, $postedBy);
+        self::postJournalEntries($entries, $receiptNumber, "Savings Withdrawal", $postedBy);
     }
 
     /**
@@ -241,7 +241,7 @@ class LedgerService
             ]
         ];
 
-        self::postJournalEntries($entries, $receiptNumber, "Interest Accrual", null, $postedBy);
+        self::postJournalEntries($entries, $receiptNumber, "Interest Accrual", $postedBy);
     }
 
     /**
@@ -274,7 +274,181 @@ class LedgerService
             ]
         ];
 
-        self::postJournalEntries($entries, $receiptNumber, "Share Purchase", $memberId, $postedBy);
+        self::postJournalEntries($entries, $receiptNumber, "Share Purchase", $postedBy);
+    }
+
+    /**
+     * Post share purchase funded from savings account
+     * Debit: Member Savings (liability reduction)
+     * Credit: Member Share Capital (equity increase)
+     *
+     * @param int $memberId
+     * @param float $amount
+     * @param int $postedBy
+     * @param string|null $referenceNumber
+     */
+    public static function postSharePurchaseFromSavings($memberId, $amount, $postedBy, $referenceNumber = null)
+    {
+        $referenceNumber = $referenceNumber ?: self::generateReceiptNumber('SH');
+
+        $entries = [
+            [
+                'ledger_code' => self::COA_MEMBER_SAVINGS,
+                'debit' => $amount,
+                'credit' => 0,
+                'description' => "Transfer from savings to share capital",
+                'member_id' => $memberId,
+                'transaction_type' => 'SHARE_PURCHASE',
+                'payment_method' => 'internal',
+                'account_type' => 'savings'
+            ],
+            [
+                'ledger_code' => self::COA_MEMBER_SHARES,
+                'debit' => 0,
+                'credit' => $amount,
+                'description' => "Member share capital increase",
+                'member_id' => $memberId,
+                'transaction_type' => 'SHARE_PURCHASE',
+                'payment_method' => 'internal',
+                'account_type' => 'shares'
+            ]
+        ];
+
+        self::postJournalEntries($entries, $referenceNumber, "Share Purchase from Savings", $postedBy);
+    }
+
+    /**
+     * Post share redemption when shares are sold back into savings
+     * Debit: Member Savings (liability increase)
+     * Credit: Member Shares (equity reduction)
+     *
+     * @param int $memberId
+     * @param float $amount
+     * @param int $postedBy
+     * @param string|null $referenceNumber
+     */
+    public static function postShareRedemptionToSavings($memberId, $amount, $postedBy, $referenceNumber = null)
+    {
+        $referenceNumber = $referenceNumber ?: self::generateReceiptNumber('SR');
+
+        $entries = [
+            [
+                'ledger_code' => self::COA_MEMBER_SAVINGS,
+                'debit' => $amount,
+                'credit' => 0,
+                'description' => "Share redemption deposited to savings",
+                'member_id' => $memberId,
+                'transaction_type' => 'SHARE_REDEMPTION',
+                'account_type' => 'savings'
+            ],
+            [
+                'ledger_code' => self::COA_MEMBER_SHARES,
+                'debit' => 0,
+                'credit' => $amount,
+                'description' => "Member share capital reduction",
+                'member_id' => $memberId,
+                'transaction_type' => 'SHARE_REDEMPTION',
+                'account_type' => 'shares'
+            ]
+        ];
+
+        self::postJournalEntries($entries, $referenceNumber, "Share Redemption to Savings", $postedBy);
+    }
+
+    /**
+     * Post a share transfer between members
+     * Debit: Member shares for source
+     * Credit: Member shares for destination
+     *
+     * @param int $sourceMemberId
+     * @param int $destinationMemberId
+     * @param float $amount
+     * @param string $referenceNumber
+     * @param int $postedBy
+     */
+    public static function postShareTransfer($sourceMemberId, $destinationMemberId, $amount, $referenceNumber, $postedBy)
+    {
+        $entries = [
+            [
+                'ledger_code' => self::COA_MEMBER_SHARES,
+                'debit' => $amount,
+                'credit' => 0,
+                'description' => "Share transfer out to member {$destinationMemberId}",
+                'member_id' => $sourceMemberId,
+                'related_member_id' => $destinationMemberId,
+                'transaction_type' => 'SHARE_TRANSFER_OUT',
+                'account_type' => 'shares'
+            ],
+            [
+                'ledger_code' => self::COA_MEMBER_SHARES,
+                'debit' => 0,
+                'credit' => $amount,
+                'description' => "Share transfer in from member {$sourceMemberId}",
+                'member_id' => $destinationMemberId,
+                'related_member_id' => $sourceMemberId,
+                'transaction_type' => 'SHARE_TRANSFER_IN',
+                'account_type' => 'shares'
+            ]
+        ];
+
+        self::postJournalEntries($entries, $referenceNumber, "Share Transfer {$referenceNumber}", $postedBy);
+    }
+
+    /**
+     * Post a manual share adjustment for corrections or audit updates.
+     * Debit/Credit: Member Shares vs Retained Earnings as adjustment clearing.
+     *
+     * @param int $memberId
+     * @param float $amount
+     * @param int $postedBy
+     * @param string $referenceNumber
+     * @param string $adjustmentType
+     */
+    public static function postShareAdjustment($memberId, $amount, $postedBy, $referenceNumber, $adjustmentType = 'increase')
+    {
+        $entries = [];
+
+        if ($adjustmentType === 'increase') {
+            $entries[] = [
+                'ledger_code' => self::COA_RETAINED_EARNINGS,
+                'debit' => $amount,
+                'credit' => 0,
+                'description' => "Manual share adjustment increase for member {$memberId}",
+                'member_id' => $memberId,
+                'transaction_type' => 'SHARE_ADJUSTMENT',
+                'account_type' => 'adjustment'
+            ];
+            $entries[] = [
+                'ledger_code' => self::COA_MEMBER_SHARES,
+                'debit' => 0,
+                'credit' => $amount,
+                'description' => "Manual share adjustment increase for member {$memberId}",
+                'member_id' => $memberId,
+                'transaction_type' => 'SHARE_ADJUSTMENT',
+                'account_type' => 'shares'
+            ];
+        } else {
+            $entries[] = [
+                'ledger_code' => self::COA_MEMBER_SHARES,
+                'debit' => $amount,
+                'credit' => 0,
+                'description' => "Manual share adjustment decrease for member {$memberId}",
+                'member_id' => $memberId,
+                'transaction_type' => 'SHARE_ADJUSTMENT',
+                'account_type' => 'shares'
+            ];
+            $entries[] = [
+                'ledger_code' => self::COA_RETAINED_EARNINGS,
+                'debit' => 0,
+                'credit' => $amount,
+                'description' => "Manual share adjustment decrease for member {$memberId}",
+                'member_id' => $memberId,
+                'transaction_type' => 'SHARE_ADJUSTMENT',
+                'account_type' => 'adjustment'
+            ];
+        }
+
+        self::postJournalEntries($entries, $referenceNumber, "Share Adjustment {$referenceNumber}", $postedBy);
     }
 
     /**
@@ -358,18 +532,16 @@ class LedgerService
      * @param array $entries
      * @param string $receiptNumber
      * @param string $description
-     * @param int|null $memberId
      * @param int $postedBy
      * @return bool
      */
-    private static function postJournalEntries($entries, $receiptNumber, $description, $memberId, $postedBy)
+    private static function postJournalEntries($entries, $receiptNumber, $description, $postedBy)
     {
         global $db;  // Using global DB instance
 
         try {
             $db->beginTransaction();
 
-            // Verify balanced
             $totalDebits = 0;
             $totalCredits = 0;
 
@@ -378,31 +550,36 @@ class LedgerService
                 $totalCredits += $entry['credit'];
             }
 
-            // Allow for floating point rounding
             if (abs($totalDebits - $totalCredits) > 0.01) {
                 throw new Exception("Journal entries not balanced: Debit {$totalDebits} != Credit {$totalCredits}");
             }
 
-            // Insert each entry
             foreach ($entries as $entry) {
                 $stmt = $db->prepare("
                     INSERT INTO ledger_entries
                     (ledger_code, ledger_name, entry_date, receipt_number, transaction_reference,
-                     transaction_type, debit, credit, description, posted_by, member_id, status)
-                    VALUES (?, ?, NOW(), ?, ?, ?, ?, ?, ?, ?, ?, 'posted')
+                     transaction_type, debit, credit, description, payment_method, posted_by, approved_by,
+                     member_id, related_member_id, account_type, status, reversal_of_id)
+                    VALUES (?, ?, NOW(), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ");
 
                 $stmt->execute([
                     $entry['ledger_code'],
                     self::getAccountName($entry['ledger_code']),
                     $receiptNumber,
-                    $description,
-                    'general_entry',
+                    $entry['transaction_reference'] ?? $receiptNumber,
+                    $entry['transaction_type'] ?? 'general_entry',
                     $entry['debit'],
                     $entry['credit'],
                     $entry['description'],
+                    $entry['payment_method'] ?? null,
                     $postedBy,
-                    $memberId
+                    $entry['approved_by'] ?? null,
+                    $entry['member_id'] ?? null,
+                    $entry['related_member_id'] ?? null,
+                    $entry['account_type'] ?? null,
+                    $entry['status'] ?? 'posted',
+                    $entry['reversal_of_id'] ?? null
                 ]);
             }
 

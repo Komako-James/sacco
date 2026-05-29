@@ -16,7 +16,7 @@ $db = Database::getInstance()->getConnection();
 
 // Get loan
 $stmt = $db->prepare("
-    SELECT l.*, m.full_name, m.membership_no
+    SELECT l.*, l.loan_ref_no AS loan_reference, l.amount_requested AS loan_amount, m.full_name, m.membership_no
     FROM loans l
     JOIN members m ON l.member_id = m.member_id
     WHERE l.loan_id = ? AND l.status = 'disbursed'
@@ -30,7 +30,7 @@ if (!$loan) {
 }
 
 // Get schedule
-$stmt = $db->prepare("SELECT * FROM loan_schedules WHERE loan_id = ? ORDER BY installment ASC");
+$stmt = $db->prepare("SELECT * FROM loan_repayment_schedule WHERE loan_id = ? ORDER BY installment_no ASC");
 $stmt->execute([$loanId]);
 $schedule = $stmt->fetchAll();
 
@@ -56,10 +56,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $receipt = generateReceiptNumber('LRP');
             $stmt = $db->prepare("
                 INSERT INTO loan_repayments 
-                (loan_id, amount, payment_method, reference_no, receipt_no, paid_by, created_at)
-                VALUES (?, ?, ?, ?, ?, ?, NOW())
+                (loan_id, amount_paid, principal_paid, interest_paid, penalty_paid, payment_method, reference_no, receipt_no, posted_by)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             ");
-            $stmt->execute([$loanId, $amount, $paymentMethod, $referenceNo, $receipt, $_SESSION['user_id']]);
+            $stmt->execute([
+                $loanId,
+                $amount,
+                NULL,
+                NULL,
+                0,
+                $paymentMethod,
+                $referenceNo,
+                $receipt,
+                $_SESSION['user_id']
+            ]);
             
             // Update loan balance
             $newBalance = $loan['outstanding_balance'] - $amount;
@@ -89,17 +99,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Loan Repayment - <?php echo APP_NAME; ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css" rel="stylesheet">
     <link rel="stylesheet" href="../assets/css/style.css">
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="../dashboard.php"><?php echo APP_NAME; ?></a>
-        </div>
-    </nav>
+    <button class="sidebar-toggle" id="sidebarToggle">
+        <i class="bi bi-list"></i>
+    </button>
 
-    <div class="container-fluid mt-4">
-        <div class="row">
+    <?php include '../includes/sidebar.php'; ?>
+
+    <div class="main-content">
+        <div class="container-fluid mt-4">
+            <nav aria-label="breadcrumb" class="mb-4">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="<?php echo APP_URL; ?>/dashboard.php">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="<?php echo APP_URL; ?>/loans/list.php">Loans</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Loan Repayment</li>
+                </ol>
+            </nav>
+
+            <div class="row">
             <div class="col-md-8">
                 <div class="card mb-3">
                     <div class="card-header bg-primary text-white">
@@ -164,31 +184,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <h5 class="mb-0">Repayment Schedule</h5>
                     </div>
                     <div class="card-body" style="max-height: 500px; overflow-y: auto;">
-                        <table class="table table-sm">
-                            <thead>
-                                <tr>
-                                    <th>Inst</th>
-                                    <th>Principal</th>
-                                    <th>Interest</th>
-                                    <th>Total</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php foreach ($schedule as $s): ?>
-                                <tr>
-                                    <td><?php echo $s['installment']; ?></td>
-                                    <td><?php echo formatMoney($s['principal']); ?></td>
-                                    <td><?php echo formatMoney($s['interest']); ?></td>
-                                    <td><?php echo formatMoney($s['total']); ?></td>
-                                </tr>
-                                <?php endforeach; ?>
-                            </tbody>
-                        </table>
+                        <?php if (!$schedule): ?>
+                            <p class="text-muted">Repayment schedule is not available for this loan.</p>
+                        <?php else: ?>
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Inst</th>
+                                        <th>Due Date</th>
+                                        <th>Principal</th>
+                                        <th>Interest</th>
+                                        <th>Total Due</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php foreach ($schedule as $s): ?>
+                                    <tr>
+                                        <td><?php echo htmlspecialchars($s['installment_no']); ?></td>
+                                        <td><?php echo htmlspecialchars($s['due_date']); ?></td>
+                                        <td><?php echo formatMoney($s['principal_amount']); ?></td>
+                                        <td><?php echo formatMoney($s['interest_amount']); ?></td>
+                                        <td><?php echo formatMoney($s['total_due']); ?></td>
+                                        <td><?php echo htmlspecialchars(ucfirst($s['status'])); ?></td>
+                                    </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        <?php endif; ?>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+</div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>

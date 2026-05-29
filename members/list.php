@@ -30,9 +30,19 @@ if (!empty($status)) {
     $params[] = $status;
 }
 
-// Count total
-$countStmt = $db->prepare("SELECT COUNT(*) as total FROM members WHERE 1=1" . (count($params) > 0 ? " AND (full_name LIKE ? OR membership_no LIKE ? OR phone LIKE ?)" . (!empty($status) ? " AND status = ?" : "") : ""));
-$countStmt->execute($params);
+$countSql = "SELECT COUNT(*) as total FROM members WHERE 1=1";
+$countParams = [];
+if (!empty($search)) {
+    $countSql .= " AND (full_name LIKE ? OR membership_no LIKE ? OR phone LIKE ?)";
+    $searchTerm = "%$search%";
+    $countParams = array_merge($countParams, [$searchTerm, $searchTerm, $searchTerm]);
+}
+if (!empty($status)) {
+    $countSql .= " AND status = ?";
+    $countParams[] = $status;
+}
+$countStmt = $db->prepare($countSql);
+$countStmt->execute($countParams);
 $total = $countStmt->fetch()['total'];
 $totalPages = ceil($total / ITEMS_PER_PAGE);
 
@@ -74,7 +84,10 @@ $members = $stmt->fetchAll();
                     <div class="card-body">
                         <div class="row gy-2">
                             <div class="col-lg-6">
-                                <input type="text" class="form-control" id="member-search" name="search" placeholder="Search by name, membership no, or phone..." value="<?php echo htmlspecialchars($search); ?>">
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="member-search" name="search" placeholder="Search by name, membership no, or phone..." value="<?php echo htmlspecialchars($search); ?>">
+                                    <button class="btn btn-primary" type="button" id="member-search-btn"><i class="bi bi-search"></i> Search</button>
+                                </div>
                             </div>
                             <div class="col-lg-3">
                                 <select class="form-select" id="status" name="status" onchange="window.location.href='?search=' + encodeURIComponent(document.getElementById('member-search').value) + '&status=' + encodeURIComponent(this.value)">
@@ -89,7 +102,7 @@ $members = $stmt->fetchAll();
                 </div>
 
                 <div class="card">
-                    <div class="table-responsive">
+                    <div class="table-responsive members-table-wrapper">
                         <table class="table table-hover mb-0">
                             <thead class="table-light">
                                 <tr>
@@ -141,5 +154,110 @@ $members = $stmt->fetchAll();
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="../assets/js/main.js"></script>
+    <script>
+        const memberSearchInput = document.getElementById('member-search');
+        const memberStatusSelect = document.getElementById('status');
+        const searchResultsBody = document.getElementById('search-results');
+        const paginationNav = document.querySelector('.pagination');
+        let searchTimeout = null;
+
+        function escapeHtml(value) {
+            return String(value || '').replace(/[&<>"']/g, function(match) {
+                return {
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    '"': '&quot;',
+                    "'": '&#39;'
+                }[match];
+            });
+        }
+
+        function renderMembers(members) {
+            if (!searchResultsBody) return;
+            if (!members || members.length === 0) {
+                searchResultsBody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4">No members match your search.</td></tr>';
+                return;
+            }
+            searchResultsBody.innerHTML = members.map(member => {
+                const statusClass = member.status === 'active' ? 'success' : 'danger';
+                const statusLabel = member.status ? member.status.charAt(0).toUpperCase() + member.status.slice(1) : 'Unknown';
+                const joinDate = member.join_date ? new Date(member.join_date).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }) : 'N/A';
+                return `
+                    <tr>
+                        <td>${escapeHtml(member.membership_no || '')}</td>
+                        <td>${escapeHtml(member.full_name || '')}</td>
+                        <td>${escapeHtml(member.phone || '')}</td>
+                        <td>${escapeHtml(joinDate)}</td>
+                        <td><span class="badge bg-${statusClass}">${escapeHtml(statusLabel)}</span></td>
+                        <td>
+                            <a href="view.php?id=${encodeURIComponent(member.member_id)}" class="btn btn-sm btn-info">View</a>
+                            <a href="statement.php?id=${encodeURIComponent(member.member_id)}" class="btn btn-sm btn-secondary">Statement</a>
+                        </td>
+                    </tr>`;
+            }).join('');
+        }
+
+        function fetchMembers(query, status) {
+            const url = `../api/ajax_handler.php?action=search_member&q=${encodeURIComponent(query)}&status=${encodeURIComponent(status)}`;
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && Array.isArray(data.members)) {
+                        renderMembers(data.members);
+                        if (paginationNav) {
+                            paginationNav.style.display = query ? 'none' : '';
+                        }
+                    }
+                })
+                .catch(() => {
+                    if (searchResultsBody) {
+                        searchResultsBody.innerHTML = '<tr><td colspan="6" class="text-center text-danger py-4">Search failed. Please try again.</td></tr>';
+                    }
+                });
+        }
+
+        const memberSearchBtn = document.getElementById('member-search-btn');
+        if (memberSearchInput) {
+            memberSearchInput.addEventListener('input', function() {
+                const query = this.value.trim();
+                const status = memberStatusSelect ? memberStatusSelect.value : '';
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => {
+                    if (query.length === 0) {
+                        window.location.search = `?search=${encodeURIComponent(query)}&status=${encodeURIComponent(status)}`;
+                        return;
+                    }
+                    fetchMembers(query, status);
+                }, 200);
+            });
+        }
+
+        if (memberSearchBtn) {
+            memberSearchBtn.addEventListener('click', function() {
+                const query = memberSearchInput ? memberSearchInput.value.trim() : '';
+                const status = memberStatusSelect ? memberStatusSelect.value : '';
+                if (query.length === 0) {
+                    window.location.search = `?search=${encodeURIComponent(query)}&status=${encodeURIComponent(status)}`;
+                    return;
+                }
+                // immediate search without debounce
+                clearTimeout(searchTimeout);
+                fetchMembers(query, status);
+            });
+        }
+
+        // Hide pagination initially if there's an active search
+        if (paginationNav) {
+            paginationNav.style.display = (memberSearchInput && memberSearchInput.value.trim()) ? 'none' : '';
+        }
+
+        if (memberStatusSelect) {
+            memberStatusSelect.addEventListener('change', function() {
+                const query = memberSearchInput ? memberSearchInput.value.trim() : '';
+                fetchMembers(query, this.value);
+            });
+        }
+    </script>
 </body>
 </html>

@@ -16,7 +16,7 @@ $db = Database::getInstance()->getConnection();
 
 // Get loan
 $stmt = $db->prepare("
-    SELECT l.*, m.full_name, m.membership_no, lp.default_interest_rate
+    SELECT l.*, l.loan_ref_no AS loan_reference, l.amount_requested AS loan_amount, m.full_name, m.membership_no, lp.default_interest_rate
     FROM loans l
     JOIN members m ON l.member_id = m.member_id
     JOIN loan_products lp ON l.product_id = lp.product_id
@@ -25,7 +25,7 @@ $stmt = $db->prepare("
 $stmt->execute([$loanId]);
 $loan = $stmt->fetch();
 
-if (!$loan || $loan['status'] !== 'application') {
+if (!$loan || $loan['status'] !== 'applied') {
     header('Location: list.php');
     exit();
 }
@@ -40,15 +40,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($decision === 'approve') {
         $stmt = $db->prepare("
             UPDATE loans 
-            SET status = 'approved', approved_by = ?, approved_date = NOW(), remarks = ?
+            SET status = 'approved', approved_by = ?, approval_date = NOW()
             WHERE loan_id = ?
         ");
-        $stmt->execute([$_SESSION['user_id'], $remarks, $loanId]);
+        $stmt->execute([$_SESSION['user_id'], $loanId]);
         $success = 'Loan approved successfully';
     } elseif ($decision === 'reject') {
         $stmt = $db->prepare("
             UPDATE loans 
-            SET status = 'rejected', approved_by = ?, approved_date = NOW(), remarks = ?
+            SET status = 'rejected', approved_by = ?, approval_date = NOW(), rejection_reason = ?
             WHERE loan_id = ?
         ");
         $stmt->execute([$_SESSION['user_id'], $remarks, $loanId]);
@@ -104,7 +104,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <div class="row mb-4">
                             <div class="col-md-6">
                                 <p><strong>Requested Amount:</strong> <?php echo formatMoney($loan['loan_amount']); ?></p>
-                                <p><strong>Term:</strong> <?php echo $loan['repayment_period']; ?> months</p>
+                                <?php $termMonths = $loan['repayment_period_months'] ?? $loan['repayment_period'] ?? $loan['period'] ?? null; ?>
+                                <p><strong>Term:</strong> <?php echo $termMonths ? htmlspecialchars($termMonths) . ' months' : 'N/A'; ?></p>
                             </div>
                             <div class="col-md-6">
                                 <p><strong>Interest Rate:</strong> <?php echo $loan['interest_rate']; ?>%</p>

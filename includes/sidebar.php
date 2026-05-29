@@ -20,7 +20,7 @@ function isActiveMenu($path) {
         <!-- Brand Logo -->
         <div class="sidebar-brand">
             <div class="brand-logo">
-                <img src="<?php echo APP_URL; ?>/assets/images/logo.svg" alt="SACCO" class="logo-img">
+                <img src="<?php echo COMPANY_LOGO; ?>" alt="<?php echo htmlspecialchars(COMPANY_NAME); ?>" class="logo-img">
             </div>
             <div class="brand-text">
                 <h5 class="brand-name">SACCO</h5>
@@ -43,7 +43,7 @@ function isActiveMenu($path) {
         <ul class="sidebar-menu">
             <!-- Dashboard -->
             <li class="menu-item">
-                <a href="<?php echo APP_URL; ?>/dashboard.php" 
+                <a href="<?php echo APP_URL; ?>/dashboard.php"
                    class="menu-link <?php echo $currentPage === 'dashboard.php' ? 'active' : ''; ?>">
                     <i class="bi bi-speedometer2"></i>
                     <span>Dashboard</span>
@@ -52,9 +52,9 @@ function isActiveMenu($path) {
 
             <!-- Members Module -->
             <li class="menu-item has-submenu">
-                <a href="#" 
-                   class="menu-link <?php echo isActiveMenu('/members') ? 'active' : ''; ?>" 
-                   data-bs-toggle="collapse" 
+                <a href="#"
+                   class="menu-link <?php echo isActiveMenu('/members') ? 'active' : ''; ?>"
+                   data-bs-toggle="collapse"
                    data-bs-target="#membersSubmenu">
                     <i class="bi bi-people"></i>
                     <span>Members</span>
@@ -72,9 +72,9 @@ function isActiveMenu($path) {
 
             <!-- Savings Module -->
             <li class="menu-item has-submenu">
-                <a href="#" 
-                   class="menu-link <?php echo isActiveMenu('/savings') ? 'active' : ''; ?>" 
-                   data-bs-toggle="collapse" 
+                <a href="#"
+                   class="menu-link <?php echo isActiveMenu('/savings') ? 'active' : ''; ?>"
+                   data-bs-toggle="collapse"
                    data-bs-target="#savingsSubmenu">
                     <i class="bi bi-piggy-bank"></i>
                     <span>Savings</span>
@@ -96,9 +96,9 @@ function isActiveMenu($path) {
 
             <!-- Loans Module -->
             <li class="menu-item has-submenu">
-                <a href="#" 
-                   class="menu-link <?php echo isActiveMenu('/loans') ? 'active' : ''; ?>" 
-                   data-bs-toggle="collapse" 
+                <a href="#"
+                   class="menu-link <?php echo isActiveMenu('/loans') ? 'active' : ''; ?>"
+                   data-bs-toggle="collapse"
                    data-bs-target="#loansSubmenu">
                     <i class="bi bi-cash-coin"></i>
                     <span>Loans</span>
@@ -110,21 +110,108 @@ function isActiveMenu($path) {
                     <li><a href="<?php echo APP_URL; ?>/loans/list.php" class="submenu-link">
                         <i class="bi bi-list-ul"></i> All Loans</a></li>
                     <?php if (hasPermission('approve_loans')): ?>
-                    <li><a href="<?php echo APP_URL; ?>/loans/approve.php" class="submenu-link">
+                    <li><a href="<?php echo APP_URL; ?>/loans/list.php?status=applied" class="submenu-link">
                         <i class="bi bi-check-circle"></i> Approvals</a></li>
                     <?php endif; ?>
-                    <li><a href="<?php echo APP_URL; ?>/loans/repay.php" class="submenu-link">
+                    <li><a href="<?php echo APP_URL; ?>/loans/list.php" class="submenu-link">
                         <i class="bi bi-arrow-repeat"></i> Repayments</a></li>
                     <li><a href="<?php echo APP_URL; ?>/loans/calculator.php" class="submenu-link">
                         <i class="bi bi-calculator"></i> Calculator</a></li>
                 </ul>
             </li>
 
+            <!-- Shares Module -->
+            <li class="menu-item has-submenu">
+                <a href="#"
+                   class="menu-link <?php echo isActiveMenu('/shares') ? 'active' : ''; ?>"
+                   data-bs-toggle="collapse"
+                   data-bs-target="#sharesSubmenu">
+                    <i class="bi bi-diagram-3"></i>
+                    <span>Shares</span>
+                    <i class="bi bi-chevron-down arrow"></i>
+                </a>
+                <ul class="submenu collapse <?php echo isActiveMenu('/shares') ? 'show' : ''; ?>" id="sharesSubmenu">
+                    <li><a href="<?php echo APP_URL; ?>/shares/index.php" class="submenu-link">
+                        <i class="bi bi-collection"></i> Share Dashboard</a></li>
+                    <li><a href="<?php echo APP_URL; ?>/shares/buy.php" class="submenu-link">
+                        <i class="bi bi-cart-plus"></i> Buy Shares</a></li>
+                    <li><a href="<?php echo APP_URL; ?>/shares/transfer.php" class="submenu-link">
+                        <i class="bi bi-arrow-left-right"></i> Transfer Shares</a></li>
+                    <li><a href="<?php echo APP_URL; ?>/shares/holdings.php" class="submenu-link">
+                        <i class="bi bi-people-fill"></i> Share Holdings</a></li>
+                    <li><a href="<?php echo APP_URL; ?>/shares/statement.php" class="submenu-link">
+                        <i class="bi bi-file-earmark-text"></i> Share Statements</a></li>
+                    <li><a href="<?php echo APP_URL; ?>/shares/reports.php" class="submenu-link">
+                        <i class="bi bi-graph-up"></i> Share Reports</a></li>
+                    <li><a href="<?php echo APP_URL; ?>/shares/history.php" class="submenu-link">
+                        <i class="bi bi-clock-history"></i> Share History</a></li>
+                    <?php if ($role === 'admin' || $role === 'manager' || $role === 'accountant'): ?>
+                    <li><a href="<?php echo APP_URL; ?>/shares/adjust.php" class="submenu-link">
+                        <i class="bi bi-pencil-square"></i> Share Adjustments</a></li>
+                    <?php endif; ?>
+                </ul>
+            </li>
+
+            <!-- Batches Module -->
+            <li class="menu-item has-submenu">
+                <a href="#"
+                   class="menu-link <?php echo isActiveMenu('/batches') ? 'active' : ''; ?>"
+                   data-bs-toggle="collapse"
+                   data-bs-target="#batchesSubmenu">
+                    <i class="bi bi-upload"></i>
+                    <span>Batches</span>
+                    <i class="bi bi-chevron-down arrow"></i>
+                </a>
+                <ul class="submenu collapse <?php echo isActiveMenu('/batches') ? 'show' : ''; ?>" id="batchesSubmenu">
+                    <li><a href="<?php echo APP_URL; ?>/batches/upload.php" class="submenu-link">
+                        <i class="bi bi-file-earmark-arrow-up"></i> Upload Batch</a></li>
+                    <li><a href="<?php echo APP_URL; ?>/batches/list.php" class="submenu-link">
+                        <i class="bi bi-list-check"></i> View Batches</a></li>
+                </ul>
+            </li>
+            <!-- Bank Reconciliation Module -->
+            <li class="menu-item has-submenu">
+                <a href="#"
+                   class="menu-link <?php echo isActiveMenu('/reconciliation') ? 'active' : ''; ?>"
+                   data-bs-toggle="collapse"
+                   data-bs-target="#reconciliationSubmenu">
+                    <i class="bi bi-bank"></i>
+                    <span>Reconciliation</span>
+                    <i class="bi bi-chevron-down arrow"></i>
+                </a>
+                <ul class="submenu collapse <?php echo isActiveMenu('/reconciliation') ? 'show' : ''; ?>" id="reconciliationSubmenu">
+                    <li><a href="<?php echo APP_URL; ?>/reconciliation/upload.php" class="submenu-link">
+                        <i class="bi bi-file-earmark-arrow-up"></i> Upload Statement</a></li>
+                    <li><a href="<?php echo APP_URL; ?>/reconciliation/matching.php" class="submenu-link">
+                        <i class="bi bi-arrow-left-right"></i> Match Transactions</a></li>
+                    <li><a href="<?php echo APP_URL; ?>/reconciliation/reports.php" class="submenu-link">
+                        <i class="bi bi-file-earmark-bar-graph"></i> Reports</a></li>
+                </ul>
+            </li>
+            <!-- Standing Orders Module -->
+            <li class="menu-item has-submenu">
+                <a href="#"
+                   class="menu-link <?php echo isActiveMenu('/standing-orders') ? 'active' : ''; ?>"
+                   data-bs-toggle="collapse"
+                   data-bs-target="#standingOrdersSubmenu">
+                    <i class="bi bi-arrow-repeat"></i>
+                    <span>Standing Orders</span>
+                    <i class="bi bi-chevron-down arrow"></i>
+                </a>
+                <ul class="submenu collapse <?php echo isActiveMenu('/standing-orders') ? 'show' : ''; ?>" id="standingOrdersSubmenu">
+                    <li><a href="<?php echo APP_URL; ?>/standing-orders/list.php" class="submenu-link">
+                        <i class="bi bi-list-ul"></i> All Orders</a></li>
+                    <li><a href="<?php echo APP_URL; ?>/standing-orders/create.php" class="submenu-link">
+                        <i class="bi bi-plus-circle"></i> Create New</a></li>
+                    <li><a href="<?php echo APP_URL; ?>/standing-orders/reconcile.php" class="submenu-link">
+                        <i class="bi bi-check2-square"></i> Reconcile</a></li>
+                </ul>
+            </li>
             <!-- Reports Module -->
             <li class="menu-item has-submenu">
-                <a href="#" 
-                   class="menu-link <?php echo isActiveMenu('/reports') ? 'active' : ''; ?>" 
-                   data-bs-toggle="collapse" 
+                <a href="#"
+                   class="menu-link <?php echo isActiveMenu('/reports') ? 'active' : ''; ?>"
+                   data-bs-toggle="collapse"
                    data-bs-target="#reportsSubmenu">
                     <i class="bi bi-graph-up"></i>
                     <span>Reports</span>
@@ -148,9 +235,9 @@ function isActiveMenu($path) {
                 <span>Administration</span>
             </li>
             <li class="menu-item has-submenu">
-                <a href="#" 
-                   class="menu-link <?php echo isActiveMenu('/admin') ? 'active' : ''; ?>" 
-                   data-bs-toggle="collapse" 
+                <a href="#"
+                   class="menu-link <?php echo isActiveMenu('/admin') ? 'active' : ''; ?>"
+                   data-bs-toggle="collapse"
                    data-bs-target="#adminSubmenu">
                     <i class="bi bi-gear"></i>
                     <span>System</span>

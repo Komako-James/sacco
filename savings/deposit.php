@@ -156,6 +156,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                                        value="<?php echo htmlspecialchars($_POST['membership_no'] ?? ''); ?>"
                                                        autocomplete="off"
                                                        required>
+                                                <button type="button" class="btn btn-outline-secondary" id="membershipLookupBtn" title="Lookup exact membership number">
+                                                    <i class="bi bi-search-heart"></i>
+                                                </button>
                                             </div>
                                             <!-- Live search results will appear here -->
                                         </div>
@@ -176,6 +179,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                         </select>
                                         <div id="account_feedback" class="form-text"></div>
                                         <div class="invalid-feedback">Please select a savings account.</div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="holder_name" class="form-label">
+                                            <i class="bi bi-person-lines-fill me-1"></i>
+                                            Holder's Name
+                                        </label>
+                                        <input type="text" id="holder_name" name="holder_name" class="form-control" readonly value="<?php echo htmlspecialchars($_POST['holder_name'] ?? ''); ?>">
+                                    </div>
+
+                                    <div class="col-md-6 mb-3">
+                                        <label for="account_number" class="form-label">
+                                            <i class="bi bi-credit-card-2-front me-1"></i>
+                                            Account Number
+                                        </label>
+                                        <input type="text" id="account_number" name="account_number" class="form-control" readonly value="<?php echo htmlspecialchars($_POST['account_number'] ?? ''); ?>">
                                     </div>
                                 </div>
 
@@ -288,6 +309,107 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         document.getElementById('membership_no').addEventListener('memberSelected', function(e) {
             console.log('Member selected:', e.detail);
         });
+
+        function lookupMembershipExact() {
+            const membershipNoInput = document.getElementById('membership_no');
+            const membershipNo = membershipNoInput.value.trim();
+            const feedback = document.getElementById('account_feedback');
+            const accountSelect = document.getElementById('account_id');
+            const holderName = document.getElementById('holder_name');
+            const accountNumber = document.getElementById('account_number');
+
+            if (!membershipNo) {
+                if (feedback) {
+                    feedback.textContent = 'Enter a membership number first.';
+                    feedback.className = 'form-text text-danger';
+                }
+                return;
+            }
+
+            if (feedback) {
+                feedback.textContent = 'Looking up member...';
+                feedback.className = 'form-text text-info';
+            }
+
+            fetch(`../api/ajax_handler.php?action=check_membership&membership_no=${encodeURIComponent(membershipNo)}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (!data.success || !data.member) {
+                        if (feedback) {
+                            feedback.textContent = 'Member not found. Please verify the membership number.';
+                            feedback.className = 'form-text text-danger';
+                        }
+                        hideMemberInfo();
+                        return;
+                    }
+
+                    const member = data.member;
+                    membershipNoInput.value = member.membership_no;
+
+                    if (holderName) {
+                        holderName.value = member.full_name || '';
+                    }
+                    if (accountNumber) {
+                        accountNumber.value = member.matched_account ? member.matched_account.account_number : '';
+                    }
+
+                    showMemberInfo(member);
+
+                    if (window.memberSearch) {
+                        window.__preselectedAccountNumber = member.matched_account ? member.matched_account.account_number : null;
+                        window.memberSearch.loadMemberAccounts(member.member_id);
+                    } else if (feedback) {
+                        feedback.textContent = 'Member found, but accounts cannot be loaded automatically.';
+                        feedback.className = 'form-text text-warning';
+                    }
+                })
+                .catch(() => {
+                    if (feedback) {
+                        feedback.textContent = 'Unable to verify member right now. Please try again.';
+                        feedback.className = 'form-text text-danger';
+                    }
+                    hideMemberInfo();
+                });
+        }
+
+        document.getElementById('membershipLookupBtn').addEventListener('click', lookupMembershipExact);
+        document.getElementById('membership_no').addEventListener('blur', debounce(lookupMembershipExact, 300));
+
+        function escapeHtml(value) {
+            return String(value || '').replace(/[&<>"']/g, function(match) {
+                return {
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    '"': '&quot;',
+                    "'": '&#39;'
+                }[match];
+            });
+        }
+
+        function showMemberInfo(member) {
+            const memberInfoCard = document.getElementById('memberInfoCard');
+            const memberInfo = document.getElementById('memberInfo');
+            if (!memberInfo || !memberInfoCard) return;
+
+            memberInfo.innerHTML = `
+                <div class="row">
+                    <div class="col-12 mb-2"><strong>Name:</strong> ${escapeHtml(member.full_name || 'N/A')}</div>
+                    <div class="col-12 mb-2"><strong>Membership No:</strong> ${escapeHtml(member.membership_no || 'N/A')}</div>
+                    ${member.phone ? `<div class="col-12 mb-2"><strong>Phone:</strong> ${escapeHtml(member.phone)}</div>` : ''}
+                    ${member.email ? `<div class="col-12 mb-2"><strong>Email:</strong> ${escapeHtml(member.email)}</div>` : ''}
+                    ${member.matched_account ? `<div class="col-12 mb-2"><strong>Account:</strong> ${escapeHtml(member.matched_account.account_number)}</div>` : ''}
+                </div>
+            `;
+            memberInfoCard.style.display = 'block';
+        }
+
+        function hideMemberInfo() {
+            const memberInfoCard = document.getElementById('memberInfoCard');
+            if (memberInfoCard) {
+                memberInfoCard.style.display = 'none';
+            }
+        }
     </script>
 </body>
 </html>

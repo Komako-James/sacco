@@ -459,6 +459,12 @@ class MemberFormSearch extends LiveSearch {
 
         // Load member accounts if on deposit page
         if (document.getElementById('account_id')) {
+            // If search returned a matched_account (e.g., searched by account number), remember it
+            window.__preselectedAccountNumber = member.matched_account && member.matched_account.account_number ? member.matched_account.account_number : null;
+            // Populate holder name field if present
+            const holderInput = document.getElementById('holder_name');
+            if (holderInput) holderInput.value = member.full_name || '';
+
             this.loadMemberAccounts(member.member_id);
         }
     }
@@ -515,6 +521,14 @@ class MemberFormSearch extends LiveSearch {
             const response = await fetch(`../api/ajax_handler.php?action=get_member_accounts&member_id=${memberId}`);
             const data = await response.json();
 
+            // If the API returned member info, populate holder and membership fields for assurance
+            if (data.member) {
+                const holderInput = document.getElementById('holder_name');
+                if (holderInput) holderInput.value = data.member.full_name || '';
+                const membershipInput = document.getElementById('membership_no');
+                if (membershipInput && data.member.membership_no) membershipInput.value = data.member.membership_no;
+            }
+
             if (data.success && data.accounts && data.accounts.length) {
                 accountSelect.innerHTML = '<option value="">Select an account</option>';
 
@@ -522,6 +536,7 @@ class MemberFormSearch extends LiveSearch {
                     const option = document.createElement('option');
                     option.value = account.account_id;
                     option.textContent = `${account.account_number} (${account.account_type}) - ${formatMoney(account.balance)}`;
+                    option.dataset.accountNumber = account.account_number;
                     accountSelect.appendChild(option);
                 });
 
@@ -531,6 +546,19 @@ class MemberFormSearch extends LiveSearch {
                     accountSelect.dispatchEvent(new Event('change'));
                 }
 
+                // If a preselected account number exists from the search result, select it
+                if (window.__preselectedAccountNumber) {
+                    for (const opt of accountSelect.options) {
+                        if (opt.dataset && opt.dataset.accountNumber === window.__preselectedAccountNumber) {
+                            accountSelect.value = opt.value;
+                            accountSelect.dispatchEvent(new Event('change'));
+                            break;
+                        }
+                    }
+                    // clear the preselection after applying
+                    window.__preselectedAccountNumber = null;
+                }
+
                 if (feedback) {
                     feedback.textContent = `Found ${data.accounts.length} active account(s)`;
                     feedback.className = 'form-text text-success';
@@ -538,7 +566,7 @@ class MemberFormSearch extends LiveSearch {
             } else {
                 accountSelect.innerHTML = '<option value="">No accounts found</option>';
                 if (feedback) {
-                    feedback.textContent = 'No active savings accounts found for this member.';
+                    feedback.textContent = data.message || 'No active savings accounts found for this member.';
                     feedback.className = 'form-text text-warning';
                 }
             }
@@ -742,6 +770,22 @@ document.addEventListener('DOMContentLoaded', function() {
     if (typeof fetchNotifications === 'function') {
         fetchNotifications();
         setInterval(fetchNotifications, 30000);
+    }
+
+    // Populate account_number and holder_name when account changes
+    const accountSelect = document.getElementById('account_id');
+    if (accountSelect) {
+        accountSelect.addEventListener('change', function() {
+            const opt = accountSelect.options[accountSelect.selectedIndex];
+            const acctNo = opt && opt.dataset ? opt.dataset.accountNumber || '' : '';
+            const acctField = document.getElementById('account_number');
+            if (acctField) acctField.value = acctNo;
+
+            const holderField = document.getElementById('holder_name');
+            if (holderField && window.memberSearch && window.memberSearch.selectedMember) {
+                holderField.value = window.memberSearch.selectedMember.full_name || '';
+            }
+        });
     }
 });
 

@@ -40,7 +40,7 @@ $stmt->execute([$memberId]);
 $accounts = $stmt->fetchAll();
 
 // Get loans
-$stmt = $db->prepare("SELECT * FROM loans WHERE member_id = ? ORDER BY created_at DESC");
+$stmt = $db->prepare("SELECT l.*, l.loan_ref_no AS loan_reference, l.amount_requested AS loan_amount FROM loans l WHERE member_id = ? ORDER BY created_at DESC");
 $stmt->execute([$memberId]);
 $loans = $stmt->fetchAll();
 ?>

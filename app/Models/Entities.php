@@ -60,7 +60,7 @@ class Member
 class Loan
 {
     public $loan_id;
-    public $loan_reference_number;
+    public $loan_ref_no;
     public $member_id;
     public $product_id;
     public $amount_requested;
@@ -203,6 +203,88 @@ class ShareAccount
     {
         return $this->status === 'active';
     }
+}
+
+/**
+ * ShareHolding Entity
+ * Represents a member's share ownership balance
+ */
+class ShareHolding
+{
+    public $share_id;
+    public $member_id;
+    public $shares_owned;
+    public $share_price;
+    public $total_invested;
+    public $last_purchase_date;
+    public $created_at;
+    public $updated_at;
+
+    public function getShareValue()
+    {
+        return $this->shares_owned * $this->share_price;
+    }
+
+    public function canTransfer(int $quantity)
+    {
+        return $quantity > 0 && $this->shares_owned >= $quantity;
+    }
+}
+
+/**
+ * ShareTransaction Entity
+ * Tracks membership share activity and transfers
+ */
+class ShareTransaction
+{
+    public $transaction_id;
+    public $member_id;
+    public $share_id;
+    public $account_id;
+    public $transaction_type;
+    public $shares;
+    public $amount;
+    public $reference_number;
+    public $related_member_id;
+    public $transfer_id;
+    public $transaction_date;
+    public $created_by;
+    public $description;
+    public $status;
+    public $created_at;
+    public $updated_at;
+
+    public function isPurchase()
+    {
+        return $this->transaction_type === 'purchase';
+    }
+
+    public function isTransfer()
+    {
+        return in_array($this->transaction_type, ['transfer_in', 'transfer_out']);
+    }
+}
+
+/**
+ * ShareTransfer Entity
+ * Tracks transfers of shares between member accounts
+ */
+class ShareTransfer
+{
+    public $transfer_id;
+    public $source_member_id;
+    public $destination_member_id;
+    public $source_share_id;
+    public $destination_share_id;
+    public $shares_transferred;
+    public $amount;
+    public $reference_number;
+    public $status;
+    public $posted_by;
+    public $approved_by;
+    public $reversed_by;
+    public $notes;
+    public $transfer_date;
 }
 
 /**
