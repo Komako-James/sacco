@@ -1,0 +1,16 @@
+{
+    "users": true,
+    "chart_of_accounts": false,
+    "journal_entries": false,
+    "journal_entry_lines": false,
+    "bank_accounts": false,
+    "cash_book": false,
+    "ledger_entries": true,
+    "security_logs": false,
+    "audit_logs": true,
+    "password_resets": true,
+    "members": true,
+    "savings_accounts": true,
+    "savings_transactions": true,
+    "loans": true
+}

@@ -1,0 +1,186 @@
+{
+    "create": "CREATE TABLE `ledger_entries` (\n  `entry_id` bigint NOT NULL AUTO_INCREMENT,\n  `ledger_code` varchar(20) NOT NULL,\n  `ledger_name` varchar(100) NOT NULL,\n  `entry_date` timestamp NULL DEFAULT CURRENT_TIMESTAMP,\n  `receipt_number` varchar(100) DEFAULT NULL,\n  `transaction_reference` varchar(100) DEFAULT NULL,\n  `transaction_type` varchar(50) DEFAULT NULL,\n  `debit` decimal(15,2) DEFAULT '0.00',\n  `credit` decimal(15,2) DEFAULT '0.00',\n  `description` text,\n  `payment_method` varchar(50) DEFAULT NULL,\n  `posted_by` int DEFAULT NULL,\n  `approved_by` int DEFAULT NULL,\n  `member_id` int DEFAULT NULL,\n  `related_member_id` int DEFAULT NULL,\n  `account_type` varchar(50) DEFAULT NULL,\n  `status` enum('pending','posted','reversed') DEFAULT 'posted',\n  `reversal_of_id` bigint DEFAULT NULL,\n  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,\n  PRIMARY KEY (`entry_id`),\n  KEY `posted_by` (`posted_by`),\n  KEY `approved_by` (`approved_by`),\n  KEY `related_member_id` (`related_member_id`),\n  KEY `idx_ledger_code` (`ledger_code`),\n  KEY `idx_entry_date` (`entry_date`),\n  KEY `idx_member` (`member_id`),\n  KEY `idx_receipt` (`receipt_number`),\n  KEY `idx_status` (`status`)\n) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci",
+    "count": 4,
+    "status": {
+        "Name": "ledger_entries",
+        "Engine": "InnoDB",
+        "Version": 10,
+        "Row_format": "Dynamic",
+        "Rows": 4,
+        "Avg_row_length": 173,
+        "Data_length": 692,
+        "Max_data_length": 281474976710655,
+        "Index_length": 12288,
+        "Data_free": 0,
+        "Auto_increment": 5,
+        "Create_time": "2026-06-12 13:44:58",
+        "Update_time": "2026-05-29 21:13:51",
+        "Check_time": null,
+        "Collation": "utf8mb4_0900_ai_ci",
+        "Checksum": null,
+        "Create_options": "",
+        "Comment": ""
+    },
+    "indexes": [
+        {
+            "INDEX_NAME": "approved_by",
+            "NON_UNIQUE": 1,
+            "SEQ_IN_INDEX": 1,
+            "COLUMN_NAME": "approved_by",
+            "COLLATION": "A",
+            "CARDINALITY": null,
+            "SUB_PART": null,
+            "INDEX_TYPE": "BTREE",
+            "COMMENT": ""
+        },
+        {
+            "INDEX_NAME": "idx_entry_date",
+            "NON_UNIQUE": 1,
+            "SEQ_IN_INDEX": 1,
+            "COLUMN_NAME": "entry_date",
+            "COLLATION": "A",
+            "CARDINALITY": null,
+            "SUB_PART": null,
+            "INDEX_TYPE": "BTREE",
+            "COMMENT": ""
+        },
+        {
+            "INDEX_NAME": "idx_ledger_code",
+            "NON_UNIQUE": 1,
+            "SEQ_IN_INDEX": 1,
+            "COLUMN_NAME": "ledger_code",
+            "COLLATION": "A",
+            "CARDINALITY": null,
+            "SUB_PART": null,
+            "INDEX_TYPE": "BTREE",
+            "COMMENT": ""
+        },
+        {
+            "INDEX_NAME": "idx_member",
+            "NON_UNIQUE": 1,
+            "SEQ_IN_INDEX": 1,
+            "COLUMN_NAME": "member_id",
+            "COLLATION": "A",
+            "CARDINALITY": null,
+            "SUB_PART": null,
+            "INDEX_TYPE": "BTREE",
+            "COMMENT": ""
+        },
+        {
+            "INDEX_NAME": "idx_receipt",
+            "NON_UNIQUE": 1,
+            "SEQ_IN_INDEX": 1,
+            "COLUMN_NAME": "receipt_number",
+            "COLLATION": "A",
+            "CARDINALITY": null,
+            "SUB_PART": null,
+            "INDEX_TYPE": "BTREE",
+            "COMMENT": ""
+        },
+        {
+            "INDEX_NAME": "idx_status",
+            "NON_UNIQUE": 1,
+            "SEQ_IN_INDEX": 1,
+            "COLUMN_NAME": "status",
+            "COLLATION": "A",
+            "CARDINALITY": null,
+            "SUB_PART": null,
+            "INDEX_TYPE": "BTREE",
+            "COMMENT": ""
+        },
+        {
+            "INDEX_NAME": "posted_by",
+            "NON_UNIQUE": 1,
+            "SEQ_IN_INDEX": 1,
+            "COLUMN_NAME": "posted_by",
+            "COLLATION": "A",
+            "CARDINALITY": null,
+            "SUB_PART": null,
+            "INDEX_TYPE": "BTREE",
+            "COMMENT": ""
+        },
+        {
+            "INDEX_NAME": "PRIMARY",
+            "NON_UNIQUE": 0,
+            "SEQ_IN_INDEX": 1,
+            "COLUMN_NAME": "entry_id",
+            "COLLATION": "A",
+            "CARDINALITY": 4,
+            "SUB_PART": null,
+            "INDEX_TYPE": "BTREE",
+            "COMMENT": ""
+        },
+        {
+            "INDEX_NAME": "related_member_id",
+            "NON_UNIQUE": 1,
+            "SEQ_IN_INDEX": 1,
+            "COLUMN_NAME": "related_member_id",
+            "COLLATION": "A",
+            "CARDINALITY": null,
+            "SUB_PART": null,
+            "INDEX_TYPE": "BTREE",
+            "COMMENT": ""
+        }
+    ],
+    "integrity": {
+        "entry_id": 0,
+        "ledger_code": 0,
+        "ledger_name": 0,
+        "duplicate_entry_id": 0,
+        "auto_increment": 5,
+        "max_entry_id": 4
+    },
+    "trial_balance": {
+        "success": true,
+        "count": 2,
+        "sample": [
+            {
+                "ledger_code": "2010",
+                "ledger_name": "Member Share Capital",
+                "total_debit": "20000.00",
+                "total_credit": "40000.00",
+                "balance": "-20000.00"
+            },
+            {
+                "ledger_code": "2020",
+                "ledger_name": "Member Savings",
+                "total_debit": "20000.00",
+                "total_credit": "0.00",
+                "balance": "20000.00"
+            }
+        ]
+    },
+    "balance_sheet": {
+        "success": true,
+        "assets": 0,
+        "liabilities": 1,
+        "equity": 1,
+        "sample_assets": [],
+        "sample_liabilities": [
+            {
+                "ledger_code": "2020",
+                "ledger_name": "Member Savings",
+                "total_debit": "20000.00",
+                "total_credit": "0.00",
+                "balance": "20000.00"
+            }
+        ],
+        "sample_equity": [
+            {
+                "ledger_code": "2010",
+                "ledger_name": "Member Share Capital",
+                "total_debit": "20000.00",
+                "total_credit": "40000.00",
+                "balance": "-20000.00"
+            }
+        ]
+    },
+    "income_statement": {
+        "success": true,
+        "income_items": 0,
+        "expense_items": 0,
+        "net_income": 0,
+        "sample_income": [],
+        "sample_expense": []
+    }
+}
