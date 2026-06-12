@@ -1,0 +1,59 @@
+<?php
+set_error_handler(function($severity, $message, $file, $line) {
+    throw new ErrorException($message, 0, $severity, $file, $line);
+});
+
+chdir('D:/wamp64/www/sacco/accounting');
+error_reporting(E_ALL);
+ini_set('display_errors','1');
+
+ob_start();
+
+$_SERVER['PHP_SELF'] = 'dashboard.php';
+$_SERVER['REQUEST_URI'] = '/accounting/dashboard.php';
+$_SERVER['SERVER_NAME'] = 'localhost';
+$_SERVER['HTTP_HOST'] = 'localhost';
+$_SERVER['REMOTE_ADDR'] = '127.0.0.1';
+$_SERVER['HTTPS'] = 'off';
+$_SERVER['HTTP_USER_AGENT'] = 'CLI';
+
+require_once '../config/constants.php';
+require_once '../config/db_connection.php';
+require_once '../includes/auth.php';
+require_once 'app/Services/LedgerService.php';
+
+$_SESSION = [
+    'user_id' => 1,
+    'role' => 'manager',
+    'username' => 'test',
+    'full_name' => 'CLI Manager',
+    'email' => 'test@example.com',
+    'last_activity' => time(),
+    'expires_at' => time() + 3600,
+    'user_agent' => 'CLI',
+    'ip_address' => '127.0.0.1',
+];
+
+$marker = false;
+register_shutdown_function(function() use (&$marker) {
+    if (!$marker) {
+        echo 'SHUTDOWN_MARKER
+';
+    }
+});
+
+try {
+    require 'dashboard.php';
+    $pageOutput = ob_get_clean();
+    $marker = true;
+    echo 'accounting/dashboard.php:PASS
+';
+} catch (Throwable $e) {
+    if (ob_get_level() > 0) {
+        ob_end_clean();
+    }
+    $marker = true;
+    echo 'accounting/dashboard.php:FAIL:' . str_replace("
+", ' ', $e->getMessage()) . "
+";
+}

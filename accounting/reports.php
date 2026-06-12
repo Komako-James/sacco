@@ -4,6 +4,7 @@ require_once '../includes/functions.php';
 require_once '../config/constants.php';
 require_once '../config/db_connection.php';
 require_once '../app/Services/LedgerService.php';
+use SACCO\Services\LedgerService;
 
 $auth->requireLogin();
 $auth->requirePermission('accounting.view');
