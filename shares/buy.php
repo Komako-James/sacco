@@ -13,17 +13,36 @@ $db = getDB();
 $message = '';
 $messageType = 'success';
 $shareTablesAvailable = true;
+$member = null;
+$savingsAccounts = [];
+$action = $_POST['action'] ?? '';
+
+$membershipNo = trim($_POST['membership_no'] ?? '');
+if ($membershipNo !== '') {
+    $member = $shareService->getMemberByMembershipNumber($membershipNo);
+}
 
 try {
-    $savingsAccounts = $db->prepare(
-        'SELECT sa.account_id, sa.account_number, sa.balance, sa.account_type, m.full_name, m.membership_no
-         FROM savings_accounts sa
-         JOIN members m ON sa.member_id = m.member_id
-         WHERE sa.status = ?
-         ORDER BY m.full_name, sa.account_type'
-    );
-    $savingsAccounts->execute(['active']);
-    $savingsAccounts = $savingsAccounts->fetchAll(PDO::FETCH_ASSOC);
+    if ($membershipNo !== '' && !$member) {
+        $savingsAccounts = [];
+    } else {
+        $sql =
+            'SELECT sa.account_id, sa.account_number, sa.balance, sa.account_type, m.full_name, m.membership_no
+             FROM savings_accounts sa
+             JOIN members m ON sa.member_id = m.member_id
+             WHERE sa.status = ?';
+        $params = ['active'];
+
+        if ($member) {
+            $sql .= ' AND m.membership_no = ?';
+            $params[] = $member['membership_no'];
+        }
+
+        $sql .= ' ORDER BY m.full_name, sa.account_type';
+        $stmt = $db->prepare($sql);
+        $stmt->execute($params);
+        $savingsAccounts = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
 } catch (Exception $e) {
     $shareTablesAvailable = false;
     $savingsAccounts = [];
@@ -36,18 +55,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $accountId = (int) ($_POST['savings_account_id'] ?? 0);
     $shareCount = (int) ($_POST['shares'] ?? 0);
 
-    if (empty($membershipNo) || $accountId <= 0 || $shareCount <= 0) {
-        $message = 'Please provide a member, a savings account, and the number of shares.';
-        $messageType = 'danger';
-    } else {
-        $member = $shareService->getMemberByMembershipNumber($membershipNo);
-        if (!$member) {
+    if ($action === 'search') {
+        if (empty($membershipNo)) {
+            $message = 'Enter a membership number to search for the member.';
+            $messageType = 'danger';
+        } elseif (!$member) {
             $message = 'Member not found. Please verify the membership number.';
             $messageType = 'danger';
+        }
+    } else {
+        if (empty($membershipNo) || $accountId <= 0 || $shareCount <= 0) {
+            $message = 'Please provide a member, a savings account, and the number of shares.';
+            $messageType = 'danger';
         } else {
-            $result = $shareService->purchaseSharesFromSavings($member['member_id'], $accountId, $shareCount, $user['user_id']);
-            $message = $result['message'];
-            $messageType = $result['success'] ? 'success' : 'danger';
+            $member = $shareService->getMemberByMembershipNumber($membershipNo);
+            if (!$member) {
+                $message = 'Member not found. Please verify the membership number.';
+                $messageType = 'danger';
+            } else {
+                try {
+                    $result = $shareService->purchaseSharesFromSavings($member['member_id'], $accountId, $shareCount, $user['user_id']);
+                    $message = $result['message'];
+                    $messageType = $result['success'] ? 'success' : 'danger';
+                } catch (Exception $e) {
+                    $message = 'Purchase failed: ' . $e->getMessage();
+                    $messageType = 'danger';
+                }
+            }
         }
     }
 }
@@ -96,15 +130,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                             <form method="post" class="needs-validation" novalidate>
                                 <div class="mb-3">
-                                    <label for="membership_no" class="form-label">Member Number</label>
+                                <label for="membership_no" class="form-label">Member Number</label>
+                                <div class="input-group">
                                     <input type="text" class="form-control" id="membership_no" name="membership_no" required value="<?php echo htmlspecialchars($_POST['membership_no'] ?? ''); ?>">
-                                    <div class="invalid-feedback">Enter the member's membership number.</div>
+                                    <button type="submit" class="btn btn-outline-secondary" name="action" value="search" formnovalidate>
+                                        <i class="bi bi-search"></i> Search
+                                    </button>
                                 </div>
+                                <div class="invalid-feedback">Enter the member's membership number.</div>
+                            </div>
+
+                                <?php if (!empty($membershipNo) && $member): ?>
+                                <div class="alert alert-secondary py-2 mb-3">
+                                    <strong>Member:</strong> <?php echo htmlspecialchars($member['full_name']); ?> <br>
+                                    <strong>Membership No:</strong> <?php echo htmlspecialchars($member['membership_no']); ?>
+                                </div>
+                                <?php elseif (!empty($membershipNo) && !$member): ?>
+                                <div class="alert alert-danger py-2 mb-3">
+                                    Member not found. Please verify the membership number.
+                                </div>
+                                <?php endif; ?>
 
                                 <div class="mb-3">
                                     <label for="savings_account_id" class="form-label">Savings Account</label>
                                     <select class="form-select" id="savings_account_id" name="savings_account_id" required>
                                         <option value="">Select an active savings account</option>
+                                        <?php if (empty($savingsAccounts) && !empty($membershipNo) && $member): ?>
+                                            <option value="" disabled>No active savings account found for this member.</option>
+                                        <?php endif; ?>
                                         <?php foreach ($savingsAccounts as $account): ?>
                                             <option value="<?php echo $account['account_id']; ?>" <?php echo (int)($_POST['savings_account_id'] ?? 0) === (int)$account['account_id'] ? 'selected' : ''; ?>>
                                                 <?php echo htmlspecialchars($account['membership_no']); ?> | <?php echo htmlspecialchars($account['account_number']); ?> | <?php echo htmlspecialchars($account['account_type']); ?> | Balance: <?php echo formatMoney($account['balance']); ?>
@@ -132,7 +185,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 </div>
 
                                 <div class="d-grid gap-2">
-                                    <button type="submit" class="btn btn-warning">Purchase Shares</button>
+                                    <button type="submit" class="btn btn-warning" name="action" value="purchase">Purchase Shares</button>
                                     <a href="index.php" class="btn btn-secondary">Back to Share Dashboard</a>
                                 </div>
                             </form>

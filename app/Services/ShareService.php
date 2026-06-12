@@ -416,7 +416,9 @@ class ShareService
 
             return ['success' => true, 'message' => 'Shares purchased successfully.', 'new_balance' => $newBalance, 'shares_purchased' => $shareCount];
         } catch (Exception $e) {
-            $this->db->rollBack();
+            if ($this->db->inTransaction()) {
+                $this->db->rollBack();
+            }
             return ['success' => false, 'message' => $e->getMessage()];
         }
     }
@@ -432,6 +434,7 @@ class ShareService
         }
 
         $sourceHolding = $this->getMemberShareHolding($sourceMemberId);
+        $sourceMember = $this->getMemberById($sourceMemberId);
         $destinationMember = $this->getMemberById($destinationMemberId);
 
         if (!$sourceHolding) {
@@ -531,7 +534,7 @@ class ShareService
                 $destinationMemberId,
                 $transferId,
                 $postedBy,
-                'Share transfer to ' . $destinationMember['full_name'],
+                'Share transfer to ' . ($destinationMember['full_name'] ?? $destinationMemberId),
                 'completed'
             ]);
 
@@ -550,7 +553,7 @@ class ShareService
                 $sourceMemberId,
                 $transferId,
                 $postedBy,
-                'Share transfer received from ' . $sourceMember['full_name'],
+                'Share transfer received from ' . ($sourceMember['full_name'] ?? $sourceMemberId),
                 'completed'
             ]);
 
@@ -569,7 +572,9 @@ class ShareService
 
             return ['success' => true, 'message' => 'Share transfer completed successfully.', 'transfer_id' => $transferId];
         } catch (Exception $e) {
-            $this->db->rollBack();
+            if ($this->db->inTransaction()) {
+                $this->db->rollBack();
+            }
             return ['success' => false, 'message' => $e->getMessage()];
         }
     }
@@ -679,7 +684,9 @@ class ShareService
 
             return ['success' => true, 'message' => 'Shares sold successfully.', 'new_balance' => $newBalance, 'shares_sold' => $shareCount];
         } catch (Exception $e) {
-            $this->db->rollBack();
+            if ($this->db->inTransaction()) {
+                $this->db->rollBack();
+            }
             return ['success' => false, 'message' => $e->getMessage()];
         }
     }

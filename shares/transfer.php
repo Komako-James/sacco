@@ -11,25 +11,61 @@ $shareService = new \SACCO\Services\ShareService();
 
 $message = '';
 $messageType = 'success';
+$action = $_POST['action'] ?? 'transfer';
+$sourceMember = null;
+$destinationMember = null;
+$transferSummary = null;
+$sourceMembership = trim($_POST['source_membership_no'] ?? '');
+$destinationMembership = trim($_POST['destination_membership_no'] ?? '');
+
+if ($sourceMembership !== '') {
+    $sourceMember = $shareService->getMemberByMembershipNumber($sourceMembership);
+}
+
+if ($destinationMembership !== '') {
+    $destinationMember = $shareService->getMemberByMembershipNumber($destinationMembership);
+}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $sourceMembership = trim($_POST['source_membership_no'] ?? '');
-    $destinationMembership = trim($_POST['destination_membership_no'] ?? '');
     $shareCount = (int) ($_POST['shares'] ?? 0);
     $note = trim($_POST['note'] ?? '');
 
-    if (empty($sourceMembership) || empty($destinationMembership) || $shareCount <= 0) {
-        $message = 'Please enter source and destination membership numbers and a valid share quantity.';
-        $messageType = 'danger';
-    } else {
-        $sourceMember = $shareService->getMemberByMembershipNumber($sourceMembership);
-        if (!$sourceMember) {
+    if ($action === 'search') {
+        if (empty($sourceMembership) && empty($destinationMembership)) {
+            $message = 'Enter at least one membership number to search.';
+            $messageType = 'danger';
+        } elseif ($sourceMembership !== '' && !$sourceMember) {
             $message = 'Source member not found. Please verify the source membership number.';
+            $messageType = 'danger';
+        } elseif ($destinationMembership !== '' && !$destinationMember) {
+            $message = 'Destination member not found. Please verify the destination membership number.';
+            $messageType = 'danger';
+        }
+    } else {
+        if (empty($sourceMembership) || empty($destinationMembership) || $shareCount <= 0) {
+            $message = 'Please enter source and destination membership numbers and a valid share quantity.';
+            $messageType = 'danger';
+        } elseif (!$sourceMember) {
+            $message = 'Source member not found. Please verify the source membership number.';
+            $messageType = 'danger';
+        } elseif (!$destinationMember) {
+            $message = 'Destination member not found. Please verify the destination membership number.';
             $messageType = 'danger';
         } else {
             $result = $shareService->transferSharesByMembershipNumber($sourceMember['member_id'], $destinationMembership, $shareCount, $user['user_id'], $note);
             $message = $result['message'];
             $messageType = $result['success'] ? 'success' : 'danger';
+            if ($result['success']) {
+                $transferSummary = [
+                    'source_membership' => $sourceMembership,
+                    'source_name' => $sourceMember['full_name'],
+                    'destination_membership' => $destinationMembership,
+                    'destination_name' => $destinationMember['full_name'],
+                    'shares' => $shareCount,
+                    'amount' => $shareCount * SHARE_PRICE,
+                    'note' => $note,
+                ];
+            }
         }
     }
 }
@@ -72,17 +108,69 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 <div class="alert alert-<?php echo htmlspecialchars($messageType); ?>"><?php echo htmlspecialchars($message); ?></div>
                             <?php endif; ?>
 
+                            <?php if (!empty($transferSummary)): ?>
+                                <div class="card mb-4 border-success">
+                                    <div class="card-header bg-success text-white py-2">
+                                        <strong>Transfer Summary</strong>
+                                    </div>
+                                    <div class="card-body py-3">
+                                        <div class="row">
+                                            <div class="col-md-6 mb-2">
+                                                <strong>Source Member</strong><br>
+                                                <?php echo htmlspecialchars($transferSummary['source_name']); ?> <br>
+                                                <small class="text-muted"><?php echo htmlspecialchars($transferSummary['source_membership']); ?></small>
+                                            </div>
+                                            <div class="col-md-6 mb-2">
+                                                <strong>Destination Member</strong><br>
+                                                <?php echo htmlspecialchars($transferSummary['destination_name']); ?> <br>
+                                                <small class="text-muted"><?php echo htmlspecialchars($transferSummary['destination_membership']); ?></small>
+                                            </div>
+                                            <div class="col-md-6 mb-2">
+                                                <strong>Shares Transferred</strong><br>
+                                                <?php echo htmlspecialchars($transferSummary['shares']); ?>
+                                            </div>
+                                            <div class="col-md-6 mb-2">
+                                                <strong>Total Value</strong><br>
+                                                <?php echo htmlspecialchars(formatMoney($transferSummary['amount'])); ?>
+                                            </div>
+                                            <?php if (!empty($transferSummary['note'])): ?>
+                                            <div class="col-12">
+                                                <strong>Note</strong><br>
+                                                <?php echo htmlspecialchars($transferSummary['note']); ?>
+                                            </div>
+                                            <?php endif; ?>
+                                        </div>
+                                    </div>
+                                </div>
+                            <?php endif; ?>
+
                             <form method="post" class="needs-validation" novalidate>
                                 <div class="mb-3">
                                     <label for="source_membership_no" class="form-label">Source Member Number</label>
-                                    <input type="text" class="form-control" id="source_membership_no" name="source_membership_no" required value="<?php echo htmlspecialchars($_POST['source_membership_no'] ?? ''); ?>">
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" id="source_membership_no" name="source_membership_no" required value="<?php echo htmlspecialchars($_POST['source_membership_no'] ?? ''); ?>">
+                                        <button type="submit" class="btn btn-outline-secondary" name="action" value="search" formnovalidate>
+                                            <i class="bi bi-search"></i>
+                                        </button>
+                                    </div>
                                     <div class="invalid-feedback">Enter the source member's number.</div>
+                                    <?php if ($sourceMember): ?>
+                                        <div class="mt-2 small text-muted">Source Member: <?php echo htmlspecialchars($sourceMember['full_name']); ?></div>
+                                    <?php endif; ?>
                                 </div>
 
                                 <div class="mb-3">
                                     <label for="destination_membership_no" class="form-label">Destination Member Number</label>
-                                    <input type="text" class="form-control" id="destination_membership_no" name="destination_membership_no" required value="<?php echo htmlspecialchars($_POST['destination_membership_no'] ?? ''); ?>">
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" id="destination_membership_no" name="destination_membership_no" required value="<?php echo htmlspecialchars($_POST['destination_membership_no'] ?? ''); ?>">
+                                        <button type="submit" class="btn btn-outline-secondary" name="action" value="search" formnovalidate>
+                                            <i class="bi bi-search"></i>
+                                        </button>
+                                    </div>
                                     <div class="invalid-feedback">Enter the destination member's number.</div>
+                                    <?php if ($destinationMember): ?>
+                                        <div class="mt-2 small text-muted">Destination Member: <?php echo htmlspecialchars($destinationMember['full_name']); ?></div>
+                                    <?php endif; ?>
                                 </div>
 
                                 <div class="mb-3">

@@ -108,11 +108,11 @@ if ($membershipNo !== '') {
                                     <tbody>
                                         <?php foreach ($statement as $row): ?>
                                             <tr>
-                                                <td><?php echo htmlspecialchars($row['created_at']); ?></td>
-                                                <td><?php echo htmlspecialchars(ucfirst($row['type'])); ?></td>
-                                                <td><?php echo number_format($row['shares']); ?></td>
-                                                <td><?php echo formatMoney($row['amount']); ?></td>
-                                                <td><?php echo htmlspecialchars($row['reference'] ?? $row['note'] ?? '-'); ?></td>
+                                                <td><?php echo htmlspecialchars($row['transaction_date'] ?? $row['created_at'] ?? ''); ?></td>
+                                                <td><?php echo htmlspecialchars(ucfirst($row['transaction_type'] ?? $row['type'] ?? '')); ?></td>
+                                                <td><?php echo number_format($row['shares'] ?? 0); ?></td>
+                                                <td><?php echo formatMoney($row['amount'] ?? 0); ?></td>
+                                                <td><?php echo htmlspecialchars($row['reference_number'] ?? $row['reference'] ?? $row['note'] ?? '-'); ?></td>
                                             </tr>
                                         <?php endforeach; ?>
                                     </tbody>

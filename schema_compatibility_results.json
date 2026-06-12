@@ -1,0 +1,890 @@
+{
+  "metadata": {
+    "users": {
+      "exists": true,
+      "engine": "InnoDB",
+      "columns": [
+        {
+          "COLUMN_NAME": "user_id",
+          "COLUMN_TYPE": "int",
+          "DATA_TYPE": "int",
+          "IS_NULLABLE": "NO",
+          "COLUMN_KEY": "PRI",
+          "EXTRA": "auto_increment"
+        },
+        {
+          "COLUMN_NAME": "username",
+          "COLUMN_TYPE": "varchar(50)",
+          "DATA_TYPE": "varchar",
+          "IS_NULLABLE": "NO",
+          "COLUMN_KEY": "UNI",
+          "EXTRA": ""
+        },
+        {
+          "COLUMN_NAME": "password_hash",
+          "COLUMN_TYPE": "varchar(255)",
+          "DATA_TYPE": "varchar",
+          "IS_NULLABLE": "NO",
+          "COLUMN_KEY": "",
+          "EXTRA": ""
+        },
+        {
+          "COLUMN_NAME": "full_name",
+          "COLUMN_TYPE": "varchar(100)",
+          "DATA_TYPE": "varchar",
+          "IS_NULLABLE": "NO",
+          "COLUMN_KEY": "",
+          "EXTRA": ""
+        },
+        {
+          "COLUMN_NAME": "email",
+          "COLUMN_TYPE": "varchar(100)",
+          "DATA_TYPE": "varchar",
+          "IS_NULLABLE": "YES",
+          "COLUMN_KEY": "",
+          "EXTRA": ""
+        },
+        {
+          "COLUMN_NAME": "phone",
+          "COLUMN_TYPE": "varchar(15)",
+          "DATA_TYPE": "varchar",
+          "IS_NULLABLE": "YES",
+          "COLUMN_KEY": "",
+          "EXTRA": ""
+        },
+        {
+          "COLUMN_NAME": "role",
+          "COLUMN_TYPE": "enum('admin','branch_manager','loan_officer','teller','accountant','viewer')",
+          "DATA_TYPE": "enum",
+          "IS_NULLABLE": "NO",
+          "COLUMN_KEY": "MUL",
+          "EXTRA": ""
+        },
+        {
+          "COLUMN_NAME": "branch_id",
+          "COLUMN_TYPE": "int",
+          "DATA_TYPE": "int",
+          "IS_NULLABLE": "YES",
+          "COLUMN_KEY": "",
+          "EXTRA": ""
+        },
+        {
+          "COLUMN_NAME": "status",
+          "COLUMN_TYPE": "enum('active','inactive','suspended')",
+          "DATA_TYPE": "enum",
+          "IS_NULLABLE": "YES",
+          "COLUMN_KEY": "",
+          "EXTRA": ""
+        },
+        {
+          "COLUMN_NAME": "last_login",
+          "COLUMN_TYPE": "datetime",
+          "DATA_TYPE": "datetime",
+          "IS_NULLABLE": "YES",
+          "COLUMN_KEY": "",
+          "EXTRA": ""
+        },
+        {
+          "COLUMN_NAME": "created_at",
+          "COLUMN_TYPE": "timestamp",
+          "DATA_TYPE": "timestamp",
+          "IS_NULLABLE": "YES",
+          "COLUMN_KEY": "",
+          "EXTRA": "DEFAULT_GENERATED"
+        },
+        {
+          "COLUMN_NAME": "two_factor_enabled",
+          "COLUMN_TYPE": "tinyint(1)",
+          "DATA_TYPE": "tinyint",
+          "IS_NULLABLE": "YES",
+          "COLUMN_KEY": "",
+          "EXTRA": ""
+        },
+        {
+          "COLUMN_NAME": "two_factor_method",
+          "COLUMN_TYPE": "varchar(20)",
+          "DATA_TYPE": "varchar",
+          "IS_NULLABLE": "YES",
+          "COLUMN_KEY": "",
+          "EXTRA": ""
+        },
+        {
+          "COLUMN_NAME": "two_factor_code",
+          "COLUMN_TYPE": "varchar(128)",
+          "DATA_TYPE": "varchar",
+          "IS_NULLABLE": "YES",
+          "COLUMN_KEY": "",
+          "EXTRA": ""
+        },
+        {
+          "COLUMN_NAME": "two_factor_expires",
+          "COLUMN_TYPE": "datetime",
+          "DATA_TYPE": "datetime",
+          "IS_NULLABLE": "YES",
+          "COLUMN_KEY": "",
+          "EXTRA": ""
+        },
+        {
+          "COLUMN_NAME": "login_attempts",
+          "COLUMN_TYPE": "int",
+          "DATA_TYPE": "int",
+          "IS_NULLABLE": "YES",
+          "COLUMN_KEY": "",
+          "EXTRA": ""
+        },
+        {
+          "COLUMN_NAME": "locked_until",
+          "COLUMN_TYPE": "datetime",
+          "DATA_TYPE": "datetime",
+          "IS_NULLABLE": "YES",
+          "COLUMN_KEY": "",
+          "EXTRA": ""
+        },
+        {
+          "COLUMN_NAME": "last_failed_login",
+          "COLUMN_TYPE": "timestamp",
+          "DATA_TYPE": "timestamp",
+          "IS_NULLABLE": "YES",
+          "COLUMN_KEY": "",
+          "EXTRA": ""
+        },
+        {
+          "COLUMN_NAME": "password_changed_at",
+          "COLUMN_TYPE": "timestamp",
+          "DATA_TYPE": "timestamp",
+          "IS_NULLABLE": "YES",
+          "COLUMN_KEY": "",
+          "EXTRA": ""
+        },
+        {
+          "COLUMN_NAME": "last_login_ip",
+          "COLUMN_TYPE": "varchar(45)",
+          "DATA_TYPE": "varchar",
+          "IS_NULLABLE": "YES",
+          "COLUMN_KEY": "",
+          "EXTRA": ""
+        },
+        {
+          "COLUMN_NAME": "must_change_password",
+          "COLUMN_TYPE": "tinyint(1)",
+          "DATA_TYPE": "tinyint",
+          "IS_NULLABLE": "YES",
+          "COLUMN_KEY": "",
+          "EXTRA": ""
+        },
+        {
+          "COLUMN_NAME": "password_expires_at",
+          "COLUMN_TYPE": "timestamp",
+          "DATA_TYPE": "timestamp",
+          "IS_NULLABLE": "YES",
+          "COLUMN_KEY": "",
+          "EXTRA": ""
+        },
+        {
+          "COLUMN_NAME": "is_member",
+          "COLUMN_TYPE": "tinyint(1)",
+          "DATA_TYPE": "tinyint",
+          "IS_NULLABLE": "YES",
+          "COLUMN_KEY": "",
+          "EXTRA": ""
+        },
+        {
+          "COLUMN_NAME": "linked_member_id",
+          "COLUMN_TYPE": "int",
+          "DATA_TYPE": "int",
+          "IS_NULLABLE": "YES",
+          "COLUMN_KEY": "",
+          "EXTRA": ""
+        }
+      ],
+      "primary_key": [
+        "user_id"
+      ]
+    },
+    "members": {
+      "exists": true,
+      "engine": "InnoDB",
+      "columns": [
+        {
+          "COLUMN_NAME": "member_id",
+          "COLUMN_TYPE": "int",
+          "DATA_TYPE": "int",
+          "IS_NULLABLE": "NO",
+          "COLUMN_KEY": "PRI",
+          "EXTRA": "auto_increment"
+        },
+        {
+          "COLUMN_NAME": "membership_no",
+          "COLUMN_TYPE": "varchar(20)",
+          "DATA_TYPE": "varchar",
+          "IS_NULLABLE": "NO",
+          "COLUMN_KEY": "UNI",
+          "EXTRA": ""
+        },
+        {
+          "COLUMN_NAME": "national_id",
+          "COLUMN_TYPE": "varchar(20)",
+          "DATA_TYPE": "varchar",
+          "IS_NULLABLE": "NO",
+          "COLUMN_KEY": "UNI",
+          "EXTRA": ""
+        },
+        {
+          "COLUMN_NAME": "full_name",
+          "COLUMN_TYPE": "varchar(100)",
+          "DATA_TYPE": "varchar",
+          "IS_NULLABLE": "NO",
+          "COLUMN_KEY": "",
+          "EXTRA": ""
+        },
+        {
+          "COLUMN_NAME": "phone",
+          "COLUMN_TYPE": "varchar(15)",
+          "DATA_TYPE": "varchar",
+          "IS_NULLABLE": "NO",
+          "COLUMN_KEY": "MUL",
+          "EXTRA": ""
+        },
+        {
+          "COLUMN_NAME": "email",
+          "COLUMN_TYPE": "varchar(100)",
+          "DATA_TYPE": "varchar",
+          "IS_NULLABLE": "YES",
+          "COLUMN_KEY": "",
+          "EXTRA": ""
+        },
+        {
+          "COLUMN_NAME": "address",
+          "COLUMN_TYPE": "text",
+          "DATA_TYPE": "text",
+          "IS_NULLABLE": "YES",
+          "COLUMN_KEY": "",
+          "EXTRA": ""
+        },
+        {
+          "COLUMN_NAME": "date_of_birth",
+          "COLUMN_TYPE": "date",
+          "DATA_TYPE": "date",
+          "IS_NULLABLE": "YES",
+          "COLUMN_KEY": "",
+          "EXTRA": ""
+        },
+        {
+          "COLUMN_NAME": "gender",
+          "COLUMN_TYPE": "enum('Male','Female','Other')",
+          "DATA_TYPE": "enum",
+          "IS_NULLABLE": "YES",
+          "COLUMN_KEY": "",
+          "EXTRA": ""
+        },
+        {
+          "COLUMN_NAME": "occupation",
+          "COLUMN_TYPE": "varchar(100)",
+          "DATA_TYPE": "varchar",
+          "IS_NULLABLE": "YES",
+          "COLUMN_KEY": "",
+          "EXTRA": ""
+        },
+        {
+          "COLUMN_NAME": "employer",
+          "COLUMN_TYPE": "varchar(100)",
+          "DATA_TYPE": "varchar",
+          "IS_NULLABLE": "YES",
+          "COLUMN_KEY": "",
+          "EXTRA": ""
+        },
+        {
+          "COLUMN_NAME": "join_date",
+          "COLUMN_TYPE": "date",
+          "DATA_TYPE": "date",
+          "IS_NULLABLE": "NO",
+          "COLUMN_KEY": "",
+          "EXTRA": ""
+        },
+        {
+          "COLUMN_NAME": "status",
+          "COLUMN_TYPE": "enum('active','inactive','deceased','suspended')",
+          "DATA_TYPE": "enum",
+          "IS_NULLABLE": "YES",
+          "COLUMN_KEY": "MUL",
+          "EXTRA": ""
+        },
+        {
+          "COLUMN_NAME": "photo_path",
+          "COLUMN_TYPE": "varchar(255)",
+          "DATA_TYPE": "varchar",
+          "IS_NULLABLE": "YES",
+          "COLUMN_KEY": "",
+          "EXTRA": ""
+        },
+        {
+          "COLUMN_NAME": "signature_path",
+          "COLUMN_TYPE": "varchar(255)",
+          "DATA_TYPE": "varchar",
+          "IS_NULLABLE": "YES",
+          "COLUMN_KEY": "",
+          "EXTRA": ""
+        },
+        {
+          "COLUMN_NAME": "created_by",
+          "COLUMN_TYPE": "int",
+          "DATA_TYPE": "int",
+          "IS_NULLABLE": "YES",
+          "COLUMN_KEY": "",
+          "EXTRA": ""
+        },
+        {
+          "COLUMN_NAME": "user_id",
+          "COLUMN_TYPE": "int",
+          "DATA_TYPE": "int",
+          "IS_NULLABLE": "YES",
+          "COLUMN_KEY": "MUL",
+          "EXTRA": ""
+        },
+        {
+          "COLUMN_NAME": "created_at",
+          "COLUMN_TYPE": "timestamp",
+          "DATA_TYPE": "timestamp",
+          "IS_NULLABLE": "YES",
+          "COLUMN_KEY": "",
+          "EXTRA": "DEFAULT_GENERATED"
+        },
+        {
+          "COLUMN_NAME": "updated_at",
+          "COLUMN_TYPE": "timestamp",
+          "DATA_TYPE": "timestamp",
+          "IS_NULLABLE": "YES",
+          "COLUMN_KEY": "",
+          "EXTRA": "DEFAULT_GENERATED on update CURRENT_TIMESTAMP"
+        }
+      ],
+      "primary_key": [
+        "member_id"
+      ]
+    },
+    "ledger_entries": {
+      "exists": true,
+      "engine": "MyISAM",
+      "columns": [
+        {
+          "COLUMN_NAME": "entry_id",
+          "COLUMN_TYPE": "bigint",
+          "DATA_TYPE": "bigint",
+          "IS_NULLABLE": "NO",
+          "COLUMN_KEY": "PRI",
+          "EXTRA": "auto_increment"
+        },
+        {
+          "COLUMN_NAME": "ledger_code",
+          "COLUMN_TYPE": "varchar(20)",
+          "DATA_TYPE": "varchar",
+          "IS_NULLABLE": "NO",
+          "COLUMN_KEY": "MUL",
+          "EXTRA": ""
+        },
+        {
+          "COLUMN_NAME": "ledger_name",
+          "COLUMN_TYPE": "varchar(100)",
+          "DATA_TYPE": "varchar",
+          "IS_NULLABLE": "NO",
+          "COLUMN_KEY": "",
+          "EXTRA": ""
+        },
+        {
+          "COLUMN_NAME": "entry_date",
+          "COLUMN_TYPE": "timestamp",
+          "DATA_TYPE": "timestamp",
+          "IS_NULLABLE": "YES",
+          "COLUMN_KEY": "MUL",
+          "EXTRA": "DEFAULT_GENERATED"
+        },
+        {
+          "COLUMN_NAME": "receipt_number",
+          "COLUMN_TYPE": "varchar(100)",
+          "DATA_TYPE": "varchar",
+          "IS_NULLABLE": "YES",
+          "COLUMN_KEY": "MUL",
+          "EXTRA": ""
+        },
+        {
+          "COLUMN_NAME": "transaction_reference",
+          "COLUMN_TYPE": "varchar(100)",
+          "DATA_TYPE": "varchar",
+          "IS_NULLABLE": "YES",
+          "COLUMN_KEY": "",
+          "EXTRA": ""
+        },
+        {
+          "COLUMN_NAME": "transaction_type",
+          "COLUMN_TYPE": "varchar(50)",
+          "DATA_TYPE": "varchar",
+          "IS_NULLABLE": "YES",
+          "COLUMN_KEY": "",
+          "EXTRA": ""
+        },
+        {
+          "COLUMN_NAME": "debit",
+          "COLUMN_TYPE": "decimal(15,2)",
+          "DATA_TYPE": "decimal",
+          "IS_NULLABLE": "YES",
+          "COLUMN_KEY": "",
+          "EXTRA": ""
+        },
+        {
+          "COLUMN_NAME": "credit",
+          "COLUMN_TYPE": "decimal(15,2)",
+          "DATA_TYPE": "decimal",
+          "IS_NULLABLE": "YES",
+          "COLUMN_KEY": "",
+          "EXTRA": ""
+        },
+        {
+          "COLUMN_NAME": "description",
+          "COLUMN_TYPE": "text",
+          "DATA_TYPE": "text",
+          "IS_NULLABLE": "YES",
+          "COLUMN_KEY": "",
+          "EXTRA": ""
+        },
+        {
+          "COLUMN_NAME": "payment_method",
+          "COLUMN_TYPE": "varchar(50)",
+          "DATA_TYPE": "varchar",
+          "IS_NULLABLE": "YES",
+          "COLUMN_KEY": "",
+          "EXTRA": ""
+        },
+        {
+          "COLUMN_NAME": "posted_by",
+          "COLUMN_TYPE": "int",
+          "DATA_TYPE": "int",
+          "IS_NULLABLE": "YES",
+          "COLUMN_KEY": "MUL",
+          "EXTRA": ""
+        },
+        {
+          "COLUMN_NAME": "approved_by",
+          "COLUMN_TYPE": "int",
+          "DATA_TYPE": "int",
+          "IS_NULLABLE": "YES",
+          "COLUMN_KEY": "MUL",
+          "EXTRA": ""
+        },
+        {
+          "COLUMN_NAME": "member_id",
+          "COLUMN_TYPE": "int",
+          "DATA_TYPE": "int",
+          "IS_NULLABLE": "YES",
+          "COLUMN_KEY": "MUL",
+          "EXTRA": ""
+        },
+        {
+          "COLUMN_NAME": "related_member_id",
+          "COLUMN_TYPE": "int",
+          "DATA_TYPE": "int",
+          "IS_NULLABLE": "YES",
+          "COLUMN_KEY": "MUL",
+          "EXTRA": ""
+        },
+        {
+          "COLUMN_NAME": "account_type",
+          "COLUMN_TYPE": "varchar(50)",
+          "DATA_TYPE": "varchar",
+          "IS_NULLABLE": "YES",
+          "COLUMN_KEY": "",
+          "EXTRA": ""
+        },
+        {
+          "COLUMN_NAME": "status",
+          "COLUMN_TYPE": "enum('pending','posted','reversed')",
+          "DATA_TYPE": "enum",
+          "IS_NULLABLE": "YES",
+          "COLUMN_KEY": "MUL",
+          "EXTRA": ""
+        },
+        {
+          "COLUMN_NAME": "reversal_of_id",
+          "COLUMN_TYPE": "bigint",
+          "DATA_TYPE": "bigint",
+          "IS_NULLABLE": "YES",
+          "COLUMN_KEY": "",
+          "EXTRA": ""
+        },
+        {
+          "COLUMN_NAME": "created_at",
+          "COLUMN_TYPE": "timestamp",
+          "DATA_TYPE": "timestamp",
+          "IS_NULLABLE": "YES",
+          "COLUMN_KEY": "",
+          "EXTRA": "DEFAULT_GENERATED"
+        }
+      ],
+      "primary_key": [
+        "entry_id"
+      ]
+    },
+    "shares": {
+      "exists": false
+    },
+    "loans": {
+      "exists": true,
+      "engine": "InnoDB",
+      "columns": [
+        {
+          "COLUMN_NAME": "loan_id",
+          "COLUMN_TYPE": "int",
+          "DATA_TYPE": "int",
+          "IS_NULLABLE": "NO",
+          "COLUMN_KEY": "PRI",
+          "EXTRA": "auto_increment"
+        },
+        {
+          "COLUMN_NAME": "loan_ref_no",
+          "COLUMN_TYPE": "varchar(20)",
+          "DATA_TYPE": "varchar",
+          "IS_NULLABLE": "NO",
+          "COLUMN_KEY": "UNI",
+          "EXTRA": ""
+        },
+        {
+          "COLUMN_NAME": "member_id",
+          "COLUMN_TYPE": "int",
+          "DATA_TYPE": "int",
+          "IS_NULLABLE": "NO",
+          "COLUMN_KEY": "MUL",
+          "EXTRA": ""
+        },
+        {
+          "COLUMN_NAME": "product_id",
+          "COLUMN_TYPE": "int",
+          "DATA_TYPE": "int",
+          "IS_NULLABLE": "NO",
+          "COLUMN_KEY": "MUL",
+          "EXTRA": ""
+        },
+        {
+          "COLUMN_NAME": "amount_requested",
+          "COLUMN_TYPE": "decimal(12,2)",
+          "DATA_TYPE": "decimal",
+          "IS_NULLABLE": "NO",
+          "COLUMN_KEY": "",
+          "EXTRA": ""
+        },
+        {
+          "COLUMN_NAME": "amount_approved",
+          "COLUMN_TYPE": "decimal(12,2)",
+          "DATA_TYPE": "decimal",
+          "IS_NULLABLE": "YES",
+          "COLUMN_KEY": "",
+          "EXTRA": ""
+        },
+        {
+          "COLUMN_NAME": "interest_rate",
+          "COLUMN_TYPE": "decimal(5,2)",
+          "DATA_TYPE": "decimal",
+          "IS_NULLABLE": "NO",
+          "COLUMN_KEY": "",
+          "EXTRA": ""
+        },
+        {
+          "COLUMN_NAME": "repayment_period_months",
+          "COLUMN_TYPE": "int",
+          "DATA_TYPE": "int",
+          "IS_NULLABLE": "NO",
+          "COLUMN_KEY": "",
+          "EXTRA": ""
+        },
+        {
+          "COLUMN_NAME": "processing_fee",
+          "COLUMN_TYPE": "decimal(12,2)",
+          "DATA_TYPE": "decimal",
+          "IS_NULLABLE": "YES",
+          "COLUMN_KEY": "",
+          "EXTRA": ""
+        },
+        {
+          "COLUMN_NAME": "purpose",
+          "COLUMN_TYPE": "text",
+          "DATA_TYPE": "text",
+          "IS_NULLABLE": "YES",
+          "COLUMN_KEY": "",
+          "EXTRA": ""
+        },
+        {
+          "COLUMN_NAME": "application_date",
+          "COLUMN_TYPE": "date",
+          "DATA_TYPE": "date",
+          "IS_NULLABLE": "NO",
+          "COLUMN_KEY": "",
+          "EXTRA": ""
+        },
+        {
+          "COLUMN_NAME": "approval_date",
+          "COLUMN_TYPE": "date",
+          "DATA_TYPE": "date",
+          "IS_NULLABLE": "YES",
+          "COLUMN_KEY": "",
+          "EXTRA": ""
+        },
+        {
+          "COLUMN_NAME": "disbursement_date",
+          "COLUMN_TYPE": "date",
+          "DATA_TYPE": "date",
+          "IS_NULLABLE": "YES",
+          "COLUMN_KEY": "",
+          "EXTRA": ""
+        },
+        {
+          "COLUMN_NAME": "first_payment_date",
+          "COLUMN_TYPE": "date",
+          "DATA_TYPE": "date",
+          "IS_NULLABLE": "YES",
+          "COLUMN_KEY": "",
+          "EXTRA": ""
+        },
+        {
+          "COLUMN_NAME": "status",
+          "COLUMN_TYPE": "enum('applied','reviewed','approved','rejected','disbursed','completed','defaulted')",
+          "DATA_TYPE": "enum",
+          "IS_NULLABLE": "YES",
+          "COLUMN_KEY": "MUL",
+          "EXTRA": ""
+        },
+        {
+          "COLUMN_NAME": "outstanding_balance",
+          "COLUMN_TYPE": "decimal(12,2)",
+          "DATA_TYPE": "decimal",
+          "IS_NULLABLE": "YES",
+          "COLUMN_KEY": "",
+          "EXTRA": ""
+        },
+        {
+          "COLUMN_NAME": "total_paid",
+          "COLUMN_TYPE": "decimal(12,2)",
+          "DATA_TYPE": "decimal",
+          "IS_NULLABLE": "YES",
+          "COLUMN_KEY": "",
+          "EXTRA": ""
+        },
+        {
+          "COLUMN_NAME": "applied_by",
+          "COLUMN_TYPE": "int",
+          "DATA_TYPE": "int",
+          "IS_NULLABLE": "YES",
+          "COLUMN_KEY": "",
+          "EXTRA": ""
+        },
+        {
+          "COLUMN_NAME": "reviewed_by",
+          "COLUMN_TYPE": "int",
+          "DATA_TYPE": "int",
+          "IS_NULLABLE": "YES",
+          "COLUMN_KEY": "",
+          "EXTRA": ""
+        },
+        {
+          "COLUMN_NAME": "approved_by",
+          "COLUMN_TYPE": "int",
+          "DATA_TYPE": "int",
+          "IS_NULLABLE": "YES",
+          "COLUMN_KEY": "",
+          "EXTRA": ""
+        },
+        {
+          "COLUMN_NAME": "disbursed_by",
+          "COLUMN_TYPE": "int",
+          "DATA_TYPE": "int",
+          "IS_NULLABLE": "YES",
+          "COLUMN_KEY": "",
+          "EXTRA": ""
+        },
+        {
+          "COLUMN_NAME": "rejection_reason",
+          "COLUMN_TYPE": "text",
+          "DATA_TYPE": "text",
+          "IS_NULLABLE": "YES",
+          "COLUMN_KEY": "",
+          "EXTRA": ""
+        },
+        {
+          "COLUMN_NAME": "created_at",
+          "COLUMN_TYPE": "timestamp",
+          "DATA_TYPE": "timestamp",
+          "IS_NULLABLE": "YES",
+          "COLUMN_KEY": "",
+          "EXTRA": "DEFAULT_GENERATED"
+        },
+        {
+          "COLUMN_NAME": "updated_at",
+          "COLUMN_TYPE": "timestamp",
+          "DATA_TYPE": "timestamp",
+          "IS_NULLABLE": "YES",
+          "COLUMN_KEY": "",
+          "EXTRA": "DEFAULT_GENERATED on update CURRENT_TIMESTAMP"
+        }
+      ],
+      "primary_key": [
+        "loan_id"
+      ]
+    },
+    "savings_accounts": {
+      "exists": true,
+      "engine": "InnoDB",
+      "columns": [
+        {
+          "COLUMN_NAME": "account_id",
+          "COLUMN_TYPE": "int",
+          "DATA_TYPE": "int",
+          "IS_NULLABLE": "NO",
+          "COLUMN_KEY": "PRI",
+          "EXTRA": "auto_increment"
+        },
+        {
+          "COLUMN_NAME": "member_id",
+          "COLUMN_TYPE": "int",
+          "DATA_TYPE": "int",
+          "IS_NULLABLE": "NO",
+          "COLUMN_KEY": "MUL",
+          "EXTRA": ""
+        },
+        {
+          "COLUMN_NAME": "account_type",
+          "COLUMN_TYPE": "enum('monthly_savings','share_capital','voluntary','fixed_deposit')",
+          "DATA_TYPE": "enum",
+          "IS_NULLABLE": "NO",
+          "COLUMN_KEY": "",
+          "EXTRA": ""
+        },
+        {
+          "COLUMN_NAME": "account_number",
+          "COLUMN_TYPE": "varchar(20)",
+          "DATA_TYPE": "varchar",
+          "IS_NULLABLE": "NO",
+          "COLUMN_KEY": "UNI",
+          "EXTRA": ""
+        },
+        {
+          "COLUMN_NAME": "balance",
+          "COLUMN_TYPE": "decimal(12,2)",
+          "DATA_TYPE": "decimal",
+          "IS_NULLABLE": "YES",
+          "COLUMN_KEY": "",
+          "EXTRA": ""
+        },
+        {
+          "COLUMN_NAME": "interest_rate",
+          "COLUMN_TYPE": "decimal(5,2)",
+          "DATA_TYPE": "decimal",
+          "IS_NULLABLE": "YES",
+          "COLUMN_KEY": "",
+          "EXTRA": ""
+        },
+        {
+          "COLUMN_NAME": "opening_balance",
+          "COLUMN_TYPE": "decimal(12,2)",
+          "DATA_TYPE": "decimal",
+          "IS_NULLABLE": "YES",
+          "COLUMN_KEY": "",
+          "EXTRA": ""
+        },
+        {
+          "COLUMN_NAME": "status",
+          "COLUMN_TYPE": "enum('active','dormant','closed')",
+          "DATA_TYPE": "enum",
+          "IS_NULLABLE": "YES",
+          "COLUMN_KEY": "",
+          "EXTRA": ""
+        },
+        {
+          "COLUMN_NAME": "created_at",
+          "COLUMN_TYPE": "timestamp",
+          "DATA_TYPE": "timestamp",
+          "IS_NULLABLE": "YES",
+          "COLUMN_KEY": "",
+          "EXTRA": "DEFAULT_GENERATED"
+        }
+      ],
+      "primary_key": [
+        "account_id"
+      ]
+    },
+    "chart_of_accounts": {
+      "exists": false
+    },
+    "journal_entries": {
+      "exists": false
+    },
+    "journal_entry_lines": {
+      "exists": false
+    },
+    "bank_accounts": {
+      "exists": false
+    },
+    "cash_book": {
+      "exists": false
+    }
+  },
+  "foreign_keys": [
+    {
+      "column": "created_by",
+      "referenced_table": "users",
+      "referenced_column": "user_id",
+      "definition": "FOREIGN KEY (created_by) REFERENCES users(user_id)"
+    },
+    {
+      "column": "updated_by",
+      "referenced_table": "users",
+      "referenced_column": "user_id",
+      "definition": "FOREIGN KEY (updated_by) REFERENCES users(user_id)"
+    },
+    {
+      "column": "posted_by",
+      "referenced_table": "users",
+      "referenced_column": "user_id",
+      "definition": "FOREIGN KEY (posted_by) REFERENCES users(user_id)"
+    },
+    {
+      "column": "approved_by",
+      "referenced_table": "users",
+      "referenced_column": "user_id",
+      "definition": "FOREIGN KEY (approved_by) REFERENCES users(user_id)"
+    },
+    {
+      "column": "journal_entry_id",
+      "referenced_table": "journal_entries",
+      "referenced_column": "journal_entry_id",
+      "definition": "FOREIGN KEY (journal_entry_id) REFERENCES journal_entries(journal_entry_id)"
+    },
+    {
+      "column": "account_code",
+      "referenced_table": "chart_of_accounts",
+      "referenced_column": "account_code",
+      "definition": "FOREIGN KEY (account_code) REFERENCES chart_of_accounts(account_code)"
+    },
+    {
+      "column": "created_by",
+      "referenced_table": "users",
+      "referenced_column": "user_id",
+      "definition": "FOREIGN KEY (created_by) REFERENCES users(user_id)"
+    },
+    {
+      "column": "updated_by",
+      "referenced_table": "users",
+      "referenced_column": "user_id",
+      "definition": "FOREIGN KEY (updated_by) REFERENCES users(user_id)"
+    },
+    {
+      "column": "bank_account_id",
+      "referenced_table": "bank_accounts",
+      "referenced_column": "bank_account_id",
+      "definition": "FOREIGN KEY (bank_account_id) REFERENCES bank_accounts(bank_account_id)"
+    },
+    {
+      "column": "posted_by",
+      "referenced_table": "users",
+      "referenced_column": "user_id",
+      "definition": "FOREIGN KEY (posted_by) REFERENCES users(user_id)"
+    }
+  ],
+  "journal_entry_reference_indexes": []
+}

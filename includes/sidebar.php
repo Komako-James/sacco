@@ -229,6 +229,31 @@ function isActiveMenu($path) {
                 </ul>
             </li>
 
+            <?php if (hasPermission('accounting.view')): ?>
+            <li class="menu-item has-submenu">
+                <a href="#"
+                   class="menu-link <?php echo isActiveMenu('/accounting') ? 'active' : ''; ?>"
+                   data-bs-toggle="collapse"
+                   data-bs-target="#accountingSubmenu">
+                    <i class="bi bi-calculator"></i>
+                    <span>Accounting</span>
+                    <i class="bi bi-chevron-down arrow"></i>
+                </a>
+                <ul class="submenu collapse <?php echo isActiveMenu('/accounting') ? 'show' : ''; ?>" id="accountingSubmenu">
+                    <li><a href="<?php echo APP_URL; ?>/accounting/dashboard.php" class="submenu-link">
+                        <i class="bi bi-speedometer2"></i> Dashboard</a></li>
+                    <li><a href="<?php echo APP_URL; ?>/accounting/chart_of_accounts.php" class="submenu-link">
+                        <i class="bi bi-book"></i> Chart of Accounts</a></li>
+                    <li><a href="<?php echo APP_URL; ?>/accounting/journal_entries.php" class="submenu-link">
+                        <i class="bi bi-journal-text"></i> Journal Entries</a></li>
+                    <li><a href="<?php echo APP_URL; ?>/accounting/bank_accounts.php" class="submenu-link">
+                        <i class="bi bi-bank"></i> Bank Accounts</a></li>
+                    <li><a href="<?php echo APP_URL; ?>/accounting/reports.php" class="submenu-link">
+                        <i class="bi bi-graph-up"></i> Accounting Reports</a></li>
+                </ul>
+            </li>
+            <?php endif; ?>
+
             <!-- Administration (Admin Only) -->
             <?php if ($role === 'admin'): ?>
             <li class="menu-divider">

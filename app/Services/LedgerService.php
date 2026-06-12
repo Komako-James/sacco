@@ -6,6 +6,8 @@
 
 namespace SACCO\Services;
 
+require_once __DIR__ . '/../../config/db_connection.php';
+
 use SACCO\Models\LedgerEntry;
 use PDO;
 use Exception;
@@ -33,6 +35,30 @@ class LedgerService
     public function __construct(PDO $database)
     {
         $this->db = $database;
+    }
+
+    private static function getConnection(): PDO
+    {
+        global $db;
+
+        if ($db instanceof PDO) {
+            return $db;
+        }
+
+        return \Database::getInstance()->getConnection();
+    }
+
+    private static function tableExists(PDO $db, string $table): bool
+    {
+        try {
+            $stmt = $db->prepare(
+                "SELECT 1 FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = ? LIMIT 1"
+            );
+            $stmt->execute([$table]);
+            return (bool) $stmt->fetchColumn();
+        } catch (Exception $e) {
+            return false;
+        }
     }
 
     /**
@@ -537,10 +563,14 @@ class LedgerService
      */
     private static function postJournalEntries($entries, $receiptNumber, $description, $postedBy)
     {
-        global $db;  // Using global DB instance
+        $db = self::getConnection();
+        $ownTransaction = false;
 
         try {
-            $db->beginTransaction();
+            if (!$db->inTransaction()) {
+                $db->beginTransaction();
+                $ownTransaction = true;
+            }
 
             $totalDebits = 0;
             $totalCredits = 0;
@@ -583,12 +613,16 @@ class LedgerService
                 ]);
             }
 
-            $db->commit();
+            if ($ownTransaction) {
+                $db->commit();
+            }
             return true;
         } catch (Exception $e) {
-            $db->rollBack();
+            if ($ownTransaction && $db->inTransaction()) {
+                $db->rollBack();
+            }
             error_log("Ledger posting failed: " . $e->getMessage());
-            return false;
+            throw new Exception("Ledger posting failed: " . $e->getMessage(), 0, $e);
         }
     }
 
@@ -599,7 +633,7 @@ class LedgerService
      */
     public static function generateTrialBalance($asOfDate = null)
     {
-        global $db;
+        $db = self::getConnection();
         $asOfDate = $asOfDate ?: date('Y-m-d');
 
         $stmt = $db->prepare("
@@ -671,7 +705,7 @@ class LedgerService
      */
     public static function generateIncomeStatement($periodStart, $periodEnd)
     {
-        global $db;
+        $db = self::getConnection();
 
         $stmt = $db->prepare("
             SELECT 
@@ -723,6 +757,21 @@ class LedgerService
      */
     private static function getAccountName($code)
     {
+        $db = self::getConnection();
+
+        if (self::tableExists($db, 'chart_of_accounts')) {
+            try {
+                $stmt = $db->prepare('SELECT account_name FROM chart_of_accounts WHERE account_code = ? LIMIT 1');
+                $stmt->execute([$code]);
+                $name = $stmt->fetchColumn();
+                if ($name) {
+                    return $name;
+                }
+            } catch (Exception $e) {
+                // Fall back to static mapping if the table is unavailable or query fails
+            }
+        }
+
         $accounts = [
             self::COA_CASH => 'Cash in Hand',
             self::COA_BANK => 'Bank Account',
@@ -739,6 +788,7 @@ class LedgerService
             self::COA_STAFF_COSTS => 'Staff Costs',
             self::COA_ADMIN_EXPENSES => 'Administrative Expenses'
         ];
+
         return $accounts[$code] ?? 'Unknown Account';
     }
 

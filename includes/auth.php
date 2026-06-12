@@ -263,14 +263,16 @@ class Auth {
                 'savings.view', 'savings.create', 'savings.edit', 'savings.delete',
                 'reports.view', 'reports.generate', 'reports.export',
                 'users.view', 'users.create', 'users.edit',
-                'settings.manage', 'audit.view'
+                'settings.manage', 'audit.view',
+                'accounting.view', 'accounting.create', 'accounting.edit', 'accounting.delete', 'accounting.reports'
             ],
             'accountant' => [
                 'members.view', 'members.create', 'members.edit',
                 'loans.view', 'loans.create', 'loans.edit',
                 'savings.view', 'savings.create', 'savings.edit',
                 'reports.view', 'reports.generate', 'reports.export',
-                'audit.view'
+                'audit.view',
+                'accounting.view', 'accounting.create', 'accounting.edit', 'accounting.delete', 'accounting.reports'
             ],
             'loan_officer' => [
                 'members.view', 'members.create', 'members.edit',
@@ -292,7 +294,8 @@ class Auth {
             'audit' => [
                 'members.view', 'loans.view', 'savings.view',
                 'reports.view', 'reports.generate', 'reports.export',
-                'audit.view', 'audit.export'
+                'audit.view', 'audit.export',
+                'accounting.view', 'accounting.reports'
             ],
             'viewer' => [
                 'members.view', 'loans.view', 'savings.view',
