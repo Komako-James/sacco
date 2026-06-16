@@ -28,9 +28,16 @@ class LedgerService
     const COA_INTEREST_INCOME = '4010';
     const COA_PROCESSING_FEES = '4020';
     const COA_PENALTY_INCOME = '4030';
+    const COA_OTHER_INCOME = '4040';
     const COA_LOAN_LOSS_PROVISION = '5010';
     const COA_STAFF_COSTS = '5020';
     const COA_ADMIN_EXPENSES = '5030';
+
+    const ACCOUNT_TYPE_ASSET = 'asset';
+    const ACCOUNT_TYPE_LIABILITY = 'liability';
+    const ACCOUNT_TYPE_EQUITY = 'equity';
+    const ACCOUNT_TYPE_INCOME = 'income';
+    const ACCOUNT_TYPE_EXPENSE = 'expense';
 
     public function __construct(PDO $database)
     {
@@ -59,6 +66,202 @@ class LedgerService
         } catch (Exception $e) {
             return false;
         }
+    }
+
+    private static function validateAccount(string $accountCode, string $expectedType = null): array
+    {
+        $db = self::getConnection();
+        if (!self::tableExists($db, 'chart_of_accounts')) {
+            throw new Exception('Chart of accounts table is unavailable');
+        }
+
+        $stmt = $db->prepare(
+            'SELECT account_code, account_name, account_type, is_active FROM chart_of_accounts WHERE account_code = ? LIMIT 1'
+        );
+        $stmt->execute([$accountCode]);
+        $account = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$account) {
+            throw new Exception("Account {$accountCode} not found in chart of accounts");
+        }
+
+        if ((int) $account['is_active'] !== 1) {
+            throw new Exception("Account {$accountCode} is inactive");
+        }
+
+        if ($expectedType !== null && $account['account_type'] !== $expectedType) {
+            throw new Exception("Account {$accountCode} is not a {$expectedType} account");
+        }
+
+        return $account;
+    }
+
+    private static function getAssetAccountForPaymentMethod(string $paymentMethod): string
+    {
+        switch (strtolower($paymentMethod)) {
+            case 'cash':
+                return self::COA_CASH;
+            case 'bank':
+                return self::COA_BANK;
+            default:
+                throw new Exception('Unsupported payment method for asset account');
+        }
+    }
+
+    public static function postCashRevenueEvent(
+        float $amount,
+        string $incomeAccountCode,
+        string $paymentMethod,
+        string $description,
+        int $postedBy,
+        string $transactionType = 'revenue',
+        ?string $referenceNumber = null
+    ) {
+        if ($amount <= 0) {
+            throw new Exception('Revenue amount must be greater than zero');
+        }
+
+        $incomeAccount = self::validateAccount($incomeAccountCode, self::ACCOUNT_TYPE_INCOME);
+        $assetAccountCode = self::getAssetAccountForPaymentMethod($paymentMethod);
+        self::validateAccount($assetAccountCode, self::ACCOUNT_TYPE_ASSET);
+
+        $receiptNumber = $referenceNumber ?: self::generateReceiptNumber('REV');
+
+        $entries = [
+            [
+                'ledger_code' => $assetAccountCode,
+                'debit' => $amount,
+                'credit' => 0,
+                'description' => $description,
+                'payment_method' => $paymentMethod,
+                'transaction_type' => $transactionType
+            ],
+            [
+                'ledger_code' => $incomeAccount['account_code'],
+                'debit' => 0,
+                'credit' => $amount,
+                'description' => $description,
+                'transaction_type' => $transactionType
+            ]
+        ];
+
+        self::postJournalEntries($entries, $receiptNumber, $description, $postedBy);
+    }
+
+    public static function postOperatingExpense(
+        float $amount,
+        string $expenseAccountCode,
+        string $paymentMethod,
+        string $description,
+        int $postedBy,
+        string $transactionType = 'expense',
+        ?string $referenceNumber = null
+    ) {
+        if ($amount <= 0) {
+            throw new Exception('Expense amount must be greater than zero');
+        }
+
+        $expenseAccount = self::validateAccount($expenseAccountCode, self::ACCOUNT_TYPE_EXPENSE);
+        $assetAccountCode = self::getAssetAccountForPaymentMethod($paymentMethod);
+        self::validateAccount($assetAccountCode, self::ACCOUNT_TYPE_ASSET);
+
+        $receiptNumber = $referenceNumber ?: self::generateReceiptNumber('EXP');
+
+        $entries = [
+            [
+                'ledger_code' => $expenseAccount['account_code'],
+                'debit' => $amount,
+                'credit' => 0,
+                'description' => $description,
+                'transaction_type' => $transactionType
+            ],
+            [
+                'ledger_code' => $assetAccountCode,
+                'debit' => 0,
+                'credit' => $amount,
+                'description' => $description,
+                'payment_method' => $paymentMethod,
+                'transaction_type' => $transactionType
+            ]
+        ];
+
+        self::postJournalEntries($entries, $receiptNumber, $description, $postedBy);
+    }
+
+    public static function postAccruedRevenueEvent(
+        float $amount,
+        string $receivableAccountCode,
+        string $incomeAccountCode,
+        string $description,
+        int $postedBy,
+        string $transactionType = 'accrual',
+        ?string $referenceNumber = null
+    ) {
+        if ($amount <= 0) {
+            throw new Exception('Accrued revenue amount must be greater than zero');
+        }
+
+        $receivableAccount = self::validateAccount($receivableAccountCode, self::ACCOUNT_TYPE_ASSET);
+        $incomeAccount = self::validateAccount($incomeAccountCode, self::ACCOUNT_TYPE_INCOME);
+
+        $receiptNumber = $referenceNumber ?: self::generateReceiptNumber('ACR');
+
+        $entries = [
+            [
+                'ledger_code' => $receivableAccount['account_code'],
+                'debit' => $amount,
+                'credit' => 0,
+                'description' => $description,
+                'transaction_type' => $transactionType
+            ],
+            [
+                'ledger_code' => $incomeAccount['account_code'],
+                'debit' => 0,
+                'credit' => $amount,
+                'description' => $description,
+                'transaction_type' => $transactionType
+            ]
+        ];
+
+        self::postJournalEntries($entries, $receiptNumber, $description, $postedBy);
+    }
+
+    public static function postReceivableSettlement(
+        float $amount,
+        string $settlementAccountCode,
+        string $receivableAccountCode,
+        string $description,
+        int $postedBy,
+        string $transactionType = 'settlement',
+        ?string $referenceNumber = null
+    ) {
+        if ($amount <= 0) {
+            throw new Exception('Settlement amount must be greater than zero');
+        }
+
+        $settlementAccount = self::validateAccount($settlementAccountCode, self::ACCOUNT_TYPE_ASSET);
+        $receivableAccount = self::validateAccount($receivableAccountCode, self::ACCOUNT_TYPE_ASSET);
+
+        $receiptNumber = $referenceNumber ?: self::generateReceiptNumber('RST');
+
+        $entries = [
+            [
+                'ledger_code' => $settlementAccount['account_code'],
+                'debit' => $amount,
+                'credit' => 0,
+                'description' => $description,
+                'transaction_type' => $transactionType
+            ],
+            [
+                'ledger_code' => $receivableAccount['account_code'],
+                'debit' => 0,
+                'credit' => $amount,
+                'description' => $description,
+                'transaction_type' => $transactionType
+            ]
+        ];
+
+        self::postJournalEntries($entries, $receiptNumber, $description, $postedBy);
     }
 
     /**
@@ -636,6 +839,27 @@ class LedgerService
         $db = self::getConnection();
         $asOfDate = $asOfDate ?: date('Y-m-d');
 
+        if (self::tableExists($db, 'chart_of_accounts')) {
+            $stmt = $db->prepare("
+                SELECT
+                    le.ledger_code,
+                    COALESCE(coa.account_name, le.ledger_name) AS ledger_name,
+                    coa.account_type,
+                    coa.account_category,
+                    SUM(le.debit) AS total_debit,
+                    SUM(le.credit) AS total_credit,
+                    SUM(le.debit - le.credit) AS balance
+                FROM ledger_entries le
+                LEFT JOIN chart_of_accounts coa ON le.ledger_code = coa.account_code
+                WHERE le.entry_date <= ? AND le.status = 'posted'
+                GROUP BY le.ledger_code, COALESCE(coa.account_name, le.ledger_name), coa.account_type, coa.account_category
+                ORDER BY le.ledger_code
+            ");
+
+            $stmt->execute([$asOfDate]);
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        }
+
         $stmt = $db->prepare("
             SELECT 
                 ledger_code,
@@ -662,25 +886,54 @@ class LedgerService
      */
     public static function generateBalanceSheet($asOfDate = null)
     {
+        $db = self::getConnection();
         $asOfDate = $asOfDate ?: date('Y-m-d');
-        $trialBalance = self::generateTrialBalance($asOfDate);
 
         $assets = [];
         $liabilities = [];
         $equity = [];
 
-        // Categorize accounts
-        $assetCodes = [self::COA_CASH, self::COA_BANK, self::COA_LOANS, self::COA_INTEREST_RECEIVABLE];
-        $liabilityCodes = [self::COA_MEMBER_SAVINGS, self::COA_INTEREST_PAYABLE];
-        $equityCodes = [self::COA_MEMBER_SHARES, self::COA_RETAINED_EARNINGS];
+        if (!self::tableExists($db, 'chart_of_accounts')) {
+            return [
+                'date' => $asOfDate,
+                'assets' => [],
+                'liabilities' => [],
+                'equity' => [],
+                'total_assets' => 0,
+                'total_liabilities' => 0,
+                'total_equity' => 0
+            ];
+        }
 
-        foreach ($trialBalance as $entry) {
-            if (in_array($entry['ledger_code'], $assetCodes)) {
-                $assets[] = $entry;
-            } elseif (in_array($entry['ledger_code'], $liabilityCodes)) {
-                $liabilities[] = $entry;
-            } elseif (in_array($entry['ledger_code'], $equityCodes)) {
-                $equity[] = $entry;
+        $stmt = $db->prepare("
+            SELECT
+                coa.account_code,
+                coa.account_name,
+                coa.account_type,
+                SUM(le.debit) AS total_debit,
+                SUM(le.credit) AS total_credit,
+                SUM(le.debit - le.credit) AS balance
+            FROM ledger_entries le
+            JOIN chart_of_accounts coa ON le.ledger_code = coa.account_code
+            WHERE le.entry_date <= ? AND le.status = 'posted'
+            GROUP BY coa.account_code, coa.account_name, coa.account_type
+            ORDER BY coa.account_code
+        ");
+
+        $stmt->execute([$asOfDate]);
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        foreach ($rows as $entry) {
+            switch ($entry['account_type']) {
+                case 'asset':
+                    $assets[] = $entry;
+                    break;
+                case 'liability':
+                    $liabilities[] = $entry;
+                    break;
+                case 'equity':
+                    $equity[] = $entry;
+                    break;
             }
         }
 
@@ -707,48 +960,414 @@ class LedgerService
     {
         $db = self::getConnection();
 
+        if (!self::tableExists($db, 'chart_of_accounts')) {
+            return [
+                'period_start' => $periodStart,
+                'period_end' => $periodEnd,
+                'income_items' => [],
+                'expense_items' => [],
+                'total_income' => 0,
+                'total_expenses' => 0,
+                'net_income' => 0
+            ];
+        }
+
         $stmt = $db->prepare("
-            SELECT 
-                'Income' as type,
-                ledger_code,
-                ledger_name,
-                SUM(credit) as amount
-            FROM ledger_entries
-            WHERE entry_date BETWEEN ? AND ? 
-                AND status = 'posted'
-                AND ledger_code IN (?, ?, ?)
-            GROUP BY ledger_code, ledger_name
-            UNION ALL
-            SELECT 
-                'Expense' as type,
-                ledger_code,
-                ledger_name,
-                SUM(debit) as amount
-            FROM ledger_entries
-            WHERE entry_date BETWEEN ? AND ? 
-                AND status = 'posted'
-                AND ledger_code IN (?, ?, ?)
-            GROUP BY ledger_code, ledger_name
+            SELECT
+                coa.account_code,
+                coa.account_name,
+                coa.account_type,
+                SUM(le.debit) AS total_debit,
+                SUM(le.credit) AS total_credit
+            FROM ledger_entries le
+            JOIN chart_of_accounts coa ON le.ledger_code = coa.account_code
+            WHERE le.entry_date BETWEEN ? AND ?
+                AND le.status = 'posted'
+                AND coa.account_type IN ('income', 'expense')
+            GROUP BY coa.account_code, coa.account_name, coa.account_type
+            ORDER BY coa.account_type, coa.account_code
         ");
 
-        $stmt->execute([
-            $periodStart, $periodEnd, self::COA_INTEREST_INCOME, self::COA_PROCESSING_FEES, self::COA_PENALTY_INCOME,
-            $periodStart, $periodEnd, self::COA_LOAN_LOSS_PROVISION, self::COA_STAFF_COSTS, self::COA_ADMIN_EXPENSES
-        ]);
+        $stmt->execute([$periodStart, $periodEnd]);
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $incomeItems = [];
+        $expenseItems = [];
 
-        $income = array_sum(array_map(fn($x) => $x['type'] === 'Income' ? $x['amount'] : 0, $results));
-        $expenses = array_sum(array_map(fn($x) => $x['type'] === 'Expense' ? $x['amount'] : 0, $results));
+        foreach ($rows as $entry) {
+            if ($entry['account_type'] === 'income') {
+                $incomeItems[] = [
+                    'type' => 'Income',
+                    'ledger_code' => $entry['account_code'],
+                    'ledger_name' => $entry['account_name'],
+                    'amount' => (float) $entry['total_credit']
+                ];
+            } elseif ($entry['account_type'] === 'expense') {
+                $expenseItems[] = [
+                    'type' => 'Expense',
+                    'ledger_code' => $entry['account_code'],
+                    'ledger_name' => $entry['account_name'],
+                    'amount' => (float) $entry['total_debit']
+                ];
+            }
+        }
+
+        $totalIncome = array_sum(array_column($incomeItems, 'amount'));
+        $totalExpenses = array_sum(array_column($expenseItems, 'amount'));
 
         return [
             'period_start' => $periodStart,
             'period_end' => $periodEnd,
-            'income_items' => array_filter($results, fn($x) => $x['type'] === 'Income'),
-            'expense_items' => array_filter($results, fn($x) => $x['type'] === 'Expense'),
-            'total_income' => $income,
-            'total_expenses' => $expenses,
-            'net_income' => $income - $expenses
+            'income_items' => $incomeItems,
+            'expense_items' => $expenseItems,
+            'total_income' => $totalIncome,
+            'total_expenses' => $totalExpenses,
+            'net_income' => $totalIncome - $totalExpenses
+        ];
+    }
+
+    /**
+     * Get revenue by income account source
+     */
+    public static function getRevenueBySource($startDate = null, $endDate = null)
+    {
+        $db = self::getConnection();
+        if (!self::tableExists($db, 'ledger_entries') || !self::tableExists($db, 'chart_of_accounts')) {
+            return [];
+        }
+
+        $sql = "
+            SELECT
+                coa.account_code,
+                coa.account_name,
+                COALESCE(SUM(le.credit), 0) AS amount
+            FROM ledger_entries le
+            JOIN chart_of_accounts coa ON le.ledger_code = coa.account_code
+            WHERE le.status = 'posted'
+              AND coa.account_type = 'income'
+        ";
+        $params = [];
+
+        if ($startDate) {
+            $sql .= ' AND le.entry_date >= ?';
+            $params[] = $startDate;
+        }
+
+        if ($endDate) {
+            $sql .= ' AND le.entry_date <= ?';
+            $params[] = $endDate;
+        }
+
+        $sql .= ' GROUP BY coa.account_code, coa.account_name ORDER BY amount DESC';
+
+        $stmt = $db->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Get monthly revenue trend
+     */
+    public static function getMonthlyRevenueTrend($startDate = null, $endDate = null)
+    {
+        $db = self::getConnection();
+        if (!self::tableExists($db, 'ledger_entries') || !self::tableExists($db, 'chart_of_accounts')) {
+            return [];
+        }
+
+        $sql = "
+            SELECT
+                DATE_FORMAT(le.entry_date, '%Y-%m') AS month,
+                DATE_FORMAT(le.entry_date, '%b %Y') AS month_label,
+                COALESCE(SUM(le.credit), 0) AS revenue
+            FROM ledger_entries le
+            JOIN chart_of_accounts coa ON le.ledger_code = coa.account_code
+            WHERE le.status = 'posted'
+              AND coa.account_type = 'income'
+        ";
+        $params = [];
+
+        if ($startDate) {
+            $sql .= ' AND le.entry_date >= ?';
+            $params[] = $startDate;
+        }
+
+        if ($endDate) {
+            $sql .= ' AND le.entry_date <= ?';
+            $params[] = $endDate;
+        }
+
+        $sql .= ' GROUP BY month, month_label ORDER BY month';
+
+        $stmt = $db->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Get expense breakdown by account
+     */
+    public static function getExpenseBreakdown($startDate = null, $endDate = null)
+    {
+        $db = self::getConnection();
+        if (!self::tableExists($db, 'ledger_entries') || !self::tableExists($db, 'chart_of_accounts')) {
+            return [];
+        }
+
+        $sql = "
+            SELECT
+                coa.account_code,
+                coa.account_name,
+                COALESCE(SUM(le.debit), 0) AS amount
+            FROM ledger_entries le
+            JOIN chart_of_accounts coa ON le.ledger_code = coa.account_code
+            WHERE le.status = 'posted'
+              AND coa.account_type = 'expense'
+        ";
+        $params = [];
+
+        if ($startDate) {
+            $sql .= ' AND le.entry_date >= ?';
+            $params[] = $startDate;
+        }
+
+        if ($endDate) {
+            $sql .= ' AND le.entry_date <= ?';
+            $params[] = $endDate;
+        }
+
+        $sql .= ' GROUP BY coa.account_code, coa.account_name ORDER BY amount DESC';
+
+        $stmt = $db->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Get monthly expense trend
+     */
+    public static function getMonthlyExpenseTrend($startDate = null, $endDate = null)
+    {
+        $db = self::getConnection();
+        if (!self::tableExists($db, 'ledger_entries') || !self::tableExists($db, 'chart_of_accounts')) {
+            return [];
+        }
+
+        $sql = "
+            SELECT
+                DATE_FORMAT(le.entry_date, '%Y-%m') AS month,
+                DATE_FORMAT(le.entry_date, '%b %Y') AS month_label,
+                COALESCE(SUM(le.debit), 0) AS expenses
+            FROM ledger_entries le
+            JOIN chart_of_accounts coa ON le.ledger_code = coa.account_code
+            WHERE le.status = 'posted'
+              AND coa.account_type = 'expense'
+        ";
+        $params = [];
+
+        if ($startDate) {
+            $sql .= ' AND le.entry_date >= ?';
+            $params[] = $startDate;
+        }
+
+        if ($endDate) {
+            $sql .= ' AND le.entry_date <= ?';
+            $params[] = $endDate;
+        }
+
+        $sql .= ' GROUP BY month, month_label ORDER BY month';
+
+        $stmt = $db->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Get profit and loss summary for a period
+     */
+    public static function getProfitAndLoss($startDate = null, $endDate = null)
+    {
+        $db = self::getConnection();
+        if (!self::tableExists($db, 'ledger_entries') || !self::tableExists($db, 'chart_of_accounts')) {
+            return [
+                'total_revenue' => 0,
+                'total_expenses' => 0,
+                'net_profit' => 0
+            ];
+        }
+
+        $sql = "
+            SELECT
+                SUM(CASE WHEN coa.account_type = 'income' THEN le.credit ELSE 0 END) AS total_revenue,
+                SUM(CASE WHEN coa.account_type = 'expense' THEN le.debit ELSE 0 END) AS total_expenses
+            FROM ledger_entries le
+            JOIN chart_of_accounts coa ON le.ledger_code = coa.account_code
+            WHERE le.status = 'posted'
+              AND coa.account_type IN ('income', 'expense')
+        ";
+        $params = [];
+
+        if ($startDate) {
+            $sql .= ' AND le.entry_date >= ?';
+            $params[] = $startDate;
+        }
+
+        if ($endDate) {
+            $sql .= ' AND le.entry_date <= ?';
+            $params[] = $endDate;
+        }
+
+        $stmt = $db->prepare($sql);
+        $stmt->execute($params);
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        $totalRevenue = (float) ($result['total_revenue'] ?? 0);
+        $totalExpenses = (float) ($result['total_expenses'] ?? 0);
+
+        return [
+            'total_revenue' => $totalRevenue,
+            'total_expenses' => $totalExpenses,
+            'net_profit' => $totalRevenue - $totalExpenses
+        ];
+    }
+
+    /**
+     * Get profit and loss summary for a period
+     */
+    public static function getProfitabilitySummary($startDate = null, $endDate = null)
+    {
+        $pl = self::getProfitAndLoss($startDate, $endDate);
+
+        return [
+            'total_revenue' => $pl['total_revenue'],
+            'total_expenses' => $pl['total_expenses'],
+            'net_profit' => $pl['net_profit']
+        ];
+    }
+
+    /**
+     * Get monthly profit trend for a date range
+     */
+    public static function getMonthlyProfitTrend($startDate = null, $endDate = null)
+    {
+        $db = self::getConnection();
+        if (!self::tableExists($db, 'ledger_entries') || !self::tableExists($db, 'chart_of_accounts')) {
+            return [];
+        }
+
+        $sql = "
+            SELECT
+                DATE_FORMAT(le.entry_date, '%Y-%m') AS month,
+                DATE_FORMAT(le.entry_date, '%b %Y') AS month_label,
+                SUM(CASE WHEN coa.account_type = 'income' THEN le.credit ELSE 0 END) AS revenue,
+                SUM(CASE WHEN coa.account_type = 'expense' THEN le.debit ELSE 0 END) AS expenses
+            FROM ledger_entries le
+            JOIN chart_of_accounts coa ON le.ledger_code = coa.account_code
+            WHERE le.status = 'posted'
+              AND coa.account_type IN ('income', 'expense')
+        ";
+        $params = [];
+
+        if ($startDate) {
+            $sql .= ' AND le.entry_date >= ?';
+            $params[] = $startDate;
+        }
+
+        if ($endDate) {
+            $sql .= ' AND le.entry_date <= ?';
+            $params[] = $endDate;
+        }
+
+        $sql .= ' GROUP BY month, month_label ORDER BY month';
+
+        $stmt = $db->prepare($sql);
+        $stmt->execute($params);
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        foreach ($rows as &$row) {
+            $row['revenue'] = (float) $row['revenue'];
+            $row['expenses'] = (float) $row['expenses'];
+            $row['profit'] = $row['revenue'] - $row['expenses'];
+        }
+
+        return $rows;
+    }
+
+    /**
+     * Get loan portfolio summary metrics.
+     */
+    public static function getLoanPortfolioSummary()
+    {
+        $db = self::getConnection();
+        if (!self::tableExists($db, 'loans')) {
+            return [
+                'total_loans_issued' => 0,
+                'outstanding_principal' => 0,
+                'interest_accrued' => 0,
+                'interest_collected' => 0,
+                'active_loans' => 0
+            ];
+        }
+
+        $stmt = $db->query(
+            "SELECT
+                COALESCE(SUM(CASE WHEN amount_approved IS NOT NULL THEN amount_approved ELSE amount_requested END), 0) AS total_loans_issued,
+                COALESCE(SUM(outstanding_balance), 0) AS outstanding_principal,
+                COALESCE(SUM(interest_accrued), 0) AS interest_accrued,
+                SUM(CASE WHEN status = 'disbursed' THEN 1 ELSE 0 END) AS active_loans
+            FROM loans"
+        );
+        $loanSummary = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        $interestCollected = 0;
+        if (self::tableExists($db, 'loan_repayments')) {
+            $stmt = $db->query('SELECT COALESCE(SUM(interest_paid), 0) AS interest_collected FROM loan_repayments');
+            $interestData = $stmt->fetch(PDO::FETCH_ASSOC);
+            $interestCollected = (float) ($interestData['interest_collected'] ?? 0);
+        }
+
+        return [
+            'total_loans_issued' => (float) ($loanSummary['total_loans_issued'] ?? 0),
+            'outstanding_principal' => (float) ($loanSummary['outstanding_principal'] ?? 0),
+            'interest_accrued' => (float) ($loanSummary['interest_accrued'] ?? 0),
+            'interest_collected' => $interestCollected,
+            'active_loans' => (int) ($loanSummary['active_loans'] ?? 0)
+        ];
+    }
+
+    /**
+     * Get revenue contribution by loan product type.
+     */
+    public static function getIncomeContributionByProduct()
+    {
+        $db = self::getConnection();
+
+        if (!self::tableExists($db, 'loan_products') || !self::tableExists($db, 'loan_repayments') || !self::tableExists($db, 'loans')) {
+            return [
+                'available' => false,
+                'message' => 'Loan product revenue contribution cannot be calculated because loan_products or loan_repayments tables are unavailable.',
+                'data' => []
+            ];
+        }
+
+        $stmt = $db->prepare(
+            'SELECT
+                lp.product_name,
+                COALESCE(SUM(lr.interest_paid), 0) AS revenue
+            FROM loan_repayments lr
+            JOIN loans l ON lr.loan_id = l.loan_id
+            JOIN loan_products lp ON l.product_id = lp.product_id
+            WHERE lr.status = ?
+            GROUP BY lp.product_id, lp.product_name
+            ORDER BY revenue DESC'
+        );
+        $stmt->execute(['posted']);
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        return [
+            'available' => true,
+            'message' => null,
+            'data' => $rows
         ];
     }
 

@@ -3,11 +3,16 @@
 $currentPage = basename($_SERVER['PHP_SELF']);
 $currentPath = $_SERVER['REQUEST_URI'];
 $role = $_SESSION['role'] ?? 'viewer';
-$permissions = $_SESSION['permissions'] ?? [];
 
 function hasPermission($permission) {
-    global $permissions;
-    return in_array($permission, $permissions) || $_SESSION['role'] === 'admin';
+    global $auth;
+
+    if (isset($auth) && method_exists($auth, 'can')) {
+        return $auth->can($permission);
+    }
+
+    $permissions = $_SESSION['permissions'] ?? [];
+    return in_array($permission, $permissions, true) || ($_SESSION['role'] ?? '') === 'admin';
 }
 
 function isActiveMenu($path) {
@@ -109,7 +114,7 @@ function isActiveMenu($path) {
                         <i class="bi bi-file-earmark-plus"></i> Apply Loan</a></li>
                     <li><a href="<?php echo APP_URL; ?>/loans/list.php" class="submenu-link">
                         <i class="bi bi-list-ul"></i> All Loans</a></li>
-                    <?php if (hasPermission('approve_loans')): ?>
+                    <?php if (hasPermission('loans.approve')): ?>
                     <li><a href="<?php echo APP_URL; ?>/loans/list.php?status=applied" class="submenu-link">
                         <i class="bi bi-check-circle"></i> Approvals</a></li>
                     <?php endif; ?>
@@ -224,6 +229,14 @@ function isActiveMenu($path) {
                         <i class="bi bi-people"></i> Members</a></li>
                     <li><a href="<?php echo APP_URL; ?>/savings/reports.php" class="submenu-link">
                         <i class="bi bi-piggy-bank"></i> Savings</a></li>
+                    <li><a href="<?php echo APP_URL; ?>/reports/revenue_analysis.php" class="submenu-link">
+                        <i class="bi bi-bar-chart-line"></i> Revenue Analysis</a></li>
+                    <li><a href="<?php echo APP_URL; ?>/reports/expense_analysis.php" class="submenu-link">
+                        <i class="bi bi-graph-down"></i> Expense Analysis</a></li>
+                    <li><a href="<?php echo APP_URL; ?>/reports/profitability.php" class="submenu-link">
+                        <i class="bi bi-cash-stack"></i> Profitability</a></li>
+                    <li><a href="<?php echo APP_URL; ?>/reports/executive_dashboard.php" class="submenu-link">
+                        <i class="bi bi-speedometer2"></i> Executive Dashboard</a></li>
                     <li><a href="<?php echo APP_URL; ?>/reports/transactions.php" class="submenu-link">
                         <i class="bi bi-receipt"></i> Transactions</a></li>
                 </ul>

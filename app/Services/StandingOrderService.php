@@ -12,20 +12,83 @@ class StandingOrderService {
     }
 
     public function createStandingOrder($memberId, $amount, $frequency, $nextRunDate, $savingsAccountId = null, $loanId = null, $endDate = null, $createdBy = null) {
-        $stmt = $this->db->prepare("INSERT INTO standing_orders (member_id, savings_account_id, loan_id, amount, frequency, next_run_date, end_date, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+        $stmt = $this->db->prepare("INSERT INTO standing_orders (member_id, savings_account_id, loan_id, amount, frequency, next_run_date, end_date, status, is_active, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, 'active', 1, ?)");
         $stmt->execute([$memberId, $savingsAccountId, $loanId, $amount, $frequency, $nextRunDate, $endDate, $createdBy]);
         return $this->db->lastInsertId();
     }
 
     public function cancelStandingOrder($standingOrderId) {
-        $stmt = $this->db->prepare("UPDATE standing_orders SET is_active = 0 WHERE standing_order_id = ?");
+        $stmt = $this->db->prepare("UPDATE standing_orders SET status = 'cancelled', is_active = 0 WHERE standing_order_id = ?");
         return $stmt->execute([$standingOrderId]);
     }
 
     public function getDueOrders($date = null) {
         $date = $date ?: date('Y-m-d');
-        $stmt = $this->db->prepare("SELECT * FROM standing_orders WHERE is_active = 1 AND next_run_date <= ?");
-        $stmt->execute([$date]);
+        $stmt = $this->db->prepare(
+            "SELECT * FROM standing_orders WHERE status = 'active' AND next_run_date <= ? " .
+            "AND (end_date IS NULL OR end_date >= ?)"
+        );
+        $stmt->execute([$date, $date]);
+        return $stmt->fetchAll();
+    }
+
+    public function getAllStandingOrders($limit = 100, $offset = 0) {
+        if ($limit === null) {
+            $stmt = $this->db->prepare("SELECT * FROM standing_orders ORDER BY standing_order_id DESC");
+            $stmt->execute();
+        } else {
+            $stmt = $this->db->prepare("SELECT * FROM standing_orders ORDER BY standing_order_id DESC LIMIT ? OFFSET ?");
+            $stmt->execute([$limit, $offset]);
+        }
+        return $stmt->fetchAll();
+    }
+
+    public function getStandingOrderById($standingOrderId) {
+        $stmt = $this->db->prepare("SELECT * FROM standing_orders WHERE standing_order_id = ?");
+        $stmt->execute([$standingOrderId]);
+        return $stmt->fetch();
+    }
+
+    public function updateStandingOrder($standingOrderId, array $data) {
+        $allowed = [
+            'member_id',
+            'savings_account_id',
+            'loan_id',
+            'amount',
+            'frequency',
+            'next_run_date',
+            'end_date',
+            'is_active'
+        ];
+
+        $fields = [];
+        $params = [];
+
+        foreach ($allowed as $field) {
+            if (array_key_exists($field, $data)) {
+                if ($field === 'is_active') {
+                    $params[] = $data[$field] ? 1 : 0;
+                } elseif ($field === 'amount') {
+                    $params[] = (float)$data[$field];
+                } else {
+                    $params[] = $data[$field];
+                }
+                $fields[] = "$field = ?";
+            }
+        }
+
+        if (empty($fields)) {
+            return false;
+        }
+
+        $params[] = $standingOrderId;
+        $stmt = $this->db->prepare("UPDATE standing_orders SET " . implode(', ', $fields) . " WHERE standing_order_id = ?");
+        return $stmt->execute($params);
+    }
+
+    public function getStandingOrderHistory($standingOrderId) {
+        $stmt = $this->db->prepare("SELECT * FROM standing_order_runs WHERE standing_order_id = ? ORDER BY run_date DESC, run_id DESC");
+        $stmt->execute([$standingOrderId]);
         return $stmt->fetchAll();
     }
 

@@ -1,0 +1,5 @@
+﻿D:\wamp64\www\sacco\config\config.php:289 // BACKUP & RECOVERY
+D:\wamp64\www\sacco\config\config.php:291 'backup' => [
+D:\wamp64\www\sacco\config\config.php:302 'encrypt_backups' => true,
+D:\wamp64\www\sacco\includes\sidebar.php:276 <li><a href="<?php echo APP_URL; ?>/admin/backup.php" class="submenu-link">
+D:\wamp64\www\sacco\includes\sidebar.php:277 <i class="bi bi-download"></i> Backup</a></li>

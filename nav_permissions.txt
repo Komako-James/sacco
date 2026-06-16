@@ -1,0 +1,174 @@
+﻿D:\wamp64\www\sacco\accounting\bank_accounts.php:31 $stmt->execute([$bankName, $accountNumber, $branch ?: null, $currency, $_SESSION['user_id']]);
+D:\wamp64\www\sacco\accounting\chart_of_accounts.php:31 $stmt->execute([$accountCode, $accountName, $accountType, $accountCategory ?: null, $_SESSION['user_id']]);
+D:\wamp64\www\sacco\admin\users\create.php:11 $roles = $userService->getRoleOptions();
+D:\wamp64\www\sacco\admin\users\create.php:22 $role = $_POST['role'] ?? 'loan_officer';
+D:\wamp64\www\sacco\admin\users\create.php:37 'role' => $role,
+D:\wamp64\www\sacco\admin\users\create.php:39 ], $_SESSION['user_id']);
+D:\wamp64\www\sacco\admin\users\create.php:114 <?php foreach ($roles as $roleKey => $roleLabel): ?>
+D:\wamp64\www\sacco\admin\users\create.php:115 <option value="<?php echo htmlspecialchars($roleKey); ?>" <?php echo (($_POST['role'] ?? '') === $roleKey) ? 'selected' : ''; ?>><?php echo htmlspecialchars($roleLabel); ?></option>
+D:\wamp64\www\sacco\admin\users\edit.php:18 $roles = $userService->getRoleOptions();
+D:\wamp64\www\sacco\admin\users\edit.php:26 $role = $_POST['role'] ?? $user['role'];
+D:\wamp64\www\sacco\admin\users\edit.php:35 'role' => $role,
+D:\wamp64\www\sacco\admin\users\edit.php:98 <?php foreach ($roles as $roleKey => $roleLabel): ?>
+D:\wamp64\www\sacco\admin\users\edit.php:99 <option value="<?php echo htmlspecialchars($roleKey); ?>" <?php echo $user['role'] === $roleKey ? 'selected' : ''; ?>><?php echo htmlspecialchars($roleLabel); ?></option>
+D:\wamp64\www\sacco\admin\users\index.php:14 $roles = $userService->getRoleOptions();
+D:\wamp64\www\sacco\api\v1\index.php:31 $id = $service->createStandingOrder($input['member_id'],$input['amount'],$input['frequency'],$input['next_run_date'],$input['savings_account_id'] ?? null,$input['loan_id'] ?? null,$input['end_date'] ?? null,$_SESSION['user_id']);
+D:\wamp64\www\sacco\api\v1\index.php:52 $res = $service->processDueOrders($date, $_SESSION['user_id']);
+D:\wamp64\www\sacco\api\v1\index.php:113 if (!isset($_SESSION['user_id'])) {
+D:\wamp64\www\sacco\api\v1\index.php:268 $_SESSION['user_id']
+D:\wamp64\www\sacco\api\v1\index.php:312 $_SESSION['user_id'],
+D:\wamp64\www\sacco\api\v1\index.php:371 $_SESSION['user_id']
+D:\wamp64\www\sacco\api\v1\index.php:404 $_SESSION['user_id']
+D:\wamp64\www\sacco\api\v1\index.php:460 $result = $savingsService->deposit((int)$memberId, (int)$accountId, (float)$amount, $paymentMethod, $_SESSION['user_id'], $reference);
+D:\wamp64\www\sacco\api\v1\index.php:488 $result = $savingsService->withdraw((int)$memberId, (int)$accountId, (float)$amount, $paymentMethod, $_SESSION['user_id'], $reference);
+D:\wamp64\www\sacco\api\v1\index.php:625 $_SESSION['user_id']
+D:\wamp64\www\sacco\api\v1\member.php:15 if (!isset($_SESSION['session_token'])) {
+D:\wamp64\www\sacco\api\v1\member.php:49 $stmt->execute([$_SESSION['member_id']]);
+D:\wamp64\www\sacco\api\v1\member.php:65 $stmt->execute([$_SESSION['member_id']]);
+D:\wamp64\www\sacco\api\v1\member.php:77 $stmt->execute([$_SESSION['member_id']]);
+D:\wamp64\www\sacco\api\v1\member.php:89 $stmt->execute([$_SESSION['member_id']]);
+D:\wamp64\www\sacco\api\v1\member.php:115 $stmt->execute([$accountId, $_SESSION['member_id']]);
+D:\wamp64\www\sacco\api\v1\member.php:127 $reference = 'SHR-' . $_SESSION['member_id'] . '-' . time();
+D:\wamp64\www\sacco\api\v1\member.php:130 $insert->execute([$accountId, $_SESSION['member_id'], $amount, $newBalance, $reference, $_SESSION['member_user_id']]);
+D:\wamp64\www\sacco\api\v1\member.php:136 $holdingStmt->execute([$_SESSION['member_id']]);
+D:\wamp64\www\sacco\api\v1\member.php:145 $insertHolding->execute([$_SESSION['member_id'], $shares, SHARE_PRICE, $amount]);
+D:\wamp64\www\sacco\api\v1\member.php:150 $insertShareTxn->execute([$_SESSION['member_id'], $shareId, $accountId, $shares, $amount, $reference, $_SESSION['member_user_id']]);
+D:\wamp64\www\sacco\api\v1\member.php:177 $stmt->execute([$_SESSION['member_id'], $limit, $offset]);
+D:\wamp64\www\sacco\api\v1\member.php:207 $_SESSION['member_id'],
+D:\wamp64\www\sacco\api\v1\member.php:229 $stmt->execute([$_SESSION['member_id']]);
+D:\wamp64\www\sacco\api\v1\member.php:250 $stmt->execute([$_SESSION['member_user_id']]);
+D:\wamp64\www\sacco\api\v1\member.php:262 $stmt->execute([$newPasswordHash, $_SESSION['member_user_id']]);
+D:\wamp64\www\sacco\api\v1\member.php:285 $stmt->execute([$phone, $email, $address, $_SESSION['member_id']]);
+D:\wamp64\www\sacco\api\v1\member.php:316 $fileName = 'member_' . $_SESSION['member_id'] . '_' . time() . '.' . pathinfo($file['name'], PATHINFO_EXTENSION);
+D:\wamp64\www\sacco\api\v1\member.php:324 $stmt->execute([$fileName, $_SESSION['member_id']]);
+D:\wamp64\www\sacco\app\Models\Entities.php:434 public $role;  // admin, manager, accountant, loan_officer, cashier, member, audit
+D:\wamp64\www\sacco\app\Services\UserService.php:19 $roles = $stmt->fetchAll();
+D:\wamp64\www\sacco\app\Services\UserService.php:20 if (!empty($roles)) {
+D:\wamp64\www\sacco\app\Services\UserService.php:21 return array_column($roles, 'label', 'role_name');
+D:\wamp64\www\sacco\batches\upload.php:76 $_SESSION['user_id'],
+D:\wamp64\www\sacco\config\session_config.php:115 if (!isset($_SESSION['initiated'])) {
+D:\wamp64\www\sacco\config\session_config.php:117 $_SESSION['initiated'] = true;
+D:\wamp64\www\sacco\config\session_config.php:121 if (!isset($_SESSION['created'])) {
+D:\wamp64\www\sacco\config\session_config.php:122 $_SESSION['created'] = time();
+D:\wamp64\www\sacco\config\session_config.php:126 if (isset($_SESSION['created']) && (time() - $_SESSION['created'] > SESSION_TIMEOUT)) {
+D:\wamp64\www\sacco\config\session_config.php:143 $_SESSION = array();
+D:\wamp64\www\sacco\config\session_config.php:170 if (!isset($_SESSION['user_id']) || !isset($_SESSION['expires_at'])) {
+D:\wamp64\www\sacco\config\session_config.php:175 if ($_SESSION['expires_at'] < time()) {
+D:\wamp64\www\sacco\config\session_config.php:187 $_SESSION['expires_at'] = time() + SESSION_TIMEOUT;
+D:\wamp64\www\sacco\config\session_config.php:188 $_SESSION['last_activity'] = time();
+D:\wamp64\www\sacco\includes\auth.php:83 $_SESSION['user_id'] = $user['user_id'];
+D:\wamp64\www\sacco\includes\auth.php:84 $_SESSION['username'] = $user['username'];
+D:\wamp64\www\sacco\includes\auth.php:85 $_SESSION['full_name'] = $user['full_name'];
+D:\wamp64\www\sacco\includes\auth.php:86 $_SESSION['email'] = $user['email'];
+D:\wamp64\www\sacco\includes\auth.php:87 $_SESSION['role'] = $user['role'];
+D:\wamp64\www\sacco\includes\auth.php:88 $_SESSION['branch_id'] = $user['branch_id'] ?? null;
+D:\wamp64\www\sacco\includes\auth.php:89 $_SESSION['last_activity'] = time();
+D:\wamp64\www\sacco\includes\auth.php:90 $_SESSION['expires_at'] = time() + SESSION_TIMEOUT;
+D:\wamp64\www\sacco\includes\auth.php:91 $_SESSION['ip_address'] = getClientIpAddress();
+D:\wamp64\www\sacco\includes\auth.php:92 $_SESSION['user_agent'] = $_SERVER['HTTP_USER_AGENT'] ?? '';
+D:\wamp64\www\sacco\includes\auth.php:147 if (isset($_SESSION['user_id'])) {
+D:\wamp64\www\sacco\includes\auth.php:148 $this->logActivity($_SESSION['user_id'], 'Logout', 'users', $_SESSION['user_id'], null, null);
+D:\wamp64\www\sacco\includes\auth.php:152 $_SESSION = [];
+D:\wamp64\www\sacco\includes\auth.php:173 if (!isset($_SESSION['user_id']) || !isset($_SESSION['expires_at'])) {
+D:\wamp64\www\sacco\includes\auth.php:178 if ($_SESSION['expires_at'] < time()) {
+D:\wamp64\www\sacco\includes\auth.php:198 if ($checkIp && isset($_SESSION['ip_address'])) {
+D:\wamp64\www\sacco\includes\auth.php:199 if ($_SESSION['ip_address'] !== getClientIpAddress()) {
+D:\wamp64\www\sacco\includes\auth.php:205 if (isset($_SESSION['user_agent'])) {
+D:\wamp64\www\sacco\includes\auth.php:206 if ($_SESSION['user_agent'] !== ($_SERVER['HTTP_USER_AGENT'] ?? '')) {
+D:\wamp64\www\sacco\includes\auth.php:219 $_SESSION['expires_at'] = time() + SESSION_TIMEOUT;
+D:\wamp64\www\sacco\includes\auth.php:220 $_SESSION['last_activity'] = time();
+D:\wamp64\www\sacco\includes\auth.php:229 public function hasRole($roles) {
+D:\wamp64\www\sacco\includes\auth.php:234 if (!is_array($roles)) {
+D:\wamp64\www\sacco\includes\auth.php:235 $roles = [$roles];
+D:\wamp64\www\sacco\includes\auth.php:238 return isset($_SESSION['role']) && in_array($_SESSION['role'], $roles, true);
+D:\wamp64\www\sacco\includes\auth.php:249 if (empty($_SESSION['role'])) {
+D:\wamp64\www\sacco\includes\auth.php:254 if ($_SESSION['role'] === 'admin') {
+D:\wamp64\www\sacco\includes\auth.php:258 $role = $_SESSION['role'];
+D:\wamp64\www\sacco\includes\auth.php:259 $rolePermissions = [
+D:\wamp64\www\sacco\includes\auth.php:306 return in_array($permission, $rolePermissions[$role] ?? [], true);
+D:\wamp64\www\sacco\includes\auth.php:315 $_SESSION['redirect_after_login'] = $_SERVER['REQUEST_URI'] ?? '';
+D:\wamp64\www\sacco\includes\auth.php:331 public function requireRole($roles) {
+D:\wamp64\www\sacco\includes\auth.php:334 if (!$this->hasRole($roles)) {
+D:\wamp64\www\sacco\includes\auth.php:363 $stmt->execute([$_SESSION['user_id']]);
+D:\wamp64\www\sacco\includes\auth.php:505 if ($this->isLoggedIn() && $_SESSION['user_id'] == $userId) {
+D:\wamp64\www\sacco\includes\auth.php:509 'ip_address' => $_SESSION['ip_address'] ?? 'Unknown',
+D:\wamp64\www\sacco\includes\auth.php:510 'user_agent' => $_SESSION['user_agent'] ?? 'Unknown',
+D:\wamp64\www\sacco\includes\auth.php:511 'last_activity' => date('Y-m-d H:i:s', $_SESSION['last_activity'] ?? time()),
+D:\wamp64\www\sacco\includes\auth.php:523 return $this->isLoggedIn() && $_SESSION['user_id'] == $userId &&
+D:\wamp64\www\sacco\includes\auth.php:524 (time() - ($_SESSION['last_activity'] ?? 0)) < 300; // 5 minutes
+D:\wamp64\www\sacco\includes\functions.php:292 $userId = $_SESSION['user_id'] ?? null;
+D:\wamp64\www\sacco\includes\navbar.php:26 <i class="bi bi-person-circle"></i> <?php echo htmlspecialchars($_SESSION['full_name'] ?? 'User'); ?>
+D:\wamp64\www\sacco\includes\navbar.php:29 <li><span class="dropdown-item-text">Role: <?php echo htmlspecialchars(ucwords(str_replace('_', ' ', $_SESSION['role'] ?? 'guest'))); ?></span></li>
+D:\wamp64\www\sacco\includes\sidebar.php:5 $role = $_SESSION['role'] ?? 'viewer';
+D:\wamp64\www\sacco\includes\sidebar.php:6 $permissions = $_SESSION['permissions'] ?? [];
+D:\wamp64\www\sacco\includes\sidebar.php:8 function hasPermission($permission) {
+D:\wamp64\www\sacco\includes\sidebar.php:10 return in_array($permission, $permissions) || $_SESSION['role'] === 'admin';
+D:\wamp64\www\sacco\includes\sidebar.php:37 <div class="user-name"><?php echo htmlspecialchars($_SESSION['username'] ?? 'User'); ?></div>
+D:\wamp64\www\sacco\includes\sidebar.php:38 <div class="user-role"><?php echo ucfirst($role); ?></div>
+D:\wamp64\www\sacco\includes\sidebar.php:112 <?php if (hasPermission('approve_loans')): ?>
+D:\wamp64\www\sacco\includes\sidebar.php:148 <?php if ($role === 'admin' || $role === 'manager' || $role === 'accountant'): ?>
+D:\wamp64\www\sacco\includes\sidebar.php:232 <?php if (hasPermission('accounting.view')): ?>
+D:\wamp64\www\sacco\includes\sidebar.php:258 <?php if ($role === 'admin'): ?>
+D:\wamp64\www\sacco\loans\approve.php:46 $stmt->execute([$_SESSION['user_id'], $loanId]);
+D:\wamp64\www\sacco\loans\approve.php:54 $stmt->execute([$_SESSION['user_id'], $remarks, $loanId]);
+D:\wamp64\www\sacco\loans\disburse.php:37 $stmt->execute([$_SESSION['user_id'], $newBalance, $loanId]);
+D:\wamp64\www\sacco\loans\repay.php:71 $_SESSION['user_id']
+D:\wamp64\www\sacco\member\auth-middleware.php:17 if (!isset($_SESSION['member_user_id']) || !isset($_SESSION['session_token'])) {
+D:\wamp64\www\sacco\member\auth-middleware.php:28 $sessionValidation = $authService->validateSession($_SESSION['session_token']);
+D:\wamp64\www\sacco\member\auth-middleware.php:37 $_SESSION['last_activity'] = time();
+D:\wamp64\www\sacco\member\auth-middleware.php:38 $_SESSION['user_id'] = $sessionValidation['user_id'];
+D:\wamp64\www\sacco\member\auth-middleware.php:39 $_SESSION['member_id'] = $sessionValidation['member_id'];
+D:\wamp64\www\sacco\member\auth-middleware.php:48 if (!isset($_SESSION['member_id'])) {
+D:\wamp64\www\sacco\member\auth-middleware.php:59 $stmt->execute([$_SESSION['member_id']]);
+D:\wamp64\www\sacco\member\auth-middleware.php:70 $stmt->execute([$_SESSION['member_id']]);
+D:\wamp64\www\sacco\member\auth-middleware.php:82 $stmt->execute([$_SESSION['member_id']]);
+D:\wamp64\www\sacco\member\auth-middleware.php:89 $stmt->execute([$_SESSION['member_id']]);
+D:\wamp64\www\sacco\member\auth-middleware.php:96 if (isset($_SESSION['session_token'])) {
+D:\wamp64\www\sacco\member\auth-middleware.php:99 $authService->memberLogout($_SESSION['session_token']);
+D:\wamp64\www\sacco\member\change-password-first-login.php:17 if (!isset($_SESSION['temp_user_id'])) {
+D:\wamp64\www\sacco\member\change-password-first-login.php:35 $_SESSION['temp_user_id'],
+D:\wamp64\www\sacco\member\change-password-first-login.php:36 $_SESSION['temp_member_id'] ?? 0,
+D:\wamp64\www\sacco\member\change-password-first-login.php:41 $_SESSION['member_user_id'] = $_SESSION['temp_user_id'];
+D:\wamp64\www\sacco\member\change-password-first-login.php:42 $_SESSION['is_member'] = true;
+D:\wamp64\www\sacco\member\change-password-first-login.php:44 unset($_SESSION['temp_user_id']);
+D:\wamp64\www\sacco\member\change-password-first-login.php:45 unset($_SESSION['temp_member_id']);
+D:\wamp64\www\sacco\member\change-password-first-login.php:46 unset($_SESSION['first_login']);
+D:\wamp64\www\sacco\member\security.php:37 $stmt->execute([$_SESSION['member_user_id']]);
+D:\wamp64\www\sacco\member\security.php:56 $stmt->execute([$newPasswordHash, $_SESSION['member_user_id']]);
+D:\wamp64\www\sacco\member\security.php:66 $_SESSION['member_user_id'],
+D:\wamp64\www\sacco\member\security.php:67 $_SESSION['member_id'],
+D:\wamp64\www\sacco\member\security.php:70 $_SESSION['member_user_id']
+D:\wamp64\www\sacco\member\security.php:95 $_SESSION['member_user_id'],
+D:\wamp64\www\sacco\member\security.php:96 $_SESSION['member_id'],
+D:\wamp64\www\sacco\member\security.php:111 $stmt->execute([$_SESSION['member_user_id']]);
+D:\wamp64\www\sacco\member\security.php:235 $stmt->execute([$_SESSION['member_id']]);
+D:\wamp64\www\sacco\member\shares.php:37 $result = $shareService->purchaseSharesFromSavings($member['member_id'], $savingsAccountId, $sharesToBuy, $_SESSION['member_user_id']);
+D:\wamp64\www\sacco\member\shares.php:53 $result = $shareService->sellShares($member['member_id'], $sellSavingsAccountId, $sellShares, $_SESSION['member_user_id']);
+D:\wamp64\www\sacco\member\shares.php:73 $_SESSION['member_user_id'],
+D:\wamp64\www\sacco\member\verify-otp.php:16 if (!isset($_SESSION['pending_2fa']) || !isset($_SESSION['temp_user_id'])) {
+D:\wamp64\www\sacco\member\verify-otp.php:31 $_SESSION['temp_user_id'],
+D:\wamp64\www\sacco\member\verify-otp.php:32 $_SESSION['temp_member_id'],
+D:\wamp64\www\sacco\member\verify-otp.php:39 $_SESSION['member_user_id'] = $result['user_id'];
+D:\wamp64\www\sacco\member\verify-otp.php:40 $_SESSION['member_id'] = $result['member_id'];
+D:\wamp64\www\sacco\member\verify-otp.php:41 $_SESSION['session_token'] = $result['session_token'];
+D:\wamp64\www\sacco\member\verify-otp.php:42 $_SESSION['is_member'] = true;
+D:\wamp64\www\sacco\member\verify-otp.php:44 unset($_SESSION['pending_2fa']);
+D:\wamp64\www\sacco\member\verify-otp.php:45 unset($_SESSION['temp_user_id']);
+D:\wamp64\www\sacco\member\verify-otp.php:46 unset($_SESSION['temp_member_id']);
+D:\wamp64\www\sacco\members\statement.php:8 $memberId = $_GET['id'] ?? $_SESSION['member_id'] ?? null;
+D:\wamp64\www\sacco\savings\deposit.php:67 $_SESSION['user_id']
+D:\wamp64\www\sacco\savings\open.php:84 $_SESSION['user_id'] ?? null,
+D:\wamp64\www\sacco\savings\withdraw.php:57 $_SESSION['user_id']
+D:\wamp64\www\sacco\login.php:18 $redirectUrl = $_SESSION['redirect_after_login'] ?? APP_URL . '/dashboard.php';
+D:\wamp64\www\sacco\login.php:19 unset($_SESSION['redirect_after_login']);
+D:\wamp64\www\sacco\member-login.php:38 $_SESSION['member_user_id'] = $result['user_id'];
+D:\wamp64\www\sacco\member-login.php:39 $_SESSION['member_id'] = $result['member_id'];
+D:\wamp64\www\sacco\member-login.php:40 $_SESSION['session_token'] = $result['session_token'];
+D:\wamp64\www\sacco\member-login.php:41 $_SESSION['is_member'] = true;
+D:\wamp64\www\sacco\member-login.php:46 $_SESSION['temp_user_id'] = $result['user_id'];
+D:\wamp64\www\sacco\member-login.php:47 $_SESSION['first_login'] = $result['first_login'] ?? false;
+D:\wamp64\www\sacco\member-login.php:51 $_SESSION['temp_user_id'] = $result['user_id'];
+D:\wamp64\www\sacco\member-login.php:52 $_SESSION['temp_member_id'] = $result['member_id'];
+D:\wamp64\www\sacco\member-login.php:53 $_SESSION['pending_2fa'] = true;
+D:\wamp64\www\sacco\tmp_accounting_page_test.php:25 $_SESSION = [
+D:\wamp64\www\sacco\tmp_test_wrapper2.php:21 $_SESSION = [
