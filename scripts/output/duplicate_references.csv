@@ -1,0 +1,24 @@
+reference,duplicate_count,debit_total,credit_total,classification,recommended_action
+RP20260617185109210,3,50000.00,50000.00,Possible duplicate postings (triplicate),Investigate sequence; reverse extra entries keeping earliest pair
+RP20260617185239943,3,11203.98,11203.98,Possible duplicate postings (triplicate),Investigate sequence; reverse extra entries keeping earliest pair
+SHR-3-1780076050,2,20000.00,20000.00,Valid Journal (double-entry),No action - confirmed posted
+STR-3-4-1780078429,2,20000.00,20000.00,Valid Journal (double-entry),No action - confirmed posted
+SHR-7-1781680671,2,40000.00,40000.00,Valid Journal (double-entry),No action - confirmed posted
+SHR-6-1781680695,2,30000.00,30000.00,Valid Journal (double-entry),No action - confirmed posted
+STR-4-7-1781680792,2,40000.00,40000.00,Valid Journal (double-entry),No action - confirmed posted
+LD20260617110756670,2,10000.00,10000.00,Valid Journal (double-entry),No action - confirmed posted
+LD20260617110817214,2,10000.00,10000.00,Valid Journal (double-entry),No action - confirmed posted
+RP20260617110818890,2,1000.00,1000.00,Valid Journal (double-entry),No action - confirmed posted
+LD20260617112815121,2,10000.00,10000.00,Valid Journal (double-entry),No action - confirmed posted
+RP20260617112817416,2,1000.00,1000.00,Valid Journal (double-entry),No action - confirmed posted
+LD20260617145511343,2,60000.00,60000.00,Valid Journal (double-entry),No action - confirmed posted
+LD20260617145624487,2,3000000.00,3000000.00,Valid Journal (double-entry),No action - confirmed posted
+SHR-8-1781711646,2,120000.00,120000.00,Valid Journal (double-entry),No action - confirmed posted
+STR-4-8-1781711690,2,40000.00,40000.00,Valid Journal (double-entry),No action - confirmed posted
+STR-3-4-1780077242,2,0.00,0.00,Orphan/Incomplete entries,Investigate entries with null ledger_code/status; recreate or remove as appropriate
+STR-3-4-1780077070,2,0.00,0.00,Orphan/Incomplete entries,Investigate entries with null ledger_code/status; recreate or remove as appropriate
+SHR-4-1780075563,1,0.00,0.00,Single unmatched share transaction,Review and post via LedgerService if valid
+SHR-2-1780075534,1,0.00,0.00,Single unmatched share transaction,Review and post via LedgerService if valid
+SHR-3-1780075495,1,0.00,0.00,Single unmatched share transaction,Review and post via LedgerService if valid
+SHR-3-1780075459,1,0.00,0.00,Single unmatched share transaction,Review and post via LedgerService if valid
+SHR-3-1780075157,1,0.00,0.00,Single unmatched share transaction,Review and post via LedgerService if valid

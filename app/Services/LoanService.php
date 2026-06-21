@@ -12,6 +12,9 @@ use SACCO\Models\PaymentAllocation;
 use PDO;
 use Exception;
 
+require_once __DIR__ . '/LedgerService.php';
+require_once __DIR__ . '/AuditAuthNotificationServices.php';
+
 class LoanService
 {
     private $db;
@@ -21,6 +24,15 @@ class LoanService
     public function __construct(PDO $database)
     {
         $this->db = $database;
+        // Ensure AuditService and other statics have DB access when autoloader isn't present
+        try {
+            AuditService::setDatabase($database);
+        } catch (\Exception $e) {
+            // ignore if AuditService not available yet
+        }
+
+        // Some legacy static helpers expect $GLOBALS['db']
+        $GLOBALS['db'] = $database;
     }
 
     /**
@@ -167,7 +179,7 @@ class LoanService
             return ['success' => true, 'message' => 'Loan approved successfully'];
         } catch (Exception $e) {
             $this->db->rollBack();
-            return ['success' => false, 'message' => $e->getMessage()];
+            return ['success' => false, 'message' => $e->getMessage(), 'trace' => $e->getTraceAsString()];
         }
     }
 
@@ -193,6 +205,12 @@ class LoanService
             $processingFee = $this->calculateProcessingFee($disbursementAmount, $loan['product_id']);
             $netDisbursement = $disbursementAmount - $processingFee;
 
+            // Validate disbursement amount
+            $disbursementAmount = (float) $disbursementAmount;
+            if ($disbursementAmount <= 0) {
+                throw new Exception('Disbursement amount is not set or is zero');
+            }
+
             // Update loan
             $stmt = $this->db->prepare("
                 UPDATE loans
@@ -205,9 +223,11 @@ class LoanService
             // Create ledger entries for disbursement
             LedgerService::postLoanDisbursement($loanId, $disbursementAmount, $processingFee, $disbursedBy);
 
-            // Generate repayment schedule
-            $this->generateRepaymentSchedule($loanId, $disbursementAmount, $loan['annual_interest_rate'],
-                $loan['repayment_period_months']);
+            // Generate repayment schedule using product/loan interest and term
+            $product = $this->getLoanProduct($loan['product_id']);
+            $annualRate = isset($loan['interest_rate']) ? $loan['interest_rate'] : ($product['default_interest_rate'] ?? 0);
+            $months = isset($loan['repayment_period_months']) ? (int)$loan['repayment_period_months'] : (int)($product['min_repayment_months'] ?? 12);
+            $this->generateRepaymentSchedule($loanId, $disbursementAmount, $annualRate, $months);
 
             // Log audit
             AuditService::log(
@@ -263,7 +283,7 @@ class LoanService
 
             $stmt = $this->db->prepare("
                 INSERT INTO loan_repayment_schedule
-                (loan_id, installment_number, due_date, principal_due, interest_due, total_due, principal_balance, status)
+                (loan_id, installment_no, due_date, principal_amount, interest_amount, total_due, principal_balance, status)
                 VALUES (?, ?, ?, ?, ?, ?, ?, 'pending')
             ");
 
@@ -325,12 +345,7 @@ class LoanService
             $receiptNumber = $this->generateReceiptNumber('RP');
 
             // Insert repayment record
-            $stmt = $this->db->prepare("
-                INSERT INTO loan_repayments
-                (loan_id, repayment_date, amount_paid, principal_paid, interest_paid, 
-                 penalty_paid, payment_method, reference_number, receipt_number, posted_by, status)
-                VALUES (?, NOW(), ?, ?, ?, ?, ?, ?, ?, ?, 'posted')
-            ");
+            $stmt = $this->db->prepare("\n                INSERT INTO loan_repayments\n                (loan_id, amount_paid, principal_paid, interest_paid, \n                 penalty_paid, payment_method, reference_no, receipt_no, posted_by)\n                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)\n            ");
 
             $stmt->execute([
                 $loanId,
@@ -394,36 +409,43 @@ class LoanService
     public function allocateRepayment($loanId, $totalPayment)
     {
         $loan = $this->getLoanById($loanId);
-
-        $allocation = new PaymentAllocation();
-        $allocation->total_payment = $totalPayment;
-        $allocation->penalty_paid = 0;
-        $allocation->interest_paid = 0;
-        $allocation->principal_paid = 0;
+        $allocation = [];
+        $allocation['total_payment'] = $totalPayment;
+        $allocation['penalty_paid'] = 0;
+        $allocation['interest_paid'] = 0;
+        $allocation['principal_paid'] = 0;
 
         $remaining = $totalPayment;
 
         // 1. Apply to penalties
         $totalPenalties = $this->calculateTotalPenalties($loanId);
         if ($totalPenalties > 0) {
-            $allocation->penalty_paid = min($remaining, $totalPenalties);
-            $remaining -= $allocation->penalty_paid;
+            $allocation['penalty_paid'] = min($remaining, $totalPenalties);
+            $remaining -= $allocation['penalty_paid'];
         }
 
         // 2. Apply to accrued interest
-        $accrued = $loan['interest_accrued'];
+        if (isset($loan['interest_accrued'])) {
+            $accrued = $loan['interest_accrued'];
+        } else {
+            // loan_repayment_schedule stores `interest_amount` and `paid_amount` (aggregate), use those
+            $stmt = $this->db->prepare("SELECT COALESCE(SUM(interest_amount - COALESCE(paid_amount,0)),0) as accrued FROM loan_repayment_schedule WHERE loan_id = ? AND status IN ('pending','partial','overdue')");
+            $stmt->execute([$loanId]);
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+            $accrued = $row ? $row['accrued'] : 0;
+        }
         if ($accrued > 0 && $remaining > 0) {
-            $allocation->interest_paid = min($remaining, $accrued);
-            $remaining -= $allocation->interest_paid;
+            $allocation['interest_paid'] = min($remaining, $accrued);
+            $remaining -= $allocation['interest_paid'];
         }
 
         // 3. Apply to principal
         if ($remaining > 0) {
-            $allocation->principal_paid = $remaining;
+            $allocation['principal_paid'] = $remaining;
             $remaining = 0;
         }
 
-        $allocation->balance_remaining = max(0, $remaining);
+        $allocation['balance_remaining'] = max(0, $remaining);
 
         return $allocation;
     }
@@ -487,7 +509,7 @@ class LoanService
     public function getLoanById($loanId)
     {
         $stmt = $this->db->prepare("
-            SELECT l.*, lp.product_name, m.full_name, m.membership_number
+            SELECT l.*, lp.product_name, m.full_name, m.membership_no AS membership_no
             FROM loans l
             JOIN loan_products lp ON l.product_id = lp.product_id
             JOIN members m ON l.member_id = m.member_id
@@ -534,7 +556,9 @@ class LoanService
     private function calculateProcessingFee($amount, $productId)
     {
         $product = $this->getLoanProduct($productId);
-        return round($amount * ($product['processing_fee_percentage'] / 100), 2);
+        // loan_products uses 'processing_fee' (percentage) field
+        $pct = isset($product['processing_fee']) ? $product['processing_fee'] : 0;
+        return round($amount * ($pct / 100), 2);
     }
 
     /**
@@ -542,22 +566,12 @@ class LoanService
      */
     private function updateLoanBalance($loanId, $allocation)
     {
-        $stmt = $this->db->prepare("
-            UPDATE loans
-            SET principal_balance = principal_balance - ?,
-                interest_accrued = interest_accrued - ?,
-                penalty_accrued = penalty_accrued - ?,
-                total_paid = total_paid + ?,
-                outstanding_balance = outstanding_balance - ?
-            WHERE loan_id = ?
-        ");
+        // Update only existing columns: increase total_paid and reduce outstanding_balance by principal paid
+        $stmt = $this->db->prepare("\n            UPDATE loans\n            SET total_paid = total_paid + ?,\n                outstanding_balance = outstanding_balance - ?\n            WHERE loan_id = ?\n        ");
 
         $stmt->execute([
+            $allocation['total_payment'],
             $allocation['principal_paid'],
-            $allocation['interest_paid'],
-            $allocation['penalty_paid'],
-            $allocation['total_payment'],
-            $allocation['total_payment'],
             $loanId
         ]);
     }
@@ -567,11 +581,7 @@ class LoanService
      */
     private function calculateTotalPenalties($loanId)
     {
-        $stmt = $this->db->prepare("
-            SELECT COALESCE(SUM(accumulated_penalty), 0) as total
-            FROM loan_repayment_schedule
-            WHERE loan_id = ? AND status IN ('pending', 'partial', 'overdue')
-        ");
+        $stmt = $this->db->prepare("\n            SELECT COALESCE(SUM(late_penalty), 0) as total\n            FROM loan_repayment_schedule\n            WHERE loan_id = ? AND status IN ('pending', 'partial', 'overdue')\n        ");
         $stmt->execute([$loanId]);
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
         return $result['total'];
@@ -583,19 +593,19 @@ class LoanService
     private function updateScheduleStatus($loanId)
     {
         // Mark paid installments
-        $stmt = $this->db->prepare("
-            UPDATE loan_repayment_schedule
-            SET status = 'paid'
-            WHERE loan_id = ? AND total_paid >= total_due
-        ");
+            $stmt = $this->db->prepare("
+                UPDATE loan_repayment_schedule
+                SET status = 'paid'
+                WHERE loan_id = ? AND paid_amount >= total_due
+            ");
         $stmt->execute([$loanId]);
 
         // Mark partial payments
-        $stmt = $this->db->prepare("
-            UPDATE loan_repayment_schedule
-            SET status = 'partial'
-            WHERE loan_id = ? AND total_paid > 0 AND total_paid < total_due
-        ");
+            $stmt = $this->db->prepare("
+                UPDATE loan_repayment_schedule
+                SET status = 'partial'
+                WHERE loan_id = ? AND paid_amount > 0 AND paid_amount < total_due
+            ");
         $stmt->execute([$loanId]);
     }
 
@@ -630,7 +640,7 @@ class LoanService
     public function getDefaulters($status = 'active', $limit = 100)
     {
         $stmt = $this->db->prepare("
-            SELECT d.*, l.loan_ref_no AS loan_reference, m.full_name, m.membership_number,
+            SELECT d.*, l.loan_ref_no AS loan_reference, m.full_name, m.membership_no AS membership_no,
                    m.phone, l.amount_approved, l.outstanding_balance
             FROM defaulters_list d
             JOIN loans l ON d.loan_id = l.loan_id
@@ -656,7 +666,7 @@ class LoanService
                 (SELECT COALESCE(SUM(interest_due - interest_paid), 0)
                  FROM loan_repayment_schedule 
                  WHERE loan_id = ? AND due_date <= ?) as accrued_interest,
-                (SELECT COALESCE(SUM(accumulated_penalty), 0)
+                (SELECT COALESCE(SUM(late_penalty), 0)
                  FROM loan_repayment_schedule 
                  WHERE loan_id = ? AND due_date <= ?) as accrued_penalties
             FROM loans l

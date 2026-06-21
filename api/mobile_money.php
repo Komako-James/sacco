@@ -160,25 +160,10 @@ function processPaymentTransaction($mobileMoneyTransactionId) {
     $account = $stmt->fetch();
     
     if ($account) {
-        // Record the transaction
-        $receipt = generateReceiptNumber('MTNM');
-        $stmt = $db->prepare("
-            INSERT INTO savings_transactions 
-            (account_id, transaction_type, amount, balance_after, payment_method, receipt_no, status, transaction_date)
-            VALUES (?, 'deposit', ?, ?, 'mobile_money', ?, 'completed', NOW())
-        ");
-        
-        $newBalance = $account['balance'] + $mtnTrans['amount'];
-        $stmt->execute([
-            $account['account_id'],
-            $mtnTrans['amount'],
-            $newBalance,
-            $receipt
-        ]);
-        
-        // Update account balance
-        $stmt = $db->prepare("UPDATE savings_accounts SET balance = ? WHERE account_id = ?");
-        $stmt->execute([$newBalance, $account['account_id']]);
+        // Delegate to SavingsService to ensure ledger posting and consistent transaction logging
+        require_once __DIR__ . '/../app/Services/SavingsService.php';
+        $savingsService = new \SACCO\Services\SavingsService();
+        $savingsService->deposit((int)$mtnTrans['member_id'], (int)$account['account_id'], (float)$mtnTrans['amount'], 'mobile_money', 0, generateReceiptNumber('MTNM'));
     }
 }
 ?>

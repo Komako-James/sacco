@@ -1,0 +1,41 @@
+mysql: Unknown OS character set 'cp0'.
+mysql: Switching to the default character set 'utf8mb4'.
+section
+SECTION:COA
+account_code	account_name	account_type	account_category	is_active
+1010	Cash	asset	Current Asset	1
+1020	Main Bank Account	asset	Current Asset	1
+1030	Loans Receivable	asset	Current Asset	1
+2010	Member Savings	liability	Member Liability	1
+2020	Member Deposits	liability	Member Liability	1
+3010	Share Capital	equity	Owner Equity	1
+3020	Retained Earnings	equity	Owner Equity	1
+4010	Loan Interest Income	income	Operating Income	1
+4020	Processing Fee Income	income	Operating Income	1
+4030	Penalty Income	income	Operating Income	1
+4040	Other Income	income	Operating Income	1
+5010	Staff Costs	expense	Operating Expense	1
+5020	Administrative Expenses	expense	Operating Expense	1
+5030	Utilities	expense	Operating Expense	1
+5040	Rent	expense	Operating Expense	1
+5050	Fuel	expense	Operating Expense	1
+5060	Internet	expense	Operating Expense	1
+section
+SECTION:COA_DUP
+section
+SECTION:LEDGER_COUNTS
+total_entries	total_posted	total_draft	total_reversed
+4	4	0	0
+section
+SECTION:DEBITS_CREDITS
+total_debits	total_credits	difference
+40000.00	40000.00	0.00
+section
+SECTION:ORPHAN_MEMBERS
+section
+SECTION:LEDGER_CODES_MISSING_COA
+section
+SECTION:INACTIVE_ACCOUNTS_USED
+section
+SECTION:UNBALANCED_JOURNALS
+ERROR 1054 (42S22) at line 17: Unknown column 'journal_id' in 'field list'

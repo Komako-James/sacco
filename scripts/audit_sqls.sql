@@ -1,0 +1,43 @@
+-- SACCO audit SQL batch
+SELECT 'SECTION:COA' AS section;
+SELECT account_code, account_name, account_type, account_category, is_active FROM chart_of_accounts ORDER BY account_code;
+SELECT 'SECTION:COA_DUP' AS section;
+SELECT account_code, COUNT(*) AS cnt FROM chart_of_accounts GROUP BY account_code HAVING cnt > 1;
+SELECT 'SECTION:LEDGER_COUNTS' AS section;
+SELECT COUNT(*) AS total_entries, SUM(CASE WHEN status='posted' THEN 1 ELSE 0 END) AS total_posted, SUM(CASE WHEN status='draft' THEN 1 ELSE 0 END) AS total_draft, SUM(CASE WHEN status='reversed' THEN 1 ELSE 0 END) AS total_reversed FROM ledger_entries;
+SELECT 'SECTION:DEBITS_CREDITS' AS section;
+SELECT COALESCE(SUM(debit),0) AS total_debits, COALESCE(SUM(credit),0) AS total_credits, COALESCE(SUM(debit),0) - COALESCE(SUM(credit),0) AS difference FROM ledger_entries WHERE status='posted';
+SELECT 'SECTION:ORPHAN_MEMBERS' AS section;
+SELECT le.entry_id, le.ledger_code, le.entry_date, le.member_id FROM ledger_entries le LEFT JOIN members m ON le.member_id = m.member_id WHERE le.member_id IS NOT NULL AND m.member_id IS NULL LIMIT 200;
+SELECT 'SECTION:LEDGER_CODES_MISSING_COA' AS section;
+SELECT DISTINCT le.ledger_code FROM ledger_entries le LEFT JOIN chart_of_accounts coa ON le.ledger_code = coa.account_code WHERE coa.account_code IS NULL LIMIT 200;
+SELECT 'SECTION:INACTIVE_ACCOUNTS_USED' AS section;
+SELECT DISTINCT le.ledger_code, coa.account_name FROM ledger_entries le JOIN chart_of_accounts coa ON le.ledger_code = coa.account_code WHERE coa.is_active = 0 LIMIT 200;
+SELECT 'SECTION:UNBALANCED_JOURNALS' AS section;
+SELECT journal_id, journal_reference, total_debits, total_credits FROM journal_entries WHERE COALESCE(total_debits,0) <> COALESCE(total_credits,0) LIMIT 200;
+SELECT 'SECTION:UNBALANCED_JOURNALS_BY_LEDGER' AS section;
+SELECT j.journal_reference, COALESCE(SUM(le.debit),0) AS debit_sum, COALESCE(SUM(le.credit),0) AS credit_sum FROM journal_entries j LEFT JOIN ledger_entries le ON le.transaction_reference = j.journal_reference GROUP BY j.journal_reference HAVING debit_sum <> credit_sum LIMIT 200;
+SELECT 'SECTION:SAVINGS_TOTAL' AS section;
+SELECT COALESCE(SUM(current_balance),0) AS member_savings_total FROM savings_accounts;
+SELECT 'SECTION:SAVINGS_CONTROL_LOOKUP' AS section;
+SELECT account_code, account_name FROM chart_of_accounts WHERE account_name LIKE '%saving%' OR account_name LIKE '%Savings%' OR account_name LIKE '%Member Savings%';
+SELECT 'SECTION:SHARES_TOTAL' AS section;
+SELECT COALESCE(SUM(shares_owned),0) AS total_shares_count, COALESCE(SUM(shares_owned * share_price),0) AS total_shares_value FROM member_share_holdings;
+SELECT 'SECTION:SHARE_CAPITAL_LOOKUP' AS section;
+SELECT account_code, account_name FROM chart_of_accounts WHERE account_name LIKE '%share capital%' OR account_name LIKE '%Share Capital%' OR account_name LIKE '%Member Share%';
+SELECT 'SECTION:LOANS_OUTSTANDING' AS section;
+SELECT COALESCE(SUM(outstanding_balance),0) AS outstanding_principal FROM loans WHERE status IN ('disbursed','active');
+SELECT 'SECTION:LOAN_CONTROL_LOOKUP' AS section;
+SELECT account_code, account_name FROM chart_of_accounts WHERE account_name LIKE '%Loan%' OR account_name LIKE '%Receivable%' OR account_name LIKE '%Loans%';
+SELECT 'SECTION:TOP5_LOANS' AS section;
+SELECT loan_id, member_id, outstanding_balance FROM loans ORDER BY outstanding_balance DESC LIMIT 5;
+SELECT 'SECTION:TRIAL_BALANCE_TOP200' AS section;
+SELECT le.ledger_code, COALESCE(coa.account_name, le.ledger_name) AS ledger_name, COALESCE(SUM(le.debit),0) AS total_debit, COALESCE(SUM(le.credit),0) AS total_credit, COALESCE(SUM(le.debit - le.credit),0) AS balance FROM ledger_entries le LEFT JOIN chart_of_accounts coa ON le.ledger_code = coa.account_code WHERE le.status='posted' GROUP BY le.ledger_code, COALESCE(coa.account_name, le.ledger_name) ORDER BY le.ledger_code LIMIT 200;
+SELECT 'SECTION:TRIAL_BALANCE_TOTALS' AS section;
+SELECT COALESCE(SUM(debit),0) AS total_debits, COALESCE(SUM(credit),0) AS total_credits FROM ledger_entries WHERE status='posted';
+SELECT 'SECTION:ASSET_LIABILITY_EQUITY' AS section;
+SELECT coa.account_type, COALESCE(SUM(le.debit - le.credit),0) AS net_balance FROM ledger_entries le JOIN chart_of_accounts coa ON le.ledger_code = coa.account_code WHERE le.status='posted' GROUP BY coa.account_type;
+SELECT 'SECTION:RECENT_LEDGER_AUDIT_INFO' AS section;
+SELECT entry_id, ledger_code, entry_date, posted_by, approved_by, posted_at, created_at, reversal_of_id FROM ledger_entries ORDER BY entry_date DESC, entry_id DESC LIMIT 50;
+-- Reporting validation placeholders (run separately with date range if needed)
+-- END

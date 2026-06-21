@@ -21,10 +21,13 @@ class LedgerService
     const COA_BANK = '1020';
     const COA_LOANS = '1030';
     const COA_INTEREST_RECEIVABLE = '1040';
-    const COA_MEMBER_SHARES = '2010';
-    const COA_MEMBER_SAVINGS = '2020';
+    const COA_MEMBER_SHARES = '3010';
+    const COA_MEMBER_SAVINGS = '2010';
     const COA_INTEREST_PAYABLE = '2030';
-    const COA_RETAINED_EARNINGS = '3010';
+    const COA_RETAINED_EARNINGS = '3020';
+    // Capital reserve must not collide with retained earnings
+    const COA_CAPITAL_RESERVE = '3030';
+    const COA_SAVINGS_INTEREST_EXPENSE = '5040';
     const COA_INTEREST_INCOME = '4010';
     const COA_PROCESSING_FEES = '4020';
     const COA_PENALTY_INCOME = '4030';
@@ -276,6 +279,13 @@ class LedgerService
      */
     public static function postLoanDisbursement($loanId, $principalAmount, $processingFee, $postedBy)
     {
+        // Validate inputs to avoid creating zero-valued journal lines
+        $principalAmount = isset($principalAmount) ? (float)$principalAmount : 0.0;
+        $processingFee = isset($processingFee) ? (float)$processingFee : 0.0;
+        if ($principalAmount <= 0) {
+            throw new Exception('Invalid principal amount for disbursement');
+        }
+
         $receiptNumber = self::generateReceiptNumber('LD');
         
         $entries = [
@@ -293,21 +303,24 @@ class LedgerService
                 'credit' => $principalAmount,
                 'description' => "Loan disbursement payment"
             ],
-            // Debit: Bank Account (for fee collection)
-            [
+        ];
+
+        // Only include processing fee lines when there is a non-zero fee
+        if ($processingFee > 0) {
+            $entries[] = [
                 'ledger_code' => self::COA_BANK,
                 'debit' => $processingFee,
                 'credit' => 0,
                 'description' => "Processing fee collected"
-            ],
-            // Credit: Fee Income
-            [
+            ];
+            $entries[] = [
                 'ledger_code' => self::COA_PROCESSING_FEES,
                 'debit' => 0,
                 'credit' => $processingFee,
                 'description' => "Processing fee income"
-            ]
-        ];
+            ];
+        }
+        
 
         self::postJournalEntries($entries, $receiptNumber, "Loan Disbursement", $postedBy);
     }
@@ -346,14 +359,37 @@ class LedgerService
             ];
         }
 
-        // Credit: Interest Income
+        // Credit: Interest - prefer clearing accrued receivable first to avoid double recognition
         if ($allocation['interest_paid'] > 0) {
-            $entries[] = [
-                'ledger_code' => self::COA_INTEREST_INCOME,
-                'debit' => 0,
-                'credit' => $allocation['interest_paid'],
-                'description' => "Interest received"
-            ];
+            $interestToAllocate = $allocation['interest_paid'];
+
+            // Check current Interest Receivable balance (debit - credit)
+            $db = self::getConnection();
+            $stmt = $db->prepare('SELECT COALESCE(SUM(debit - credit), 0) AS balance FROM ledger_entries WHERE ledger_code = ? AND status = "posted"');
+            $stmt->execute([self::COA_INTEREST_RECEIVABLE]);
+            $receivableBalance = (float) $stmt->fetchColumn();
+
+            if ($receivableBalance > 0) {
+                $appliedToReceivable = min($interestToAllocate, $receivableBalance);
+                $entries[] = [
+                    'ledger_code' => self::COA_INTEREST_RECEIVABLE,
+                    'debit' => 0,
+                    'credit' => $appliedToReceivable,
+                    'description' => "Interest received - settle accrued receivable"
+                ];
+
+                $interestToAllocate -= $appliedToReceivable;
+            }
+
+            // Any remaining interest not previously accrued should be recognized as income
+            if ($interestToAllocate > 0) {
+                $entries[] = [
+                    'ledger_code' => self::COA_INTEREST_INCOME,
+                    'debit' => 0,
+                    'credit' => $interestToAllocate,
+                    'description' => "Interest received (not previously accrued)"
+                ];
+            }
         }
 
         // Credit: Penalty Income
@@ -451,26 +487,10 @@ class LedgerService
         $totalInterest = array_sum($interestByAccount);
         if ($totalInterest <= 0) return;
 
-        $receiptNumber = self::generateReceiptNumber('INT');
-
-        $entries = [
-            // Debit: Interest Receivable/Accrued (Asset)
-            [
-                'ledger_code' => self::COA_INTEREST_RECEIVABLE,
-                'debit' => $totalInterest,
-                'credit' => 0,
-                'description' => "Monthly interest accrued for {$month}"
-            ],
-            // Credit: Interest Income
-            [
-                'ledger_code' => self::COA_INTEREST_INCOME,
-                'debit' => 0,
-                'credit' => $totalInterest,
-                'description' => "Interest income earned for {$month}"
-            ]
-        ];
-
-        self::postJournalEntries($entries, $receiptNumber, "Interest Accrual", $postedBy);
+        // Use accrued revenue posting helper to ensure accounts are validated and consistent
+        $description = "Monthly interest accrued for {$month}";
+        // Post as accrued revenue: Debit Interest Receivable, Credit Interest Income
+        self::postAccruedRevenueEvent($totalInterest, self::COA_INTEREST_RECEIVABLE, self::COA_INTEREST_INCOME, $description, $postedBy, 'interest_accrual');
     }
 
     /**
@@ -520,9 +540,17 @@ class LedgerService
     {
         $referenceNumber = $referenceNumber ?: self::generateReceiptNumber('SH');
 
+        // Ensure we explicitly use the Member Savings liability account for
+        // savings->shares transfers (prevents accidental use of Member Deposits 2020).
+        $savingsAccount = self::validateAccount(self::COA_MEMBER_SAVINGS, self::ACCOUNT_TYPE_LIABILITY);
+        $savingsLedgerCode = $savingsAccount['account_code'];
+
+        $sharesAccount = self::validateAccount(self::COA_MEMBER_SHARES, self::ACCOUNT_TYPE_EQUITY);
+        $sharesLedgerCode = $sharesAccount['account_code'];
+
         $entries = [
             [
-                'ledger_code' => self::COA_MEMBER_SAVINGS,
+                'ledger_code' => $savingsLedgerCode,
                 'debit' => $amount,
                 'credit' => 0,
                 'description' => "Transfer from savings to share capital",
@@ -532,7 +560,7 @@ class LedgerService
                 'account_type' => 'savings'
             ],
             [
-                'ledger_code' => self::COA_MEMBER_SHARES,
+                'ledger_code' => $sharesLedgerCode,
                 'debit' => 0,
                 'credit' => $amount,
                 'description' => "Member share capital increase",
@@ -582,6 +610,41 @@ class LedgerService
         ];
 
         self::postJournalEntries($entries, $referenceNumber, "Share Redemption to Savings", $postedBy);
+    }
+
+    /**
+     * Post aggregated savings interest to ledger
+     * Debit: Savings Interest Expense (Expense)
+     * Credit: Member Savings (Liability)
+     */
+    public static function postSavingsInterest(float $amount, string $month, int $postedBy)
+    {
+        if ($amount <= 0) return;
+
+        // Validate accounts
+        $expenseAccount = self::validateAccount(self::COA_SAVINGS_INTEREST_EXPENSE, self::ACCOUNT_TYPE_EXPENSE);
+        $memberSavings = self::validateAccount(self::COA_MEMBER_SAVINGS, self::ACCOUNT_TYPE_LIABILITY);
+
+        $reference = self::generateReceiptNumber('SINT');
+
+        $entries = [
+            [
+                'ledger_code' => $expenseAccount['account_code'],
+                'debit' => $amount,
+                'credit' => 0,
+                'description' => "Savings interest expense for {$month}",
+                'transaction_type' => 'savings_interest'
+            ],
+            [
+                'ledger_code' => $memberSavings['account_code'],
+                'debit' => 0,
+                'credit' => $amount,
+                'description' => "Savings interest credited to members for {$month}",
+                'transaction_type' => 'savings_interest'
+            ]
+        ];
+
+        self::postJournalEntries($entries, $reference, "Savings Interest Posting", $postedBy);
     }
 
     /**
@@ -778,9 +841,27 @@ class LedgerService
             $totalDebits = 0;
             $totalCredits = 0;
 
-            foreach ($entries as $entry) {
-                $totalDebits += $entry['debit'];
-                $totalCredits += $entry['credit'];
+            foreach ($entries as $idx => $entry) {
+                // Normalize missing values
+                $debit = isset($entry['debit']) ? (float)$entry['debit'] : 0.0;
+                $credit = isset($entry['credit']) ? (float)$entry['credit'] : 0.0;
+
+                // Reject negative amounts
+                if ($debit < 0 || $credit < 0) {
+                    throw new Exception('Journal entry contains negative debit or credit');
+                }
+
+                // Require exactly one side to be > 0
+                if (($debit > 0 && $credit > 0) || ($debit == 0 && $credit == 0)) {
+                    throw new Exception('Each journal line must have exactly one of debit or credit greater than zero');
+                }
+
+                $totalDebits += $debit;
+                $totalCredits += $credit;
+
+                // Write normalized values back to entries array so insertion uses correct numbers
+                $entries[$idx]['debit'] = $debit;
+                $entries[$idx]['credit'] = $credit;
             }
 
             if (abs($totalDebits - $totalCredits) > 0.01) {
@@ -1400,6 +1481,7 @@ class LedgerService
             self::COA_MEMBER_SAVINGS => 'Member Savings',
             self::COA_INTEREST_PAYABLE => 'Interest Payable',
             self::COA_RETAINED_EARNINGS => 'Retained Earnings',
+            self::COA_CAPITAL_RESERVE => 'Capital Reserve',
             self::COA_INTEREST_INCOME => 'Interest Income',
             self::COA_PROCESSING_FEES => 'Processing Fees Income',
             self::COA_PENALTY_INCOME => 'Penalty Income',
@@ -1414,7 +1496,7 @@ class LedgerService
     /**
      * Generate receipt number
      */
-    private static function generateReceiptNumber($prefix)
+    public static function generateReceiptNumber($prefix)
     {
         return $prefix . date('YmdHis') . rand(100, 999);
     }

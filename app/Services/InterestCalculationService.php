@@ -183,6 +183,12 @@ class InterestCalculationService
             ");
             $stmt->execute([$month, count($accounts), $totalInterest, $postedBy]);
 
+                // Post aggregated savings interest to ledger
+                if ($totalInterest > 0) {
+                    require_once __DIR__ . '/LedgerService.php';
+                    \SACCO\Services\LedgerService::postSavingsInterest($totalInterest, $month, $postedBy);
+                }
+
             $this->db->commit();
 
             return [
@@ -295,20 +301,10 @@ class InterestCalculationService
 
                 $calculatedPenalty = min($dailyPenalty * $daysOverdue, $totalMonthlyPenalty);
 
-                // Update schedule
-                $stmt = $this->db->prepare("
-                    UPDATE loan_repayment_schedule
-                    SET penalty_due = ?,
-                        total_due = total_due + ?,
-                        days_overdue = ?,
-                        status = 'overdue',
-                        accumulated_penalty = accumulated_penalty + ?
-                    WHERE schedule_id = ?
-                ");
+                // Update schedule: add late penalty and mark overdue
+                $stmt = $this->db->prepare("\n                    UPDATE loan_repayment_schedule\n                    SET late_penalty = COALESCE(late_penalty, 0) + ?,\n                        total_due = total_due + ?,\n                        status = 'overdue'\n                    WHERE schedule_id = ?\n                ");
                 $stmt->execute([
                     $calculatedPenalty,
-                    $calculatedPenalty,
-                    $daysOverdue,
                     $calculatedPenalty,
                     $schedule['schedule_id']
                 ]);

@@ -1,0 +1,66 @@
+Backfill Script Specification: scripts/backfill_savings_gl.php
+
+Purpose:
+- Backfill missing GL ledger_entries for unmatched savings transactions.
+- This is a production script specification only; DO NOT RUN without approvals and backups.
+
+Inputs:
+- Date range (optional): --from=YYYY-MM-DD --to=YYYY-MM-DD
+- Dry-run flag: --dry-run (default true)
+- Specific transaction IDs file: --ids=path/to/file.csv
+- Audit user ID: --posted_by=<user_id>
+
+Validation checks:
+1. Verify database connectivity and read-only previews before any writes.
+2. Confirm each source savings transaction exists and status = 'completed'.
+3. Ensure receipt_no or reference_no is unique among ledger_entries (transaction_reference or receipt_number) before inserting.
+4. Skip transactions where a matching ledger_entries row exists (prevent duplicates).
+5. Verify member account exists and balances are consistent.
+
+Duplicate protection:
+- Use SELECT ... FOR UPDATE on a dedicated backfill mapping table or transactional lock to prevent concurrent runs.
+- Before inserting a ledger_entries row, run a uniqueness check:
+    SELECT COUNT(*) FROM ledger_entries WHERE transaction_reference = :ref OR receipt_number = :ref
+  If count > 0, mark as SKIPPED_DUPLICATE and do not insert.
+
+Transaction handling:
+- Process in batches (e.g., 500 txns) with transactional commit per batch.
+- For each transaction:
+  - Build journal lines using LedgerService mapping (debit_account, credit_account, narration).
+  - Insert into `ledger_entries` using the same structure LedgerService uses (include posted_by, source_table, source_id, backfill_marker).
+  - Create a mapping record in `backfill_mappings` (columns: source_table, source_id, ledger_reference, inserted_ledger_ids, backfill_run_id, created_at, created_by).
+
+Rollback behavior:
+- Each batch is committed atomically. If failure occurs in a batch, roll back that batch only.
+- A full undo is possible by deleting ledger_entries where backfill_run_id = X (requires backfill marker column). Include warnings in audit logs.
+
+Audit logging:
+- Maintain `backfill_runs` table with run_id, started_by, started_at, options(JSON), totals_processed, totals_inserted, totals_skipped, status.
+- Maintain `backfill_mappings` table referenced above for traceability.
+- Write detailed per-transaction rows to `backfill_logs` (run_id, source_table, source_id, action, notes, created_at, created_by).
+
+Safety checks before final commit:
+- Verify per-account debit==credit totals for the batch.
+- Verify projected control account balances match subledger totals within tolerance.
+- If any duplicates detected during validation, abort and produce report.
+
+Operational checklist (pre-run):
+- Full DB backup and export of `ledger_entries`, `savings_transactions`, `savings_accounts`.
+- Stakeholder approval and maintenance window.
+- Dry-run in staging with identical dataset and reconciliation verification.
+
+Post-run validation:
+- Re-run reconciliation script (`scripts/live_recon.php`) and confirm control accounts match within tolerance.
+- Run member account spot-checks and sample statements.
+
+Security and access:
+- Run under a dedicated service account with limited privileges.
+- Require two-person approval for production run (initiator + approver recorded).
+
+Failure modes and mitigation:
+- Duplicate references found mid-run: abort and notify operators.
+- Partial batch failures: rollback batch and retry after fixes.
+- Unexpected schema differences: abort and escalate to dev.
+
+Notes:
+- This is a specification document only. Implement production script to follow this spec and include extensive logging, dry-run default, and safe idempotency checks.

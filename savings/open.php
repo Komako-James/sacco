@@ -52,44 +52,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if (!$error) {
         try {
-            $db->beginTransaction();
-
             $accountNumber = generateSavingsAccountNumber();
-            $openingBalance = $initialDeposit;
+            require_once __DIR__ . '/..//app/Services/SavingsService.php';
+            $savingsService = new \SACCO\Services\SavingsService();
 
-            $stmt = $db->prepare('INSERT INTO savings_accounts (member_id, account_type, account_number, balance, opening_balance, status, created_at) VALUES (?, ?, ?, ?, ?, ?, NOW())');
-            $stmt->execute([
-                $member['member_id'],
-                $accountType,
-                $accountNumber,
-                $openingBalance,
-                $openingBalance,
-                'active'
-            ]);
-
-            $accountId = $db->lastInsertId();
-
-            if ($initialDeposit > 0) {
-                $receipt = generateReceiptNumber('DEP');
-                $stmt = $db->prepare('INSERT INTO savings_transactions (account_id, transaction_type, amount, balance_after, payment_method, reference_no, receipt_no, description, posted_by, status, transaction_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())');
-                $stmt->execute([
-                    $accountId,
-                    'deposit',
-                    $initialDeposit,
-                    $openingBalance,
-                    $paymentMethod,
-                    $_POST['reference_no'] ?? null,
-                    $receipt,
-                    $description,
-                    $_SESSION['user_id'] ?? null,
-                    'completed'
-                ]);
+            $res = $savingsService->openAccount($member['member_id'], $accountType, $accountNumber, $initialDeposit, $paymentMethod, (int)($_SESSION['user_id'] ?? 0), $_POST['reference_no'] ?? null);
+            if (!empty($res['success'])) {
+                $success = "Savings account opened successfully: <strong>{$res['account_number']}</strong>";
+            } else {
+                $error = 'Error opening savings account: ' . ($res['message'] ?? 'Unknown error');
             }
-
-            $db->commit();
-            $success = "Savings account opened successfully: <strong>$accountNumber</strong>";
         } catch (Exception $e) {
-            $db->rollBack();
             $error = 'Error opening savings account: ' . $e->getMessage();
         }
     }

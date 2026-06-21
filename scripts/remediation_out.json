@@ -1,0 +1,139 @@
+{
+    "apply": {
+        "success": true,
+        "loan_id": "16",
+        "loan_ref": "LN20260617112814390"
+    },
+    "approve": {
+        "success": true,
+        "loan_id": "16"
+    },
+    "disburse": {
+        "success": true
+    },
+    "repay": {
+        "success": true
+    },
+    "ledger_entries": [
+        {
+            "entry_id": 19,
+            "ledger_code": "1030",
+            "ledger_name": "Loans Receivable",
+            "debit": "10000.00",
+            "credit": "0.00",
+            "receipt_number": "LD20260617112815121",
+            "transaction_reference": "LD20260617112815121",
+            "description": "Loan disbursement for loan #16",
+            "member_id": null,
+            "created_at": "2026-06-17 14:28:17"
+        },
+        {
+            "entry_id": 20,
+            "ledger_code": "1020",
+            "ledger_name": "Main Bank Account",
+            "debit": "0.00",
+            "credit": "10000.00",
+            "receipt_number": "LD20260617112815121",
+            "transaction_reference": "LD20260617112815121",
+            "description": "Loan disbursement payment",
+            "member_id": null,
+            "created_at": "2026-06-17 14:28:17"
+        },
+        {
+            "entry_id": 21,
+            "ledger_code": "1010",
+            "ledger_name": "Cash",
+            "debit": "1000.00",
+            "credit": "0.00",
+            "receipt_number": "RP20260617112817416",
+            "transaction_reference": "RP20260617112817416",
+            "description": "Loan repayment received",
+            "member_id": null,
+            "created_at": "2026-06-17 14:28:17"
+        },
+        {
+            "entry_id": 22,
+            "ledger_code": "1030",
+            "ledger_name": "Loans Receivable",
+            "debit": "0.00",
+            "credit": "1000.00",
+            "receipt_number": "RP20260617112817416",
+            "transaction_reference": "RP20260617112817416",
+            "description": "Principal repayment",
+            "member_id": null,
+            "created_at": "2026-06-17 14:28:17"
+        },
+        {
+            "entry_id": 15,
+            "ledger_code": "1030",
+            "ledger_name": "Loans Receivable",
+            "debit": "10000.00",
+            "credit": "0.00",
+            "receipt_number": "LD20260617110817214",
+            "transaction_reference": "LD20260617110817214",
+            "description": "Loan disbursement for loan #14",
+            "member_id": null,
+            "created_at": "2026-06-17 14:08:18"
+        },
+        {
+            "entry_id": 16,
+            "ledger_code": "1020",
+            "ledger_name": "Main Bank Account",
+            "debit": "0.00",
+            "credit": "10000.00",
+            "receipt_number": "LD20260617110817214",
+            "transaction_reference": "LD20260617110817214",
+            "description": "Loan disbursement payment",
+            "member_id": null,
+            "created_at": "2026-06-17 14:08:18"
+        },
+        {
+            "entry_id": 17,
+            "ledger_code": "1010",
+            "ledger_name": "Cash",
+            "debit": "1000.00",
+            "credit": "0.00",
+            "receipt_number": "RP20260617110818890",
+            "transaction_reference": "RP20260617110818890",
+            "description": "Loan repayment received",
+            "member_id": null,
+            "created_at": "2026-06-17 14:08:18"
+        },
+        {
+            "entry_id": 18,
+            "ledger_code": "1030",
+            "ledger_name": "Loans Receivable",
+            "debit": "0.00",
+            "credit": "1000.00",
+            "receipt_number": "RP20260617110818890",
+            "transaction_reference": "RP20260617110818890",
+            "description": "Principal repayment",
+            "member_id": null,
+            "created_at": "2026-06-17 14:08:18"
+        },
+        {
+            "entry_id": 14,
+            "ledger_code": "1020",
+            "ledger_name": "Main Bank Account",
+            "debit": "0.00",
+            "credit": "10000.00",
+            "receipt_number": "LD20260617110756670",
+            "transaction_reference": "LD20260617110756670",
+            "description": "Loan disbursement payment",
+            "member_id": null,
+            "created_at": "2026-06-17 14:07:58"
+        },
+        {
+            "entry_id": 13,
+            "ledger_code": "1030",
+            "ledger_name": "Loans Receivable",
+            "debit": "10000.00",
+            "credit": "0.00",
+            "receipt_number": "LD20260617110756670",
+            "transaction_reference": "LD20260617110756670",
+            "description": "Loan disbursement for loan #13",
+            "member_id": null,
+            "created_at": "2026-06-17 14:07:57"
+        }
+    ]
+}

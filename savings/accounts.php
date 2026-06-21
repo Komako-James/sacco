@@ -1,20 +1,58 @@
 <?php
-require_once '../includes/auth.php';
-require_once '../includes/functions.php';
+require_once __DIR__ . '/../config/constants.php';
+require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/../includes/functions.php';
 
 $auth->requireLogin();
 $db = getDB();
 
-// List all savings accounts
-$stmt = $db->query("
-    SELECT sa.*, m.full_name, m.membership_no 
-    FROM savings_accounts sa 
-    JOIN members m ON sa.member_id = m.member_id 
-    ORDER BY sa.created_at DESC
-");
-$accounts = $stmt->fetchAll();
-?>
+function getTableColumns(PDO $db, string $table): array
+{
+    $stmt = $db->prepare("SELECT COLUMN_NAME FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = ?");
+    $stmt->execute([$table]);
+    return array_column($stmt->fetchAll(PDO::FETCH_ASSOC), 'COLUMN_NAME');
+}
 
+$error = '';
+$accounts = [];
+
+try {
+    $memberColumns = getTableColumns($db, 'members');
+    $accountColumns = getTableColumns($db, 'savings_accounts');
+
+    $memberNumberColumn = in_array('membership_no', $memberColumns, true)
+        ? 'membership_no'
+        : (in_array('membership_number', $memberColumns, true) ? 'membership_number' : null);
+
+    $accountIdColumn = in_array('account_id', $accountColumns, true)
+        ? 'account_id'
+        : (in_array('savings_account_id', $accountColumns, true) ? 'savings_account_id' : null);
+
+    if ($memberNumberColumn === null || $accountIdColumn === null) {
+        throw new RuntimeException('Unsupported database schema for savings accounts.');
+    }
+
+    $sql = "
+        SELECT
+            sa.{$accountIdColumn} AS account_id,
+            sa.account_number,
+            sa.account_type,
+            sa.balance,
+            sa.status,
+            sa.created_at,
+            m.full_name,
+            m.{$memberNumberColumn} AS membership_no
+        FROM savings_accounts sa
+        JOIN members m ON sa.member_id = m.member_id
+        ORDER BY sa.created_at DESC
+    ";
+
+    $stmt = $db->query($sql);
+    $accounts = $stmt->fetchAll();
+} catch (Throwable $e) {
+    $error = $e->getMessage();
+}
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -40,6 +78,12 @@ $accounts = $stmt->fetchAll();
                     </a>
                 </div>
 
+                <?php if ($error): ?>
+                <div class="alert alert-danger">
+                    <strong>Unable to load savings accounts.</strong> <?php echo htmlspecialchars($error); ?>
+                </div>
+                <?php endif; ?>
+
                 <div class="card">
                     <div class="card-body">
                         <div class="table-responsive">
@@ -56,6 +100,11 @@ $accounts = $stmt->fetchAll();
                                     </tr>
                                 </thead>
                                 <tbody>
+                                    <?php if (empty($accounts)): ?>
+                                    <tr>
+                                        <td colspan="7" class="text-center text-muted py-4">No savings accounts found.</td>
+                                    </tr>
+                                    <?php else: ?>
                                     <?php foreach ($accounts as $account): ?>
                                     <tr>
                                         <td><?php echo htmlspecialchars($account['account_number']); ?></td>
@@ -63,20 +112,21 @@ $accounts = $stmt->fetchAll();
                                             <?php echo htmlspecialchars($account['full_name']); ?>
                                             <br><small class="text-muted"><?php echo htmlspecialchars($account['membership_no']); ?></small>
                                         </td>
-                                        <td><?php echo ucfirst(str_replace('_', ' ', $account['account_type'])); ?></td>
+                                        <td><?php echo htmlspecialchars(ucfirst(str_replace('_', ' ', $account['account_type']))); ?></td>
                                         <td><?php echo formatMoney($account['balance']); ?></td>
                                         <td>
                                             <span class="badge <?php echo $account['status'] === 'active' ? 'bg-success' : 'bg-danger'; ?>">
-                                                <?php echo ucfirst($account['status']); ?>
+                                                <?php echo htmlspecialchars(ucfirst($account['status'])); ?>
                                             </span>
                                         </td>
-                                        <td><?php echo date('M d, Y', strtotime($account['created_at'])); ?></td>
+                                        <td><?php echo htmlspecialchars(date('M d, Y', strtotime($account['created_at']))); ?></td>
                                         <td>
-                                            <a href="deposit.php?account_id=<?php echo $account['account_id']; ?>" class="btn btn-sm btn-success">Deposit</a>
-                                            <a href="withdraw.php?account_id=<?php echo $account['account_id']; ?>" class="btn btn-sm btn-warning">Withdraw</a>
+                                            <a href="deposit.php?account_id=<?php echo urlencode($account['account_id']); ?>" class="btn btn-sm btn-success">Deposit</a>
+                                            <a href="withdraw.php?account_id=<?php echo urlencode($account['account_id']); ?>" class="btn btn-sm btn-warning">Withdraw</a>
                                         </td>
                                     </tr>
                                     <?php endforeach; ?>
+                                    <?php endif; ?>
                                 </tbody>
                             </table>
                         </div>

@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Reconciliation Analyzer</title>
+  <style>
+    body{font-family:Arial,Helvetica,sans-serif;margin:18px}
+    textarea{width:100%;min-height:120px;font-family:monospace;margin-top:6px}
+    .col{display:block;margin-bottom:18px}
+    button{padding:10px 14px;margin-right:8px}
+    pre.sql{background:#f6f8fa;padding:10px;border:1px solid #ddd}
+    .out{white-space:pre-wrap;background:#f3f3f3;padding:10px;border:1px solid #ccc}
+    label{font-weight:600}
+  </style>
+</head>
+<body>
+  <h2>Reconciliation & Ledger Analyzer</h2>
+  <p>Instructions: run the SQL snippets shown below against your staging/production read-only DB, copy the JSON array results for each query into the matching textarea, then click <strong>Analyze</strong>. The tool is read-only and runs locally in your browser.</p>
+
+  <div class="col">
+    <label>SQL: Chart of Accounts rows for codes 2010,2020,1010,1020</label>
+    <pre class="sql">SELECT account_code, account_name, account_type, account_category
+FROM chart_of_accounts
+WHERE account_code IN ('2010','2020','1010','1020');</pre>
+    <textarea id="coa_json" placeholder='Paste JSON array of rows here (e.g. [{"account_code":"2010","account_name":"Member Share Capital","account_type":"equity","account_category":""}, ...])'></textarea>
+  </div>
+
+  <div class="col">
+    <label>SQL: Ledger entries for RP refs</label>
+    <pre class="sql">SELECT entry_id AS id, entry_date, ledger_code, ledger_name, debit, credit, description, transaction_reference, receipt_number, status
+FROM ledger_entries
+WHERE transaction_reference IN ('RP20260617185109210','RP20260617185239943')
+ORDER BY entry_date, entry_id;</pre>
+    <textarea id="rp_json" placeholder='Paste JSON array of ledger_entries rows here'></textarea>
+  </div>
+
+  <div class="col">
+    <label>SQL: Ledger entries for STR refs</label>
+    <pre class="sql">SELECT entry_id AS id, entry_date, ledger_code, ledger_name, debit, credit, description, transaction_reference, receipt_number, status, member_id
+FROM ledger_entries
+WHERE transaction_reference IN ('STR-3-4-1780077242','STR-3-4-1780077070')
+ORDER BY entry_date, entry_id;</pre>
+    <textarea id="str_json" placeholder='Paste JSON array of ledger_entries rows for STR refs here'></textarea>
+  </div>
+
+  <div class="col">
+    <label>SQL: Savings subledger total (optional full JSON)</label>
+    <pre class="sql">-- Option A: single number
+SELECT SUM(amount) AS subledger_savings_balance FROM savings_transactions WHERE status='completed';
+-- Option B: full rows if you prefer to paste them</pre>
+    <textarea id="savings_json" placeholder='Paste a single JSON number or JSON object/array (optional)'></textarea>
+  </div>
+
+  <div class="col">
+    <label>SQL: Shares subledger total (optional full JSON)</label>
+    <pre class="sql">SELECT SUM(amount) AS subledger_shares_balance FROM member_share_transactions WHERE status='completed';</pre>
+    <textarea id="shares_json" placeholder='Paste a single JSON number or JSON object/array (optional)'></textarea>
+  </div>
+
+  <div class="col">
+    <label>SQL: Optional backfill ledger entries (to simulate projection)</label>
+    <pre class="sql">-- Provide backfill entries as ledger rows similar to ledger_entries
+SELECT ledger_code, SUM(debit) AS debit, SUM(credit) AS credit FROM backfill_entries GROUP BY ledger_code;</pre>
+    <textarea id="backfill_json" placeholder='Paste JSON array of backfill entries (optional)'></textarea>
+  </div>
+
+  <div>
+    <button id="analyzeBtn">Analyze</button>
+    <button id="clearBtn">Clear</button>
+  </div>
+
+  <h3>Results (JSON)</h3>
+  <div class="out" id="results">No analysis yet.</div>
+
+  <script>
+    function safeParse(text){ try{ return JSON.parse(text); } catch(e){ return null; } }
+
+    function toNumber(v){ if (v===null||v===undefined) return 0; if (typeof v==='number') return v; v = String(v).replace(/,/g,''); var n = parseFloat(v); return isNaN(n)?0:n; }
+
+    function groupBy(arr, key){ const m = {}; (arr||[]).forEach(r=>{ const k = r[key]||null; if(!m[k]) m[k]=[]; m[k].push(r); }); return m; }
+
+    function analyzeCOA(coaRows){ const codes=['2010','2020','1010','1020']; const out={}; const map={}; (coaRows||[]).forEach(r=>map[String(r.account_code)]=r);
+      codes.forEach(c=>{ if(map[c]){ out[c]={account_code:String(map[c].account_code), account_name:map[c].account_name||null, account_type:map[c].account_type||null, account_category:map[c].account_category||null, found:true}; } else { out[c]={found:false}; } }); return out; }
+
+    function analyzeRP(rows){ const byRef = groupBy(rows||[],'transaction_reference'); const results = {};
+      Object.keys(byRef).forEach(ref=>{
+        const lines = byRef[ref]; const totalDebit = lines.reduce((s,l)=>s+toNumber(l.debit),0); const totalCredit = lines.reduce((s,l)=>s+toNumber(l.credit),0);
+        const imbalance = +(totalDebit - totalCredit).toFixed(2);
+        // detect duplicates
+        const dupMap = {}; let dupCount=0;
+        lines.forEach(l=>{ const key = [l.ledger_code,l.ledger_name,toNumber(l.debit),toNumber(l.credit),(l.description||'')].join('|'); dupMap[key]=(dupMap[key]||0)+1; if(dupMap[key]===2) dupCount++; });
+        // detect split allocation: one credit and many debits OR one debit and many credits
+        const nonZeroDebits = lines.filter(l=>Math.abs(toNumber(l.debit))>0.001);
+        const nonZeroCredits = lines.filter(l=>Math.abs(toNumber(l.credit))>0.001);
+        let classification = 'Unknown'; let confidence = 50;
+        if(Math.abs(imbalance) >= 0.01){ classification='D: Corrupted journal'; confidence=95; }
+        else if(dupCount>0){ classification='B: Duplicate posting'; confidence=70; }
+        else if((nonZeroCredits.length===1 && nonZeroDebits.length>1) || (nonZeroDebits.length===1 && nonZeroCredits.length>1)){
+          classification='C: Split allocation journal'; confidence=85;
+        } else if(lines.length>1){ classification='A: Valid compound journal'; confidence=90; }
+        else { classification = 'Single-line entry (not a compound journal)'; confidence=60; }
+        results[ref]={transaction_reference:ref, lines:lines.length, total_debit:+totalDebit.toFixed(2), total_credit:+totalCredit.toFixed(2), imbalance:imbalance, duplicate_lines:dupCount, classification:classification, confidence:confidence, rows:lines};
+      });
+      return results;
+    }
+
+    function analyzeSTR(rows){ const byRef = groupBy(rows||[],'transaction_reference'); const results={}; Object.keys(byRef).forEach(ref=>{
+      const lines = byRef[ref]; if(!lines || lines.length===0){ results[ref]={found:false}; return; }
+      const memberIds = Array.from(new Set(lines.map(l=>l.member_id).filter(x=>x!==null && x!==undefined && x!="")));
+      let rootCause = 'Unknown';
+      if(memberIds.length===0) rootCause='Orphan posting: no member/subledger linkage';
+      else rootCause='Has member_id(s): possible missing subledger record or mismatched reference';
+      results[ref]={found:true, rows:lines, member_ids:memberIds, root_cause:rootCause};
+    }); return results; }
+
+    function computeGL(rows, code){ const filtered=(rows||[]).filter(r=>String(r.ledger_code)===String(code)); const debit = filtered.reduce((s,r)=>s+toNumber(r.debit),0); const credit = filtered.reduce((s,r)=>s+toNumber(r.credit),0); return {ledger_code:code, total_debit:+debit.toFixed(2), total_credit:+credit.toFixed(2), balance:+(debit-credit).toFixed(2)}; }
+
+    function sumBackfill(backfillRows, code){ const filtered=(backfillRows||[]).filter(r=>String(r.ledger_code)===String(code)); const debit=filtered.reduce((s,r)=>s+toNumber(r.debit),0); const credit=filtered.reduce((s,r)=>s+toNumber(r.credit),0); return debit-credit; }
+
+    function deriveCertification(issues, variance){ // issues: arrays of strings
+      if(issues.length>0) return {status:'C: Blocked', confidence:40, blocking_issues:issues};
+      if(Math.abs(variance) > 0.5) return {status:'B: Staging Only', confidence:75, blocking_issues:['Material variance > 0.50']};
+      return {status:'A: Production Ready', confidence:95, blocking_issues:[]};
+    }
+
+    document.getElementById('analyzeBtn').addEventListener('click', ()=>{
+      const coa = safeParse(document.getElementById('coa_json').value) || [];
+      const rp = safeParse(document.getElementById('rp_json').value) || [];
+      const strr = safeParse(document.getElementById('str_json').value) || [];
+      const savingsInput = document.getElementById('savings_json').value.trim();
+      const sharesInput = document.getElementById('shares_json').value.trim();
+      const backfill = safeParse(document.getElementById('backfill_json').value) || [];
+
+      const coaRes = analyzeCOA(coa);
+      const rpRes = analyzeRP(rp);
+      const strRes = analyzeSTR(strr);
+
+      const gl2010 = computeGL(rp.concat(strr).concat(coa), '2010'); // rp/str/coa combined for safety
+      const gl2020 = computeGL(rp.concat(strr).concat(coa), '2020');
+
+      // subledger totals
+      let savings_total = null; let shares_total = null;
+      if(savingsInput){ try{ const s = JSON.parse(savingsInput); if(typeof s === 'number') savings_total=s; else if(s.subledger_savings_balance) savings_total = toNumber(s.subledger_savings_balance); else if(Array.isArray(s)) savings_total = s.reduce((a,b)=>a+toNumber(b.amount||b.balance||0),0); } catch(e){ /* ignore */ } }
+      if(sharesInput){ try{ const s = JSON.parse(sharesInput); if(typeof s === 'number') shares_total=s; else if(s.subledger_shares_balance) shares_total = toNumber(s.subledger_shares_balance); else if(Array.isArray(s)) shares_total = s.reduce((a,b)=>a+toNumber(b.amount||b.balance||0),0); } catch(e){} }
+
+      const backfillDelta2010 = sumBackfill(backfill,'2010');
+      const backfillDelta2020 = sumBackfill(backfill,'2020');
+
+      const projected2010 = +(toNumber(gl2010.balance) + backfillDelta2010).toFixed(2);
+      const projected2020 = +(toNumber(gl2020.balance) + backfillDelta2020).toFixed(2);
+
+      const var2010 = (shares_total===null) ? null : +(projected2010 - shares_total).toFixed(2);
+      const var2020 = (savings_total===null) ? null : +(projected2020 - savings_total).toFixed(2);
+
+      // collect issues
+      const issues = [];
+      // COA missing codes
+      ['2010','2020','1010','1020'].forEach(c=>{ if(!coaRes[c].found) issues.push('Missing COA for '+c); });
+      // corrupted journals
+      Object.values(rpRes).forEach(r=>{ if(r.classification && r.classification.startsWith('D:')) issues.push('Corrupted journal '+r.transaction_reference); });
+      // orphan STR
+      Object.values(strRes).forEach(s=>{ if(s.found && s.root_cause && s.root_cause.startsWith('Orphan')) issues.push('Orphan STR '+s.rows[0].transaction_reference); });
+
+      const certification = deriveCertification(issues, (var2010||0)+(var2020||0));
+
+      const output = {coa:coaRes, rp:rpRes, str:strRes, gl:{current:{'2010':gl2010,'2020':gl2020}, projected:{'2010':projected2010,'2020':projected2020}}, subledger:{savings:savings_total, shares:shares_total}, variance:{'2010':var2010,'2020':var2020}, issues:issues, certification:certification};
+      document.getElementById('results').textContent = JSON.stringify(output,null,2);
+    });
+
+    document.getElementById('clearBtn').addEventListener('click', ()=>{ ['coa_json','rp_json','str_json','savings_json','shares_json','backfill_json'].forEach(id=>document.getElementById(id).value=''); document.getElementById('results').textContent='Cleared'; });
+  </script>
+</body>
+</html>

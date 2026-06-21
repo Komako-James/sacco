@@ -13,15 +13,13 @@ $startDate = $_GET['start_date'] ?? date('Y-m-01');
 $endDate = $_GET['end_date'] ?? date('Y-m-d');
 
 // Get summary statistics
-$stmt = $db->prepare("
-    SELECT 
+$stmt = $db->prepare(" SELECT 
         SUM(CASE WHEN transaction_type = 'deposit' THEN amount ELSE 0 END) as total_deposits,
         SUM(CASE WHEN transaction_type = 'withdrawal' THEN amount ELSE 0 END) as total_withdrawals,
         SUM(CASE WHEN transaction_type = 'interest' THEN amount ELSE 0 END) as total_interest,
         COUNT(*) as total_transactions
     FROM savings_transactions
-    WHERE DATE(transaction_date) BETWEEN ? AND ?
-");
+    WHERE DATE(transaction_date) BETWEEN ? AND ? ");
 $stmt->execute([$startDate, $endDate]);
 $summary = $stmt->fetch();
 

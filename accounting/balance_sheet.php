@@ -21,6 +21,27 @@ try {
     $error = $e->getMessage();
 }
 
+// Normalize keys returned by LedgerService (legacy templates expect 'ledger_code'/'ledger_name')
+$normalize = function (&$items) {
+    if (!is_array($items)) return;
+    foreach ($items as &$it) {
+        if (isset($it['account_code']) && !isset($it['ledger_code'])) {
+            $it['ledger_code'] = $it['account_code'];
+        }
+        if (isset($it['account_name']) && !isset($it['ledger_name'])) {
+            $it['ledger_name'] = $it['account_name'];
+        }
+        if (isset($it['balance'])) {
+            $it['balance'] = (float) $it['balance'];
+        }
+    }
+    unset($it);
+};
+
+$normalize($reportResult['assets'] ?? []);
+$normalize($reportResult['liabilities'] ?? []);
+$normalize($reportResult['equity'] ?? []);
+
 if ($format === 'csv' && empty($error)) {
     header('Content-Type: text/csv; charset=utf-8');
     header('Content-Disposition: attachment; filename="balance_sheet_' . date('Ymd_His') . '.csv"');

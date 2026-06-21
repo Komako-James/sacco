@@ -109,28 +109,20 @@ try {
             }
 
             $amount = $shares * SHARE_PRICE;
-            $db->beginTransaction();
-
-            $stmt = $db->prepare("SELECT * FROM savings_accounts WHERE account_id = ? AND member_id = ? AND status = 'active' FOR UPDATE");
-            $stmt->execute([$accountId, $_SESSION['member_id']]);
-            $account = $stmt->fetch(PDO::FETCH_ASSOC);
-
-            if (!$account) {
-                throw new Exception('Savings account not found or inactive');
-            }
-
-            if ($account['balance'] < $amount) {
-                throw new Exception('Insufficient savings balance to purchase shares');
-            }
-
-            $newBalance = $account['balance'] - $amount;
             $reference = 'SHR-' . $_SESSION['member_id'] . '-' . time();
 
-            $insert = $db->prepare("INSERT INTO savings_transactions (account_id, member_id, transaction_type, amount, balance_after, reference_number, payment_method, transaction_date, created_by) VALUES (?, ?, 'withdrawal', ?, ?, ?, 'Shares Purchase', NOW(), ?)");
-            $insert->execute([$accountId, $_SESSION['member_id'], $amount, $newBalance, $reference, $_SESSION['member_user_id']]);
+            // Begin a transaction to make the withdrawal and share updates atomic
+            $db->beginTransaction();
+            // Use SavingsService to perform withdrawal and post ledger entries (transaction-aware)
+            require_once __DIR__ . '/../../app/Services/SavingsService.php';
+            $savingsService = new \SACCO\Services\SavingsService();
+            $withdrawRes = $savingsService->withdraw($_SESSION['member_id'], $accountId, $amount, 'internal', $_SESSION['member_user_id'] ?? 0, $reference);
 
-            $updateAccount = $db->prepare("UPDATE savings_accounts SET balance = ? WHERE account_id = ?");
-            $updateAccount->execute([$newBalance, $accountId]);
+            if (empty($withdrawRes['success'])) {
+                // rollback outer transaction if withdraw failed
+                if ($db->inTransaction()) $db->rollBack();
+                throw new Exception('Failed to withdraw from savings: ' . ($withdrawRes['message'] ?? 'unknown'));
+            }
 
             $holdingStmt = $db->prepare("SELECT * FROM member_share_holdings WHERE member_id = ? FOR UPDATE");
             $holdingStmt->execute([$_SESSION['member_id']]);

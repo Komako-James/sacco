@@ -2,92 +2,46 @@
 require_once '../includes/auth.php';
 require_once '../includes/functions.php';
 require_once '../config/constants.php';
-
 $auth->requireLogin();
 $auth->requireRole(['admin', 'finance']);
 
 $loanId = $_GET['id'] ?? null;
-if (!$loanId) {
-    header('Location: list.php');
-    exit();
-}
-
 $db = Database::getInstance()->getConnection();
-
-// Get loan
-$stmt = $db->prepare("
-    SELECT l.*, l.loan_ref_no AS loan_reference, l.amount_requested AS loan_amount, m.full_name, m.membership_no
-    FROM loans l
-    JOIN members m ON l.member_id = m.member_id
-    WHERE l.loan_id = ? AND l.status = 'disbursed'
-");
-$stmt->execute([$loanId]);
-$loan = $stmt->fetch();
-
-if (!$loan) {
-    header('Location: list.php');
-    exit();
-}
-
-// Get schedule
-$stmt = $db->prepare("SELECT * FROM loan_repayment_schedule WHERE loan_id = ? ORDER BY installment_no ASC");
-$stmt->execute([$loanId]);
-$schedule = $stmt->fetchAll();
 
 $error = '';
 $success = '';
 
+// Load loan and schedule
+$stmt = $db->prepare("SELECT l.*, l.loan_ref_no AS loan_reference, l.amount_requested AS loan_amount, m.full_name, m.membership_no FROM loans l JOIN members m ON l.member_id = m.member_id WHERE l.loan_id = ?");
+$stmt->execute([$loanId]);
+$loan = $stmt->fetch(PDO::FETCH_ASSOC);
+
+$stmt = $db->prepare("SELECT schedule_id, installment_no, due_date, principal_amount, interest_amount, total_due, status FROM loan_repayment_schedule WHERE loan_id = ? ORDER BY installment_no");
+$stmt->execute([$loanId]);
+$schedule = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $amount = floatval($_POST['amount'] ?? 0);
+    $amount = isset($_POST['amount']) ? (float)$_POST['amount'] : 0;
     $paymentMethod = $_POST['payment_method'] ?? '';
     $referenceNo = $_POST['reference_no'] ?? '';
-    
-    if ($amount <= 0) {
-        $error = 'Please enter a valid amount';
-    } elseif ($amount > $loan['outstanding_balance']) {
-        $error = 'Amount exceeds outstanding balance';
-    } elseif (empty($paymentMethod)) {
-        $error = 'Please select payment method';
-    } else {
-        try {
-            $db->beginTransaction();
-            
-            // Record payment
-            $receipt = generateReceiptNumber('LRP');
-            $stmt = $db->prepare("
-                INSERT INTO loan_repayments 
-                (loan_id, amount_paid, principal_paid, interest_paid, penalty_paid, payment_method, reference_no, receipt_no, posted_by)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-            ");
-            $stmt->execute([
-                $loanId,
-                $amount,
-                NULL,
-                NULL,
-                0,
-                $paymentMethod,
-                $referenceNo,
-                $receipt,
-                $_SESSION['user_id']
-            ]);
-            
-            // Update loan balance
-            $newBalance = $loan['outstanding_balance'] - $amount;
-            $status = $newBalance <= 0 ? 'completed' : 'disbursed';
-            
-            $stmt = $db->prepare("
-                UPDATE loans 
-                SET outstanding_balance = ?, status = ?
-                WHERE loan_id = ?
-            ");
-            $stmt->execute([$newBalance, $status, $loanId]);
-            
-            $db->commit();
-            $success = 'Payment recorded successfully. Receipt: ' . $receipt;
-        } catch (Exception $e) {
-            $db->rollback();
-            $error = 'Error processing payment: ' . $e->getMessage();
+
+    try {
+        require_once __DIR__ . '/../app/Services/LoanService.php';
+        $loanService = new \SACCO\Services\LoanService($db);
+
+        $result = $loanService->processRepayment($loanId, $amount, $paymentMethod, $referenceNo, $_SESSION['user_id']);
+
+        if (!empty($result['success'])) {
+            $success = 'Payment recorded successfully. Receipt: ' . ($result['receipt_number'] ?? '');
+            // refresh outstanding balance and schedule
+            $stmt = $db->prepare("SELECT outstanding_balance FROM loans WHERE loan_id = ?");
+            $stmt->execute([$loanId]);
+            $loan['outstanding_balance'] = $stmt->fetchColumn();
+        } else {
+            $error = 'Error processing payment: ' . ($result['message'] ?? 'Unknown error');
         }
+    } catch (Exception $e) {
+        $error = 'Error processing payment: ' . $e->getMessage();
     }
 }
 ?>

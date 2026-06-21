@@ -26,21 +26,34 @@ if (!$loan) {
 $error = '';
 $success = '';
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
-        $db->beginTransaction();
+        // Use LoanService to perform disbursement and ensure ledger posting
+        require_once __DIR__ . '/../app/Services/LoanService.php';
 
-        $approvedAmount = $loan['amount_approved'] ?: $loan['loan_amount'];
-        $newBalance = $approvedAmount;
+        $dbConn = Database::getInstance()->getConnection();
+        $loanService = new \SACCO\Services\LoanService($dbConn);
 
-        $stmt = $db->prepare("UPDATE loans SET status = 'disbursed', disbursement_date = NOW(), disbursed_by = ?, outstanding_balance = ?, first_payment_date = DATE_ADD(NOW(), INTERVAL 1 MONTH) WHERE loan_id = ?");
-        $stmt->execute([$_SESSION['user_id'], $newBalance, $loanId]);
+        // If amount_approved is missing or zero, set it to the requested amount
+        if (empty($loan['amount_approved']) || $loan['amount_approved'] <= 0) {
+            $stmt = $dbConn->prepare("UPDATE loans SET amount_approved = ?, approval_date = NOW(), status = 'approved', approved_by = ? , outstanding_balance = ? WHERE loan_id = ?");
+            $stmt->execute([$loan['loan_amount'], $_SESSION['user_id'], $loan['loan_amount'], $loanId]);
+            // refresh loan data
+            $stmt2 = $dbConn->prepare("SELECT l.*, l.loan_ref_no AS loan_reference, l.amount_requested AS loan_amount, m.full_name, m.membership_no FROM loans l JOIN members m ON l.member_id = m.member_id WHERE l.loan_id = ? AND l.status IN ('approved','disbursed')");
+            $stmt2->execute([$loanId]);
+            $loan = $stmt2->fetch();
+        }
 
-        $db->commit();
-        header('Location: list.php?status=disbursed&success=1');
-        exit();
+        // default disbursement method and empty bank details for admin
+        $result = $loanService->disburseLoan($loanId, 'cash', [], $_SESSION['user_id']);
+
+        if (!empty($result['success'])) {
+            header('Location: list.php?status=disbursed&success=1');
+            exit();
+        }
+
+        $error = 'Error disbursing loan: ' . ($result['message'] ?? 'Unknown error');
     } catch (Exception $e) {
-        $db->rollback();
         $error = 'Error disbursing loan: ' . $e->getMessage();
     }
 }

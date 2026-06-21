@@ -13,58 +13,40 @@ $success = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $membershipNo = $_POST['membership_no'] ?? '';
-    $accountId = $_POST['account_id'] ?? '';
+    $accountId = (int)($_POST['account_id'] ?? 0);
     $amount = floatval($_POST['amount'] ?? 0);
     $paymentMethod = $_POST['payment_method'] ?? '';
     $referenceNo = $_POST['reference_no'] ?? '';
-    
+
     // Validate
     if (empty($membershipNo) || empty($accountId) || $amount <= 0) {
         $error = 'Please fill all required fields';
     } else {
         try {
-            $db->beginTransaction();
-            
-            // Get account
+            require_once __DIR__ . '/../app/Services/SavingsService.php';
+            $savingsService = new \SACCO\Services\SavingsService();
+
             $stmt = $db->prepare("SELECT * FROM savings_accounts WHERE account_id = ?");
             $stmt->execute([$accountId]);
-            $account = $stmt->fetch();
-            
+            $account = $stmt->fetch(PDO::FETCH_ASSOC);
+
             if (!$account || $account['status'] !== 'active') {
                 throw new Exception('Invalid account');
             }
-            
+
             if ($account['balance'] < $amount) {
                 throw new Exception('Insufficient balance');
             }
-            
-            // Record withdrawal
+
             $receipt = generateReceiptNumber('WTH');
-            $newBalance = $account['balance'] - $amount;
-            
-            $stmt = $db->prepare("
-                INSERT INTO savings_transactions 
-                (account_id, transaction_type, amount, balance_after, payment_method, reference_no, receipt_no, posted_by, status, transaction_date)
-                VALUES (?, 'withdrawal', ?, ?, ?, ?, ?, ?, 'completed', NOW())
-            ");
-            $stmt->execute([
-                $accountId,
-                $amount,
-                $newBalance,
-                $paymentMethod,
-                $referenceNo,
-                $receipt,
-                $_SESSION['user_id']
-            ]);
-            
-            // Update account balance
-            $stmt = $db->prepare("UPDATE savings_accounts SET balance = ? WHERE account_id = ?");
-            $stmt->execute([$newBalance, $accountId]);
-            
-            $db->commit();
-            $success = 'Withdrawal recorded successfully. Receipt: ' . $receipt;
+            $result = $savingsService->withdraw((int)$account['member_id'], (int)$accountId, (float)$amount, $paymentMethod, (int)($_SESSION['user_id'] ?? 0), $referenceNo);
+
+            if (!empty($result['success'])) {
+                $success = 'Withdrawal recorded successfully. Receipt: ' . ($result['receipt'] ?? $receipt);
+            } else {
+                $error = 'Error: ' . ($result['message'] ?? 'Withdrawal failed');
+            }
         } catch (Exception $e) {
-            $db->rollback();
             $error = 'Error: ' . $e->getMessage();
         }
     }

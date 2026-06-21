@@ -24,6 +24,9 @@ $error = '';
 $success = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    require_once __DIR__ . '/../app/Services/SavingsService.php';
+    $savingsService = new \SACCO\Services\SavingsService();
+
     $membershipNo = $_POST['membership_no'] ?? '';
     $accountId = $_POST['account_id'] ?? '';
     $amount = floatval($_POST['amount'] ?? 0);
@@ -36,9 +39,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $error = 'Please fill all required fields';
     } else {
         try {
-            $db->beginTransaction();
-
-            // Get account
+            // Get account and member
             $stmt = $db->prepare("SELECT * FROM savings_accounts WHERE account_id = ?");
             $stmt->execute([$accountId]);
             $account = $stmt->fetch();
@@ -47,42 +48,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 throw new Exception('Invalid account');
             }
 
-            // Record deposit
             $receipt = generateReceiptNumber('DEP');
-            $newBalance = $account['balance'] + $amount;
+            $result = $savingsService->deposit((int)$account['member_id'], (int)$accountId, (float)$amount, $paymentMethod, (int)($_SESSION['user_id'] ?? 0), $receipt);
 
-            $stmt = $db->prepare("
-                INSERT INTO savings_transactions 
-                (account_id, transaction_type, amount, balance_after, payment_method, reference_no, receipt_no, description, posted_by, status, transaction_date)
-                VALUES (?, 'deposit', ?, ?, ?, ?, ?, ?, ?, 'completed', NOW())
-            ");
-            $stmt->execute([
-                $accountId,
-                $amount,
-                $newBalance,
-                $paymentMethod,
-                $referenceNo,
-                $receipt,
-                $description,
-                $_SESSION['user_id']
-            ]);
-
-            // Update account balance
-            $stmt = $db->prepare("UPDATE savings_accounts SET balance = ? WHERE account_id = ?");
-            $stmt->execute([$newBalance, $accountId]);
-
-            $db->commit();
-            $success = 'Deposit recorded successfully. Receipt: ' . $receipt;
+            if (!empty($result['success'])) {
+                $success = 'Deposit recorded successfully. Receipt: ' . $receipt;
+            } else {
+                $error = 'Error: ' . ($result['message'] ?? 'Deposit failed');
+            }
         } catch (Exception $e) {
-            $db->rollback();
             $error = 'Error: ' . $e->getMessage();
         }
     }
 }
-?>
-
-<!DOCTYPE html>
-<html lang="en">
+    ?>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
