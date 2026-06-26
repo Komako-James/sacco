@@ -149,14 +149,13 @@ class LoanService
             $stmt = $this->db->prepare("
                 UPDATE loans
                 SET amount_approved = ?, approval_date = NOW(), status = 'approved', 
-                    reviewed_by = ?, outstanding_balance = ?, principal_balance = ?
-                WHERE loan_id = ?
-            ");
+                reviewed_by = ?, outstanding_balance = ?
+            WHERE loan_id = ?
+        ");
 
             $stmt->execute([
                 $approvedAmount,
                 $approvedBy,
-                $approvedAmount,
                 $approvedAmount,
                 $loanId
             ]);
@@ -283,8 +282,8 @@ class LoanService
 
             $stmt = $this->db->prepare("
                 INSERT INTO loan_repayment_schedule
-                (loan_id, installment_no, due_date, principal_amount, interest_amount, total_due, principal_balance, status)
-                VALUES (?, ?, ?, ?, ?, ?, ?, 'pending')
+                (loan_id, installment_no, due_date, principal_amount, interest_amount, total_due, status)
+                VALUES (?, ?, ?, ?, ?, ?, 'pending')
             ");
 
             $stmt->execute([
@@ -293,8 +292,7 @@ class LoanService
                 $dueDate,
                 $principalPayment,
                 $interestPayment,
-                $principalPayment + $interestPayment,
-                max(0, $balance)
+                $principalPayment + $interestPayment
             ]);
         }
     }
@@ -345,10 +343,11 @@ class LoanService
             $receiptNumber = $this->generateReceiptNumber('RP');
 
             // Insert repayment record
-            $stmt = $this->db->prepare("\n                INSERT INTO loan_repayments\n                (loan_id, amount_paid, principal_paid, interest_paid, \n                 penalty_paid, payment_method, reference_no, receipt_no, posted_by)\n                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)\n            ");
+            $stmt = $this->db->prepare("\n                INSERT INTO loan_repayments\n                (loan_id, schedule_id, amount_paid, principal_paid, interest_paid, \n                 penalty_paid, payment_method, reference_no, receipt_no, posted_by)\n                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)\n            ");
 
             $stmt->execute([
                 $loanId,
+                $allocation['schedule_id'] ?? null,
                 $amountPaid,
                 $allocation['principal_paid'],
                 $allocation['interest_paid'],
@@ -408,45 +407,98 @@ class LoanService
      */
     public function allocateRepayment($loanId, $totalPayment)
     {
-        $loan = $this->getLoanById($loanId);
-        $allocation = [];
-        $allocation['total_payment'] = $totalPayment;
-        $allocation['penalty_paid'] = 0;
-        $allocation['interest_paid'] = 0;
-        $allocation['principal_paid'] = 0;
+        $allocation = [
+            'total_payment' => $totalPayment,
+            'penalty_paid' => 0,
+            'interest_paid' => 0,
+            'principal_paid' => 0,
+            'balance_remaining' => 0,
+            'schedule_id' => null
+        ];
 
         $remaining = $totalPayment;
 
-        // 1. Apply to penalties
-        $totalPenalties = $this->calculateTotalPenalties($loanId);
-        if ($totalPenalties > 0) {
-            $allocation['penalty_paid'] = min($remaining, $totalPenalties);
-            $remaining -= $allocation['penalty_paid'];
-        }
+        $stmt = $this->db->prepare(
+            "SELECT schedule_id, installment_no, due_date, principal_amount, interest_amount, total_due, paid_amount, late_penalty " .
+            "FROM loan_repayment_schedule " .
+            "WHERE loan_id = ? AND status IN ('pending', 'partial', 'overdue') " .
+            "ORDER BY due_date ASC, installment_no ASC"
+        );
+        $stmt->execute([$loanId]);
+        $schedules = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        // 2. Apply to accrued interest
-        if (isset($loan['interest_accrued'])) {
-            $accrued = $loan['interest_accrued'];
-        } else {
-            // loan_repayment_schedule stores `interest_amount` and `paid_amount` (aggregate), use those
-            $stmt = $this->db->prepare("SELECT COALESCE(SUM(interest_amount - COALESCE(paid_amount,0)),0) as accrued FROM loan_repayment_schedule WHERE loan_id = ? AND status IN ('pending','partial','overdue')");
-            $stmt->execute([$loanId]);
-            $row = $stmt->fetch(PDO::FETCH_ASSOC);
-            $accrued = $row ? $row['accrued'] : 0;
-        }
-        if ($accrued > 0 && $remaining > 0) {
-            $allocation['interest_paid'] = min($remaining, $accrued);
-            $remaining -= $allocation['interest_paid'];
-        }
-
-        // 3. Apply to principal
-        if ($remaining > 0) {
+        if (empty($schedules)) {
+            // No schedule rows available; treat entire payment as principal reduction.
             $allocation['principal_paid'] = $remaining;
-            $remaining = 0;
+            $allocation['balance_remaining'] = 0;
+            return $allocation;
+        }
+
+        $updateStmt = $this->db->prepare(
+            "UPDATE loan_repayment_schedule SET paid_amount = ?, status = ?, paid_date = ? WHERE schedule_id = ?"
+        );
+
+        $today = date('Y-m-d');
+
+        foreach ($schedules as $schedule) {
+            if ($remaining <= 0) {
+                break;
+            }
+
+            $paidAmount = (float) $schedule['paid_amount'];
+            $totalDue = (float) $schedule['total_due'];
+            $latePenalty = (float) $schedule['late_penalty'];
+            $interestAmount = (float) $schedule['interest_amount'];
+            $principalAmount = (float) $schedule['principal_amount'];
+
+            $alreadyPaidPenalty = min($paidAmount, $latePenalty);
+            $remainingPaid = max(0, $paidAmount - $alreadyPaidPenalty);
+            $alreadyPaidInterest = min($remainingPaid, $interestAmount);
+            $alreadyPaidPrincipal = max(0, $remainingPaid - $alreadyPaidInterest);
+
+            $penaltyRemaining = max(0, $latePenalty - $alreadyPaidPenalty);
+            $interestRemaining = max(0, $interestAmount - $alreadyPaidInterest);
+            $principalRemaining = max(0, $principalAmount - $alreadyPaidPrincipal);
+
+            if ($penaltyRemaining <= 0 && $interestRemaining <= 0 && $principalRemaining <= 0) {
+                continue;
+            }
+
+            $payPenalty = min($remaining, $penaltyRemaining);
+            $remaining -= $payPenalty;
+            $allocation['penalty_paid'] += $payPenalty;
+
+            $payInterest = min($remaining, $interestRemaining);
+            $remaining -= $payInterest;
+            $allocation['interest_paid'] += $payInterest;
+
+            $payPrincipal = min($remaining, $principalRemaining);
+            $remaining -= $payPrincipal;
+            $allocation['principal_paid'] += $payPrincipal;
+
+            $paymentApplied = $payPenalty + $payInterest + $payPrincipal;
+            if ($paymentApplied <= 0) {
+                continue;
+            }
+
+            $newPaidAmount = $paidAmount + $paymentApplied;
+            $newStatus = $newPaidAmount >= $totalDue ? 'paid' : 'partial';
+            $paidDate = $newPaidAmount > 0 ? $today : null;
+            $newPrincipalBalance = max(0, $principalAmount - ($alreadyPaidPrincipal + $payPrincipal));
+
+            $updateStmt->execute([
+                $newPaidAmount,
+                $newStatus,
+                $paidDate,
+                $schedule['schedule_id']
+            ]);
+
+            if ($allocation['schedule_id'] === null) {
+                $allocation['schedule_id'] = $schedule['schedule_id'];
+            }
         }
 
         $allocation['balance_remaining'] = max(0, $remaining);
-
         return $allocation;
     }
 
@@ -566,12 +618,27 @@ class LoanService
      */
     private function updateLoanBalance($loanId, $allocation)
     {
-        // Update only existing columns: increase total_paid and reduce outstanding_balance by principal paid
-        $stmt = $this->db->prepare("\n            UPDATE loans\n            SET total_paid = total_paid + ?,\n                outstanding_balance = outstanding_balance - ?\n            WHERE loan_id = ?\n        ");
+        // Recompute outstanding principal based on total principal repaid so far.
+        $stmt = $this->db->prepare(
+            "SELECT COALESCE(SUM(COALESCE(principal_paid,0)), 0) AS principal_repaid " .
+            "FROM loan_repayments WHERE loan_id = ?"
+        );
+        $stmt->execute([$loanId]);
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        $principalRepaid = (float) ($result['principal_repaid'] ?? 0);
+
+        $stmt = $this->db->prepare("SELECT amount_approved FROM loans WHERE loan_id = ?");
+        $stmt->execute([$loanId]);
+        $loan = $stmt->fetch(PDO::FETCH_ASSOC);
+        $approvedAmount = $loan ? (float) $loan['amount_approved'] : 0;
+
+        $newOutstanding = max(0, $approvedAmount - $principalRepaid);
+
+        $stmt = $this->db->prepare("\n            UPDATE loans\n            SET total_paid = total_paid + ?,\n                outstanding_balance = ?\n            WHERE loan_id = ?\n        ");
 
         $stmt->execute([
             $allocation['total_payment'],
-            $allocation['principal_paid'],
+            $newOutstanding,
             $loanId
         ]);
     }
@@ -592,20 +659,27 @@ class LoanService
      */
     private function updateScheduleStatus($loanId)
     {
-        // Mark paid installments
-            $stmt = $this->db->prepare("
-                UPDATE loan_repayment_schedule
-                SET status = 'paid'
-                WHERE loan_id = ? AND paid_amount >= total_due
-            ");
+        // Mark fully paid installments and set paid date where appropriate
+        $stmt = $this->db->prepare(
+            "UPDATE loan_repayment_schedule " .
+            "SET status = 'paid', paid_date = CASE WHEN paid_date IS NULL THEN NOW() ELSE paid_date END " .
+            "WHERE loan_id = ? AND paid_amount >= total_due"
+        );
         $stmt->execute([$loanId]);
 
-        // Mark partial payments
-            $stmt = $this->db->prepare("
-                UPDATE loan_repayment_schedule
-                SET status = 'partial'
-                WHERE loan_id = ? AND paid_amount > 0 AND paid_amount < total_due
-            ");
+        // Preserve overdue on partially paid overdue installments, otherwise mark partial.
+        $stmt = $this->db->prepare(
+            "UPDATE loan_repayment_schedule " .
+            "SET status = 'overdue' " .
+            "WHERE loan_id = ? AND status = 'overdue' AND paid_amount > 0 AND paid_amount < total_due"
+        );
+        $stmt->execute([$loanId]);
+
+        $stmt = $this->db->prepare(
+            "UPDATE loan_repayment_schedule " .
+            "SET status = 'partial' " .
+            "WHERE loan_id = ? AND status IN ('pending', 'partial') AND paid_amount > 0 AND paid_amount < total_due"
+        );
         $stmt->execute([$loanId]);
     }
 
@@ -614,12 +688,22 @@ class LoanService
      */
     private function isLoanCompleted($loanId)
     {
-        $stmt = $this->db->prepare("
-            SELECT outstanding_balance FROM loans WHERE loan_id = ?
-        ");
+        $stmt = $this->db->prepare(
+            "SELECT COUNT(*) as unpaid_count " .
+            "FROM loan_repayment_schedule " .
+            "WHERE loan_id = ? AND status != 'paid'"
+        );
+        $stmt->execute([$loanId]);
+        $scheduleRow = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($scheduleRow && $scheduleRow['unpaid_count'] == 0) {
+            return true;
+        }
+
+        $stmt = $this->db->prepare("SELECT outstanding_balance FROM loans WHERE loan_id = ?");
         $stmt->execute([$loanId]);
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
-        return $result['outstanding_balance'] <= 0;
+        return $result && $result['outstanding_balance'] <= 0;
     }
 
     /**

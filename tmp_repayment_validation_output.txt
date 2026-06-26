@@ -1,0 +1,130 @@
+
+=== Initial state after schedule generation ===
+loan_id: 22
+loan_ref_no: TESTLOAN-1782232196
+status: disbursed
+outstanding_balance: 50000.00
+principal_balance: 50000.00
+total_paid: 0.00
+schedule rows:
+installment_no,total_due,paid_amount,principal_paid,interest_paid,status
+1,17001.11,0.00,0.00,0.00,pending
+2,17001.11,0.00,0.00,0.00,pending
+3,17001.10,0.00,0.00,0.00,pending
+
+PROCESS REPAYMENT 30000 => {
+    "success": true,
+    "receipt_number": "RP20260623162956520",
+    "allocation": {
+        "total_payment": 30000,
+        "penalty_paid": 0,
+        "interest_paid": 834.99,
+        "principal_paid": 29165.010000000002,
+        "balance_remaining": 0,
+        "schedule_id": 59
+    },
+    "message": "Repayment processed successfully"
+}
+
+=== After payment #1 ===
+loan_id: 22
+loan_ref_no: TESTLOAN-1782232196
+status: disbursed
+outstanding_balance: 20834.99
+principal_balance: 20834.99
+total_paid: 30000.00
+schedule rows:
+installment_no,total_due,paid_amount,principal_paid,interest_paid,status
+1,17001.11,17001.11,16501.11,500.00,paid
+2,17001.11,12998.89,12663.90,334.99,partial
+3,17001.10,0.00,0.00,0.00,pending
+loan status after payment #1: disbursed
+
+PROCESS REPAYMENT 15000 => {
+    "success": true,
+    "receipt_number": "RP20260623162957145",
+    "allocation": {
+        "total_payment": 15000,
+        "penalty_paid": 0,
+        "interest_paid": 168.33,
+        "principal_paid": 14831.67,
+        "balance_remaining": 0,
+        "schedule_id": 60
+    },
+    "message": "Repayment processed successfully"
+}
+
+=== After payment #2 ===
+loan_id: 22
+loan_ref_no: TESTLOAN-1782232196
+status: disbursed
+outstanding_balance: 6003.32
+principal_balance: 6003.32
+total_paid: 45000.00
+schedule rows:
+installment_no,total_due,paid_amount,principal_paid,interest_paid,status
+1,17001.11,17001.11,16501.11,500.00,paid
+2,17001.11,17001.11,16666.12,334.99,paid
+3,17001.10,10997.78,10829.45,168.33,partial
+loan status after payment #2: disbursed
+
+PROCESS REPAYMENT 5000 => {
+    "success": true,
+    "receipt_number": "RP20260623162957609",
+    "allocation": {
+        "total_payment": 5000,
+        "penalty_paid": 0,
+        "interest_paid": 0,
+        "principal_paid": 5000,
+        "balance_remaining": 0,
+        "schedule_id": 61
+    },
+    "message": "Repayment processed successfully"
+}
+
+=== After payment #3 ===
+loan_id: 22
+loan_ref_no: TESTLOAN-1782232196
+status: disbursed
+outstanding_balance: 1003.32
+principal_balance: 1003.32
+total_paid: 50000.00
+schedule rows:
+installment_no,total_due,paid_amount,principal_paid,interest_paid,status
+1,17001.11,17001.11,16501.11,500.00,paid
+2,17001.11,17001.11,16666.12,334.99,paid
+3,17001.10,15997.78,15829.45,168.33,partial
+loan status after payment #3: disbursed
+
+Final clearing payment amount = 1003.32
+
+PROCESS FINAL REPAYMENT 1003.32 => {
+    "success": true,
+    "receipt_number": "RP20260623162957710",
+    "allocation": {
+        "total_payment": 1003.32,
+        "penalty_paid": 0,
+        "interest_paid": 0,
+        "principal_paid": 1003.3199999999997,
+        "balance_remaining": 3.410605131648481e-13,
+        "schedule_id": 61
+    },
+    "message": "Repayment processed successfully"
+}
+
+=== Final state after clearing payment ===
+loan_id: 22
+loan_ref_no: TESTLOAN-1782232196
+status: completed
+outstanding_balance: 0.00
+principal_balance: 0.00
+total_paid: 51003.32
+schedule rows:
+installment_no,total_due,paid_amount,principal_paid,interest_paid,status
+1,17001.11,17001.11,16501.11,500.00,paid
+2,17001.11,17001.11,16666.12,334.99,paid
+3,17001.10,17001.10,16832.77,168.33,paid
+
+FINAL LOAN STATUS: completed
+FINAL OUTSTANDING_BALANCE: 0.00
+FINAL TOTAL_PAID: 51003.32

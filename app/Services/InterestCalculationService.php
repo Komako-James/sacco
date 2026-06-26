@@ -218,15 +218,17 @@ class InterestCalculationService
         $daysInMonth = date('t', strtotime($firstDay));
         $dailyRate = $loan['annual_interest_rate'] / 100 / 365;
 
+        $principalBalance = isset($loan['principal_balance']) ? (float)$loan['principal_balance'] : (float)$loan['outstanding_balance'];
+
         // Calculate based on product type
         if ($loan['product_type'] === 'salary_loan') {
             // Salary loans: simple interest monthly on declining balance
             $monthlyRate = $loan['monthly_interest_rate'] / 100;
-            $interest = round($loan['principal_balance'] * $monthlyRate, 2);
+            $interest = round($principalBalance * $monthlyRate, 2);
         } else {
             // Business loans: 5% monthly (compound)
             $monthlyRate = 0.05;
-            $interest = round($loan['principal_balance'] * $monthlyRate, 2);
+            $interest = round($principalBalance * $monthlyRate, 2);
         }
 
         return $interest;
@@ -265,7 +267,8 @@ class InterestCalculationService
             date_create($asOfDate)
         )->days;
 
-        return round($loan['principal_balance'] * $dailyRate * $daysElapsed, 2);
+        $principalBalance = isset($loan['principal_balance']) ? (float)$loan['principal_balance'] : (float)$loan['outstanding_balance'];
+        return round($principalBalance * $dailyRate * $daysElapsed, 2);
     }
 
     /**
@@ -377,7 +380,7 @@ class InterestCalculationService
     {
         $stmt = $this->db->prepare("
             SELECT 
-                l.principal_balance,
+                COALESCE(l.principal_balance, l.outstanding_balance) as principal_balance,
                 (SELECT COALESCE(SUM(interest_due - interest_paid), 0)
                  FROM loan_repayment_schedule 
                  WHERE loan_id = ? AND due_date <= ?) as projected_interest

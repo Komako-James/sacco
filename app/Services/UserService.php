@@ -76,7 +76,7 @@ class UserService
         $passwordHash = password_hash($data['password'], PASSWORD_BCRYPT);
 
         $stmt = $this->db->prepare(
-            'INSERT INTO users (username, email, password_hash, full_name, phone, role, status, created_by, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())'
+            'INSERT INTO users (username, email, password_hash, full_name, phone, role, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, NOW())'
         );
 
         $stmt->execute([
@@ -86,8 +86,7 @@ class UserService
             $data['full_name'],
             $data['phone'],
             $data['role'],
-            $data['status'] ?? 'active',
-            $createdBy
+            $data['status'] ?? 'active'
         ]);
 
         return ['success' => true, 'user_id' => (int)$this->db->lastInsertId()];

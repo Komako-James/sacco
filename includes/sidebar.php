@@ -72,6 +72,22 @@ function isActiveMenu($path) {
                         <i class="bi bi-list-ul"></i> All Members</a></li>
                     <li><a href="<?php echo APP_URL; ?>/members/statements.php" class="submenu-link">
                         <i class="bi bi-receipt"></i> Statements</a></li>
+                    <li class="has-submenu">
+                        <a href="#" class="submenu-link" data-bs-toggle="collapse" data-bs-target="#memberPortalSubmenu">
+                            <i class="bi bi-box-arrow-in-right"></i> Member Portal
+                        </a>
+                        <ul class="submenu collapse" id="memberPortalSubmenu">
+                            <li><a href="<?php echo APP_URL; ?>/member/dashboard.php" class="submenu-link"><i class="bi bi-speedometer2"></i> Dashboard</a></li>
+                            <li><a href="<?php echo APP_URL; ?>/member/savings.php" class="submenu-link"><i class="bi bi-piggy-bank"></i> Savings</a></li>
+                            <li><a href="<?php echo APP_URL; ?>/member/shares.php" class="submenu-link"><i class="bi bi-collection"></i> Shares</a></li>
+                            <li><a href="<?php echo APP_URL; ?>/member/loans.php" class="submenu-link"><i class="bi bi-cash-coin"></i> Loans</a></li>
+                            <li><a href="<?php echo APP_URL; ?>/member/transactions.php" class="submenu-link"><i class="bi bi-receipt"></i> Transactions</a></li>
+                            <li><a href="<?php echo APP_URL; ?>/member/statements.php" class="submenu-link"><i class="bi bi-file-earmark-text"></i> Statements</a></li>
+                            <li><a href="<?php echo APP_URL; ?>/member/dividend-history.php" class="submenu-link"><i class="bi bi-clock-history"></i> Dividend History</a></li>
+                            <li><a href="<?php echo APP_URL; ?>/member/profile.php" class="submenu-link"><i class="bi bi-person"></i> Profile</a></li>
+                            <li><a href="<?php echo APP_URL; ?>/member/security.php" class="submenu-link"><i class="bi bi-shield-lock"></i> Security Settings</a></li>
+                        </ul>
+                    </li>
                 </ul>
             </li>
 
@@ -242,6 +258,66 @@ function isActiveMenu($path) {
                 </ul>
             </li>
 
+            <!-- Demonstration Modules -->
+            <li class="menu-item has-submenu">
+                <a href="#" class="menu-link <?php echo isActiveMenu('/investments') ? 'active' : ''; ?>" data-bs-toggle="collapse" data-bs-target="#investmentsSubmenu">
+                    <i class="bi bi-graph-up-arrow"></i>
+                    <span>Investments</span>
+                    <i class="bi bi-chevron-down arrow"></i>
+                </a>
+                <ul class="submenu collapse <?php echo isActiveMenu('/investments') ? 'show' : ''; ?>" id="investmentsSubmenu">
+                    <li><a href="<?php echo APP_URL; ?>/investments/index.php" class="submenu-link"><i class="bi bi-speedometer2"></i> Investment Dashboard</a></li>
+                    <li><a href="<?php echo APP_URL; ?>/investments/add.php" class="submenu-link"><i class="bi bi-plus-circle"></i> Add Investment</a></li>
+                    <li><a href="<?php echo APP_URL; ?>/investments/portfolio.php" class="submenu-link"><i class="bi bi-collection"></i> Portfolio</a></li>
+                    <li><a href="<?php echo APP_URL; ?>/investments/returns.php" class="submenu-link"><i class="bi bi-percent"></i> Returns</a></li>
+                    <li><a href="<?php echo APP_URL; ?>/investments/reports.php" class="submenu-link"><i class="bi bi-graph-up"></i> Reports</a></li>
+                </ul>
+            </li>
+
+            <li class="menu-item has-submenu">
+                <a href="#" class="menu-link <?php echo isActiveMenu('/dividends') ? 'active' : ''; ?>" data-bs-toggle="collapse" data-bs-target="#dividendsSubmenu">
+                    <i class="bi bi-cash-stack"></i>
+                    <span>Dividends</span>
+                    <i class="bi bi-chevron-down arrow"></i>
+                </a>
+                <ul class="submenu collapse <?php echo isActiveMenu('/dividends') ? 'show' : ''; ?>" id="dividendsSubmenu">
+                    <li><a href="<?php echo APP_URL; ?>/dividends/index.php" class="submenu-link"><i class="bi bi-speedometer2"></i> Dashboard</a></li>
+                    <li><a href="<?php echo APP_URL; ?>/dividends/calculate.php" class="submenu-link"><i class="bi bi-calculator"></i> Calculate Dividends</a></li>
+                    <li><a href="<?php echo APP_URL; ?>/dividends/distribute.php" class="submenu-link"><i class="bi bi-send"></i> Distribute Dividends</a></li>
+                    <li><a href="<?php echo APP_URL; ?>/dividends/history.php" class="submenu-link"><i class="bi bi-clock-history"></i> Dividend History</a></li>
+                </ul>
+            </li>
+
+            <li class="menu-item has-submenu">
+                <a href="#" class="menu-link <?php echo isActiveMenu('/expenses') ? 'active' : ''; ?>" data-bs-toggle="collapse" data-bs-target="#expensesSubmenu">
+                    <i class="bi bi-wallet2"></i>
+                    <span>Expenses</span>
+                    <i class="bi bi-chevron-down arrow"></i>
+                </a>
+                <ul class="submenu collapse <?php echo isActiveMenu('/expenses') ? 'show' : ''; ?>" id="expensesSubmenu">
+                    <li><a href="<?php echo APP_URL; ?>/expenses/index.php" class="submenu-link"><i class="bi bi-speedometer2"></i> Expense Dashboard</a></li>
+                    <li><a href="<?php echo APP_URL; ?>/expenses/create.php" class="submenu-link"><i class="bi bi-plus-circle"></i> Record Expense</a></li>
+                    <li><a href="<?php echo APP_URL; ?>/expenses/categories.php" class="submenu-link"><i class="bi bi-tags"></i> Categories</a></li>
+                    <li><a href="<?php echo APP_URL; ?>/expenses/reports.php" class="submenu-link"><i class="bi bi-graph-up"></i> Reports</a></li>
+                </ul>
+            </li>
+
+            <li class="menu-item">
+                <a href="<?php echo APP_URL; ?>/notifications.php"
+                   class="menu-link <?php echo $currentPage === 'notifications.php' ? 'active' : ''; ?>">
+                    <i class="bi bi-megaphone"></i>
+                    <span>Communication Center</span>
+                </a>
+            </li>
+
+            <li class="menu-item">
+                <a href="<?php echo APP_URL; ?>/mobile-services.php"
+                   class="menu-link <?php echo $currentPage === 'mobile-services.php' ? 'active' : ''; ?>">
+                    <i class="bi bi-wallet-fill"></i>
+                    <span>Payments &amp; Mobile Money</span>
+                </a>
+            </li>
+
             <?php if (hasPermission('accounting.view')): ?>
             <li class="menu-item has-submenu">
                 <a href="#"
@@ -261,6 +337,12 @@ function isActiveMenu($path) {
                         <i class="bi bi-journal-text"></i> Journal Entries</a></li>
                     <li><a href="<?php echo APP_URL; ?>/accounting/bank_accounts.php" class="submenu-link">
                         <i class="bi bi-bank"></i> Bank Accounts</a></li>
+                    <li><a href="<?php echo APP_URL; ?>/accounting/trial_balance.php" class="submenu-link">
+                        <i class="bi bi-table"></i> Trial Balance</a></li>
+                    <li><a href="<?php echo APP_URL; ?>/accounting/income_statement.php" class="submenu-link">
+                        <i class="bi bi-file-earmark-text"></i> Income Statement</a></li>
+                    <li><a href="<?php echo APP_URL; ?>/accounting/balance_sheet.php" class="submenu-link">
+                        <i class="bi bi-journal-bookmark"></i> Balance Sheet</a></li>
                     <li><a href="<?php echo APP_URL; ?>/accounting/reports.php" class="submenu-link">
                         <i class="bi bi-graph-up"></i> Accounting Reports</a></li>
                 </ul>
@@ -288,6 +370,12 @@ function isActiveMenu($path) {
                         <i class="bi bi-sliders"></i> Settings</a></li>
                     <li><a href="<?php echo APP_URL; ?>/admin/backup.php" class="submenu-link">
                         <i class="bi bi-download"></i> Backup</a></li>
+                    <li><a href="<?php echo APP_URL; ?>/admin/dynamic_configuration.php" class="submenu-link">
+                        <i class="bi bi-sliders"></i> Dynamic Configuration</a></li>
+                    <li><a href="<?php echo APP_URL; ?>/admin/roles_permissions.php" class="submenu-link">
+                        <i class="bi bi-shield-lock"></i> Roles & Permissions</a></li>
+                    <li><a href="<?php echo APP_URL; ?>/admin/audit_logs.php" class="submenu-link">
+                        <i class="bi bi-card-list"></i> Audit Logs</a></li>
                 </ul>
             </li>
             <?php endif; ?>

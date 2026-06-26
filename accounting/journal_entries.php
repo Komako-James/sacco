@@ -13,10 +13,11 @@ $journalEntries = [];
 
 try {
     $stmt = $db->query(
-        'SELECT je.journal_entry_id, je.entry_date, je.reference_number, je.description, je.status, COUNT(jl.journal_entry_line_id) AS lines '
+        'SELECT je.journal_entry_id, je.entry_date, je.reference_number, je.description, je.status, '
+        . 'COUNT(jl.journal_entry_line_id) AS line_count '
         . 'FROM journal_entries je '
         . 'LEFT JOIN journal_entry_lines jl ON je.journal_entry_id = jl.journal_entry_id '
-        . 'GROUP BY je.journal_entry_id '
+        . 'GROUP BY je.journal_entry_id, je.entry_date, je.reference_number, je.description, je.status '
         . 'ORDER BY je.entry_date DESC LIMIT 100'
     );
     $journalEntries = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -74,7 +75,7 @@ try {
                                             <td><?php echo htmlspecialchars($entry['reference_number']); ?></td>
                                             <td><?php echo htmlspecialchars($entry['description']); ?></td>
                                             <td><?php echo htmlspecialchars(ucfirst($entry['status'])); ?></td>
-                                            <td><?php echo htmlspecialchars($entry['lines']); ?></td>
+                                            <td><?php echo htmlspecialchars($entry['line_count']); ?></td>
                                         </tr>
                                     <?php endforeach; ?>
                                 <?php endif; ?>

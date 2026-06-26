@@ -119,54 +119,56 @@ try {
                     <?php else: ?>
                         <div class="table-responsive">
                             <table class="table table-hover mb-0">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>Batch Ref</th>
-                                    <th>Employer</th>
-                                    <th>Month</th>
-                                    <th>File</th>
-                                    <th>Records</th>
-                                    <th>Amount</th>
-                                    <th>Status</th>
-                                    <th>Uploaded By</th>
-                                    <th>Uploaded On</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php if (empty($batches)): ?>
-                                    <tr><td colspan="9" class="text-center">No batches found.</td></tr>
-                                <?php else: ?>
-                                    <?php foreach ($batches as $batch): ?>
-                                        <tr>
-                                            <td><?php echo htmlspecialchars($batch['batch_reference']); ?></td>
-                                            <td><?php echo htmlspecialchars($batch['employer_name'] ?: 'Unknown'); ?></td>
-                                            <td><?php echo date('F Y', strtotime($batch['batch_month'])); ?></td>
-                                            <td><?php echo htmlspecialchars($batch['file_name']); ?></td>
-                                            <td><?php echo (int)$batch['total_records']; ?></td>
-                                            <td><?php echo formatMoney($batch['total_amount']); ?></td>
-                                            <td><span class="badge bg-<?php echo $batch['status'] === 'failed' ? 'danger' : ($batch['status'] === 'processed' ? 'success' : ($batch['status'] === 'processing' ? 'info' : 'secondary')); ?>">
-                                                <?php echo ucfirst($batch['status']); ?></span>
-                                            </td>
-                                            <td><?php echo htmlspecialchars($batch['uploaded_by_name'] ?? 'System'); ?></td>
-                                            <td><?php echo date('M d, Y', strtotime($batch['created_at'])); ?></td>
-                                        </tr>
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Batch Ref</th>
+                                        <th>Employer</th>
+                                        <th>Month</th>
+                                        <th>File</th>
+                                        <th>Records</th>
+                                        <th>Amount</th>
+                                        <th>Status</th>
+                                        <th>Uploaded By</th>
+                                        <th>Uploaded On</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php if (empty($batches)): ?>
+                                        <tr><td colspan="9" class="text-center">No batches found.</td></tr>
+                                    <?php else: ?>
+                                        <?php foreach ($batches as $batch): ?>
+                                            <tr>
+                                                <td><?php echo htmlspecialchars($batch['batch_reference']); ?></td>
+                                                <td><?php echo htmlspecialchars($batch['employer_name'] ?: 'Unknown'); ?></td>
+                                                <td><?php echo date('F Y', strtotime($batch['batch_month'])); ?></td>
+                                                <td><?php echo htmlspecialchars($batch['file_name']); ?></td>
+                                                <td><?php echo (int)$batch['total_records']; ?></td>
+                                                <td><?php echo formatMoney($batch['total_amount']); ?></td>
+                                                <td>
+                                                    <span class="badge bg-<?php echo $batch['status'] === 'failed' ? 'danger' : ($batch['status'] === 'processed' ? 'success' : ($batch['status'] === 'processing' ? 'info' : 'secondary')); ?>">
+                                                        <?php echo ucfirst($batch['status']); ?>
+                                                    </span>
+                                                </td>
+                                                <td><?php echo htmlspecialchars($batch['uploaded_by_name'] ?? 'System'); ?></td>
+                                                <td><?php echo date('M d, Y', strtotime($batch['created_at'])); ?></td>
+                                            </tr>
+                                        <?php endforeach; ?>
+                                    <?php endif; ?>
+                                </tbody>
+                            </table>
+                        </div>
                     <?php endif; ?>
-                </div>
-
-                <?php if ($batchTablesAvailable): ?>                                <?php endif; ?>
-                            </tbody>
-                        </table>
-                    </div>
                 </div>
 
                 <nav aria-label="Page navigation" class="mt-3">
                     <ul class="pagination justify-content-center">
-                <?php endif; ?>
-                        <?php for ($i = 1; $i <= $totalPages; $i++): ?>
-                            <li class="page-item <?php echo $i === $page ? 'active' : ''; ?>">
-                                <a class="page-link" href="?page=<?php echo $i; ?>&search=<?php echo urlencode($search); ?>&status=<?php echo urlencode($status); ?>"><?php echo $i; ?></a>
-                            </li>
-                        <?php endfor; ?>
+                        <?php if ($totalPages > 1): ?>
+                            <?php for ($i = 1; $i <= $totalPages; $i++): ?>
+                                <li class="page-item <?php echo $i === $page ? 'active' : ''; ?>">
+                                    <a class="page-link" href="?page=<?php echo $i; ?>&search=<?php echo urlencode($search); ?>&status=<?php echo urlencode($status); ?>"><?php echo $i; ?></a>
+                                </li>
+                            <?php endfor; ?>
+                        <?php endif; ?>
                     </ul>
                 </nav>
             </main>

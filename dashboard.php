@@ -74,6 +74,44 @@ $recent_transactions = $stmt->fetchAll();
                     <small class="text-muted">Last login: <?php echo $user['last_login'] ? date('M j, Y g:i A', strtotime($user['last_login'])) : 'First time'; ?></small>
                 </div>
             </div>
+            <!-- Executive Demo Widgets -->
+            <div class="row mt-4 mb-5">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">Executive Dashboard</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <div class="col-md-3 col-sm-6">
+                                    <div class="card shadow-sm"><div class="card-body"><h6>Total Members</h6><h3>3,412</h3></div></div>
+                                </div>
+                                <div class="col-md-3 col-sm-6">
+                                    <div class="card shadow-sm"><div class="card-body"><h6>Active Loans</h6><h3>248</h3></div></div>
+                                </div>
+                                <div class="col-md-3 col-sm-6">
+                                    <div class="card shadow-sm"><div class="card-body"><h6>Savings Portfolio</h6><h3><?php echo formatMoney(1254300); ?></h3></div></div>
+                                </div>
+                                <div class="col-md-3 col-sm-6">
+                                    <div class="card shadow-sm"><div class="card-body"><h6>Share Capital</h6><h3><?php echo formatMoney(432100); ?></h3></div></div>
+                                </div>
+                                <div class="col-md-3 col-sm-6 mt-3">
+                                    <div class="card shadow-sm"><div class="card-body"><h6>Investments Value</h6><h3><?php echo formatMoney(210000); ?></h3></div></div>
+                                </div>
+                                <div class="col-md-3 col-sm-6 mt-3">
+                                    <div class="card shadow-sm"><div class="card-body"><h6>Dividends Payable</h6><h3><?php echo formatMoney(12500); ?></h3></div></div>
+                                </div>
+                                <div class="col-md-3 col-sm-6 mt-3">
+                                    <div class="card shadow-sm"><div class="card-body"><h6>Monthly Revenue</h6><h3><?php echo formatMoney(98000); ?></h3></div></div>
+                                </div>
+                                <div class="col-md-3 col-sm-6 mt-3">
+                                    <div class="card shadow-sm"><div class="card-body"><h6>Monthly Expenses</h6><h3><?php echo formatMoney(57200); ?></h3></div></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
             <!-- Statistics Cards -->
             <div class="row mb-4">
