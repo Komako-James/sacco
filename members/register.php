@@ -3,6 +3,9 @@ require_once '../includes/auth.php';
 require_once '../includes/functions.php';
 require_once '../includes/validation.php';
 require_once '../config/constants.php';
+require_once '../app/Services/MemberAuthenticationService.php';
+
+use SACCO\Services\MemberAuthenticationService;
 
 $auth->requireLogin();
 $auth->requireRole(['admin', 'officer', 'branch_manager']);
@@ -36,7 +39,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         try {
             // Generate membership number
             $membershipNo = generateMembershipNumber();
-            
+
+            $db->beginTransaction();
+
             // Insert member
             $stmt = $db->prepare("
                 INSERT INTO members 
@@ -44,7 +49,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                  occupation, join_date, created_by, status)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?, 'active')
             ");
-            
+
             $stmt->execute([
                 $membershipNo,
                 $nationalId,
@@ -56,18 +61,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $occupation,
                 $user['user_id']
             ]);
-            
+
             $memberId = $db->lastInsertId();
-            
+
+            $authService = new MemberAuthenticationService($db);
+            $credentialResult = $authService->createMemberCredentials($memberId, $membershipNo, $fullName, $phone);
+            if (!$credentialResult['success']) {
+                throw new Exception($credentialResult['message']);
+            }
+
             // Log activity
             logActivity($user['user_id'], 'Create', 'members', $memberId, null, $_POST);
-            
-            $success = "Member registered successfully! Membership No: <strong>$membershipNo</strong>";
-            
+
+            $db->commit();
+
+            $success = "Member registered successfully! Membership No: <strong>$membershipNo</strong>. Login credentials have been queued to the member's phone.";
+
             // Clear form
             $_POST = [];
             
         } catch (Exception $e) {
+            if ($db->inTransaction()) {
+                $db->rollBack();
+            }
             $error = "Error registering member: " . $e->getMessage();
         }
     } else {

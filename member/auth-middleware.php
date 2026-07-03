@@ -9,9 +9,23 @@ require_once __DIR__ . '/../app/Services/MemberAuthenticationService.php';
 
 use SACCO\Services\MemberAuthenticationService;
 
+// Simple file logger for diagnostics (workspace-accessible)
+function member_debug_log($msg)
+{
+    $logFile = __DIR__ . '/../tmp/member_debug.log';
+    $dir = dirname($logFile);
+    if (!is_dir($dir)) {
+        @mkdir($dir, 0755, true);
+    }
+    $line = date('c') . " " . $msg . "\n";
+    file_put_contents($logFile, $line, FILE_APPEND | LOCK_EX);
+}
+
 function requireMemberLogin()
 {
-    session_start();
+    if (session_status() !== PHP_SESSION_ACTIVE) {
+        session_start();
+    }
 
     // Check if member session exists
     if (!isset($_SESSION['member_user_id']) || !isset($_SESSION['session_token'])) {
@@ -26,6 +40,12 @@ function requireMemberLogin()
     $authService = new MemberAuthenticationService($db);
 
     $sessionValidation = $authService->validateSession($_SESSION['session_token']);
+
+    // Diagnostic: log validation result and current session for troubleshooting
+    error_log('validateSession result: ' . print_r($sessionValidation, true));
+    error_log('SESSION before update: ' . print_r(isset($_SESSION) ? $_SESSION : [], true));
+    member_debug_log('validateSession result: ' . print_r($sessionValidation, true));
+    member_debug_log('SESSION before update: ' . print_r(isset($_SESSION) ? $_SESSION : [] , true));
 
     if (!$sessionValidation['valid']) {
         session_destroy();
@@ -43,9 +63,14 @@ function requireMemberLogin()
 
 function getMemberData()
 {
-    session_start();
+    if (session_status() !== PHP_SESSION_ACTIVE) {
+        session_start();
+    }
 
     if (!isset($_SESSION['member_id'])) {
+        error_log("getMemberData: no member_id in session. SESSION=" . print_r(
+            isset($_SESSION) ? $_SESSION : [], true
+        ));
         return null;
     }
 
@@ -57,7 +82,13 @@ function getMemberData()
         WHERE m.member_id = ?
     ");
     $stmt->execute([$_SESSION['member_id']]);
-    return $stmt->fetch(PDO::FETCH_ASSOC);
+    $result = $stmt->fetch(PDO::FETCH_ASSOC);
+    if (!$result) {
+        error_log("getMemberData: no member found for member_id=" . $_SESSION['member_id']);
+        return null;
+    }
+
+    return $result;
 }
 
 function getMemberSavings()
@@ -91,7 +122,9 @@ function getMemberShares()
 }
 function memberLogout()
 {
-    session_start();
+    if (session_status() !== PHP_SESSION_ACTIVE) {
+        session_start();
+    }
 
     if (isset($_SESSION['session_token'])) {
         $db = getDB();

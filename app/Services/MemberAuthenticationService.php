@@ -42,8 +42,12 @@ class MemberAuthenticationService
      */
     public function createMemberCredentials($memberId, $membershipNumber, $memberName, $memberPhone)
     {
+        $externalTransaction = $this->db->inTransaction();
+
         try {
-            $this->db->beginTransaction();
+            if (!$externalTransaction) {
+                $this->db->beginTransaction();
+            }
 
             // Username is the membership number
             $username = $membershipNumber;
@@ -51,6 +55,9 @@ class MemberAuthenticationService
             // Generate secure temporary password
             $tempPassword = $this->generateSecurePassword();
             $passwordHash = password_hash($tempPassword, PASSWORD_BCRYPT, ['cost' => $this->config['bcrypt_cost']]);
+            error_log("TEMP PASSWORD: [" . $tempPassword . "]");
+            error_log("PASSWORD LENGTH: " . strlen($tempPassword));
+            error_log("SELF VERIFY: " . (password_verify($tempPassword, $passwordHash) ? "TRUE" : "FALSE"));
 
             // Create user account for member
             $stmt = $this->db->prepare("
@@ -77,6 +84,13 @@ class MemberAuthenticationService
             $stmt = $this->db->prepare("UPDATE members SET user_id = ? WHERE member_id = ?");
             $stmt->execute([$userId, $memberId]);
 
+            // Create default security preferences if not already set
+            $stmt = $this->db->prepare("
+                INSERT INTO member_security_preferences (user_id, member_id, two_factor_enabled)
+                VALUES (?, ?, FALSE)
+            ");
+            $stmt->execute([$userId, $memberId]);
+
             // Log credential creation
             $this->logCredentialHistory(
                 $userId,
@@ -90,10 +104,13 @@ class MemberAuthenticationService
                 'Member account created'
             );
 
+            error_log("SMS PASSWORD: [" . $tempPassword . "]");
             // Queue SMS with credentials
             $this->queueCredentialSMS($memberId, $memberPhone, $username, $tempPassword, $memberName);
 
-            $this->db->commit();
+            if (!$externalTransaction) {
+                $this->db->commit();
+            }
 
             return [
                 'success' => true,
@@ -104,7 +121,9 @@ class MemberAuthenticationService
             ];
 
         } catch (Exception $e) {
-            $this->db->rollBack();
+            if (!$externalTransaction && $this->db->inTransaction()) {
+                $this->db->rollBack();
+            }
             return [
                 'success' => false,
                 'message' => 'Failed to create credentials: ' . $e->getMessage()
@@ -128,12 +147,17 @@ class MemberAuthenticationService
                 SELECT u.*, m.member_id, m.phone, m.email as member_email
                 FROM users u
                 LEFT JOIN members m ON u.user_id = m.user_id
-                WHERE u.username = ? AND u.role = 'member' AND u.status = 'active'
+                WHERE u.username = ?
+                AND u.is_member = 1
+                AND u.linked_member_id IS NOT NULL
+                AND u.status = 'active'
             ");
             $stmt->execute([$username]);
             $user = $stmt->fetch(PDO::FETCH_ASSOC);
+            error_log("LOGIN USER: " . print_r($user, true));
 
             if (!$user) {
+                error_log("LOGIN EXIT POINT: " . __LINE__);
                 $this->logLoginAttempt(null, null, $username, 'failed_username', $ipAddress, $userAgent);
                 return [
                     'success' => false,
@@ -146,6 +170,7 @@ class MemberAuthenticationService
 
             // Check if account is locked
             if ($user['locked_until'] && strtotime($user['locked_until']) > time()) {
+                error_log("LOGIN EXIT POINT: " . __LINE__);
                 $this->logLoginAttempt($userId, $memberId, $username, 'locked', $ipAddress, $userAgent);
                 return [
                     'success' => false,
@@ -154,7 +179,12 @@ class MemberAuthenticationService
             }
 
             // Verify password
-            if (!password_verify($password, $user['password_hash'])) {
+            error_log("PASSWORD INPUT: " . $password);
+            error_log("HASH IN DB: " . ($user['password_hash'] ?? 'NULL'));
+            $verifyResult = password_verify($password, $user['password_hash']);
+            error_log("VERIFY RESULT: " . ($verifyResult ? 'TRUE' : 'FALSE'));
+            if (!$verifyResult) {
+                error_log("LOGIN EXIT POINT: " . __LINE__);
                 $this->incrementFailedLogins($userId);
                 $this->logLoginAttempt($userId, $memberId, $username, 'failed_password', $ipAddress, $userAgent);
                 return [
@@ -165,6 +195,7 @@ class MemberAuthenticationService
 
             // Check if password has expired
             if ($user['password_expires_at'] && strtotime($user['password_expires_at']) < time()) {
+                error_log("LOGIN EXIT POINT: " . __LINE__);
                 return [
                     'success' => false,
                     'requires_password_change' => true,
@@ -175,6 +206,7 @@ class MemberAuthenticationService
 
             // Check if must change password on first login
             if ($user['must_change_password']) {
+                error_log("LOGIN EXIT POINT: " . __LINE__);
                 return [
                     'success' => false,
                     'requires_password_change' => true,
@@ -198,6 +230,7 @@ class MemberAuthenticationService
                 $this->queueOTPSMS($memberId, $user['phone'], $otp);
 
                 $this->logLoginAttempt($userId, $memberId, $username, 'success', $ipAddress, $userAgent, false);
+                error_log("LOGIN EXIT POINT: " . __LINE__);
 
                 return [
                     'success' => false,
@@ -226,6 +259,7 @@ class MemberAuthenticationService
             $stmt->execute([$ipAddress, $userId]);
 
             $this->logLoginAttempt($userId, $memberId, $username, 'success', $ipAddress, $userAgent, true);
+            error_log("LOGIN EXIT POINT: " . __LINE__);
 
             return [
                 'success' => true,
@@ -236,6 +270,7 @@ class MemberAuthenticationService
             ];
 
         } catch (Exception $e) {
+            error_log("LOGIN EXIT POINT: " . __LINE__ . " | EXCEPTION: " . $e->getMessage());
             return [
                 'success' => false,
                 'message' => 'Login failed: ' . $e->getMessage()
@@ -471,14 +506,14 @@ class MemberAuthenticationService
                 expires_at, is_active
             ) VALUES (?, ?, ?, ?, ?, ?, TRUE)
         ");
-
-        $stmt->execute([
-            $userId,
-            $memberId,
-            $sessionToken,
-            $ipAddress,
-            $userAgent
-        ]);
+    $stmt->execute([
+        $userId,
+        $memberId,
+        $sessionToken,
+        $ipAddress,
+        $userAgent,
+        $expiresAt
+]);
 
         return $sessionToken;
     }
@@ -591,12 +626,11 @@ class MemberAuthenticationService
 
         $stmt = $this->db->prepare("
             INSERT INTO sms_queue (
-                member_id, phone_number, message, message_type, status
-            ) VALUES (?, ?, ?, 'login_credentials', 'pending')
+                phone_number, message_body, message_type, delivery_status
+            ) VALUES (?, ?, 'login_credentials', 'pending')
         ");
 
         $stmt->execute([
-            $memberId,
             $phone,
             $message
         ]);
@@ -611,12 +645,11 @@ class MemberAuthenticationService
 
         $stmt = $this->db->prepare("
             INSERT INTO sms_queue (
-                member_id, phone_number, message, message_type, status
-            ) VALUES (?, ?, ?, 'otp_verification', 'pending')
+                phone_number, message_body, message_type, delivery_status
+            ) VALUES (?, ?, 'otp_verification', 'pending')
         ");
 
         $stmt->execute([
-            $memberId,
             $phone,
             $message
         ]);

@@ -11,6 +11,11 @@ require_once '../includes/functions.php';
 requireMemberLogin();
 
 $member = getMemberData();
+if (!$member) {
+    error_log('dashboard: getMemberData returned empty; SESSION=' . print_r(isset($_SESSION) ? $_SESSION : [], true));
+    header('Location: ../member-login.php?error=' . urlencode('Please log in'));
+    exit();
+}
 $savings = getMemberSavings();
 $loans = getMemberLoans();
 
@@ -25,6 +30,7 @@ $stmt = $db->prepare("
 ");
 $stmt->execute([$member['member_id']]);
 $savingsSummary = $stmt->fetch(PDO::FETCH_ASSOC);
+if (!$savingsSummary) $savingsSummary = ['total_savings' => 0];
 
 $stmt = $db->prepare("
     SELECT 
@@ -35,10 +41,12 @@ $stmt = $db->prepare("
 ");
 $stmt->execute([$member['member_id']]);
 $loansSummary = $stmt->fetch(PDO::FETCH_ASSOC);
+if (!$loansSummary) $loansSummary = ['total_loans' => 0, 'total_outstanding' => 0];
 
 $stmt = $db->prepare("SELECT COALESCE(shares_owned, 0) as total_shares, COALESCE(total_invested, 0) as total_invested FROM member_share_holdings WHERE member_id = ?");
 $stmt->execute([$member['member_id']]);
 $sharesSummary = $stmt->fetch(PDO::FETCH_ASSOC);
+if (!$sharesSummary) $sharesSummary = ['total_shares' => 0, 'total_invested' => 0];
 
 // Get recent transactions
 $stmt = $db->prepare("
@@ -234,7 +242,7 @@ $recentTransactions = $stmt->fetchAll(PDO::FETCH_ASSOC);
             <!-- Page Header -->
             <div class="mb-4">
                 <h1 class="h3 mb-1">Welcome, <?php echo htmlspecialchars($member['full_name']); ?>!</h1>
-                <p class="text-muted mb-0">Member #<?php echo $member['membership_number']; ?></p>
+                <p class="text-muted mb-0">Member #<?php echo htmlspecialchars($member['membership_no']); ?></p>
             </div>
 
             <!-- Summary Cards -->

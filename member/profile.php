@@ -143,7 +143,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $_POST['action'] === 'upload_photo'
                                     </div>
                                     <div class="col-md-6 mb-3">
                                         <label for="membershipNo" class="form-label">Membership Number</label>
-                                        <input type="text" class="form-control" id="membershipNo" value="<?php echo htmlspecialchars($member['membership_number']); ?>" disabled>
+                                        <input type="text" class="form-control" id="membershipNo" value="<?php echo htmlspecialchars($member['membership_no']); ?>" disabled>
                                     </div>
                                 </div>
 

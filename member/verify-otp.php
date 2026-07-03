@@ -45,6 +45,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             unset($_SESSION['temp_user_id']);
             unset($_SESSION['temp_member_id']);
 
+            // Diagnostic: write session state to file
+            file_put_contents(__DIR__ . '/../tmp/member_debug.log', date('c') . " VERIFY OTP SET SESSION: " . print_r($_SESSION, true) . "\n", FILE_APPEND | LOCK_EX);
+
             header('Location: dashboard.php');
             exit();
         } else {

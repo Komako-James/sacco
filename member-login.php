@@ -40,6 +40,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $_SESSION['session_token'] = $result['session_token'];
             $_SESSION['is_member'] = true;
 
+            // Diagnostic: dump session to workspace-accessible log
+            file_put_contents(__DIR__ . '/../tmp/member_debug.log', date('c') . " LOGIN SET SESSION: " . print_r($_SESSION, true) . "\n", FILE_APPEND | LOCK_EX);
+
             header('Location: member/dashboard.php');
             exit();
         } elseif ($result['requires_password_change'] ?? false) {
