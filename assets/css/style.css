@@ -16,10 +16,10 @@
 /* Beautiful Enhanced Sidebar */
 .sidebar {
     position: fixed;
-    top: 0;
+    top: 56px;
     left: 0;
     width: 260px;
-    height: 100vh;
+    height: calc(100vh - 56px);
     background: linear-gradient(180deg, #2c3e50 0%, #34495e 100%);
     box-shadow: 2px 0 10px rgba(0,0,0,0.1);
     z-index: 1000;
@@ -278,8 +278,8 @@
 /* Main Content Adjustment */
 .main-content {
     margin-left: 260px;
-    padding: 2rem;
-    min-height: 100vh;
+    padding: 5.5rem 2rem 2rem;
+    min-height: calc(100vh - 56px);
     background: #f8f9fa;
 }
 
@@ -292,6 +292,8 @@
 @media (max-width: 768px) {
     .sidebar {
         transform: translateX(-100%);
+        top: 56px;
+        height: calc(100vh - 56px);
     }
 
     .sidebar.show {

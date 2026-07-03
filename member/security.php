@@ -3,10 +3,10 @@
  * Member Security Page - Change Password, 2FA Settings
  */
 
-require_once '../member/auth-middleware.php';
-require_once '../config/constants.php';
-require_once '../config/db_connection.php';
-require_once '../app/Services/MemberAuthenticationService.php';
+require_once __DIR__ . '/auth-middleware.php';
+require_once __DIR__ . '/../config/constants.php';
+require_once __DIR__ . '/../config/db_connection.php';
+require_once __DIR__ . '/../app/Services/MemberAuthenticationService.php';
 
 use SACCO\Services\MemberAuthenticationService;
 
@@ -110,20 +110,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $_POST['action'] === 'toggle_2fa') 
 $stmt = $db->prepare("SELECT * FROM member_security_preferences WHERE user_id = ?");
 $stmt->execute([$_SESSION['member_user_id']]);
 $securityPrefs = $stmt->fetch(PDO::FETCH_ASSOC);
+
+$pageTitle = 'Security Settings - Member Portal';
+require_once __DIR__ . '/layout/header.php';
 ?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Security Settings - Member Portal</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css" rel="stylesheet">
-    <link rel="stylesheet" href="../assets/css/style.css">
-</head>
-<body>
-    <div class="member-content">
-        <div class="container-fluid p-4">
+    <div class="container-fluid py-4">
             <div class="mb-4">
                 <a href="dashboard.php" class="btn btn-sm btn-outline-secondary mb-3">
                     <i class="bi bi-arrow-left me-1"></i> Back
@@ -272,5 +263,4 @@ $securityPrefs = $stmt->fetch(PDO::FETCH_ASSOC);
             </div>
         </div>
     </div>
-</body>
-</html>
+<?php require_once __DIR__ . '/layout/footer.php'; ?>

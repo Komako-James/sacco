@@ -3,9 +3,9 @@
  * Member Repayment Schedule Page
  */
 
-require_once '../member/auth-middleware.php';
-require_once '../config/constants.php';
-require_once '../includes/functions.php';
+require_once __DIR__ . '/auth-middleware.php';
+require_once __DIR__ . '/../config/constants.php';
+require_once __DIR__ . '/../includes/functions.php';
 
 requireMemberLogin();
 
@@ -37,20 +37,11 @@ foreach ($schedules as $schedule) {
     }
     $loanSchedules[$loanRef]['schedules'][] = $schedule;
 }
+
+$pageTitle = 'Repayment Schedule - Member Portal';
+require_once __DIR__ . '/layout/header.php';
 ?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Repayment Schedule - Member Portal</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css" rel="stylesheet">
-    <link rel="stylesheet" href="../assets/css/style.css">
-</head>
-<body>
-    <div class="member-content">
-        <div class="container-fluid p-4">
+    <div class="container-fluid py-4">
             <div class="mb-4">
                 <a href="dashboard.php" class="btn btn-sm btn-outline-secondary mb-3">
                     <i class="bi bi-arrow-left me-1"></i> Back
@@ -99,7 +90,5 @@ foreach ($schedules as $schedule) {
             <?php else: ?>
             <div class="alert alert-info">No active loan repayment schedules.</div>
             <?php endif; ?>
-        </div>
     </div>
-</body>
-</html>
+<?php require_once __DIR__ . '/layout/footer.php'; ?>
