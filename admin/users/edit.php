@@ -20,6 +20,7 @@ $error = '';
 $success = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $csrfToken = $_POST['csrf_token'] ?? '';
     $fullName = trim($_POST['full_name'] ?? '');
     $email = trim($_POST['email'] ?? '');
     $phone = trim($_POST['phone'] ?? '');
@@ -27,8 +28,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $status = $_POST['status'] ?? $user['status'];
     $password = $_POST['password'] ?? '';
 
-    try {
-        $userService->updateUser($userId, [
+    if (!verifyCsrfToken($csrfToken)) {
+        $error = 'Invalid CSRF token. Please try again.';
+    } elseif (!$userService->roleExists($role)) {
+        $error = 'Selected role does not exist.';
+    } else {
+        try {
+            $userService->updateUser($userId, [
             'full_name' => $fullName,
             'email' => $email,
             'phone' => $phone,
@@ -114,6 +120,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 <div class="form-text">Enter a new password only if you want to reset it.</div>
                             </div>
                             <div class="col-12 text-end">
+                                <?php echo csrfInputField(); ?>
                                 <button class="btn btn-primary">Save Changes</button>
                                 <a href="index.php" class="btn btn-secondary">Back</a>
                             </div>

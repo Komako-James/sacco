@@ -13,6 +13,7 @@ $error = '';
 $success = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $csrfToken = $_POST['csrf_token'] ?? '';
     $username = trim($_POST['username'] ?? '');
     $email = trim($_POST['email'] ?? '');
     $fullName = trim($_POST['full_name'] ?? '');
@@ -22,10 +23,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $role = $_POST['role'] ?? 'loan_officer';
     $status = $_POST['status'] ?? 'active';
 
-    if (empty($username) || empty($email) || empty($fullName) || empty($password) || empty($confirm)) {
+    if (!verifyCsrfToken($csrfToken)) {
+        $error = 'Invalid CSRF token. Please try again.';
+    } elseif (empty($username) || empty($email) || empty($fullName) || empty($password) || empty($confirm)) {
         $error = 'All fields are required.';
     } elseif ($password !== $confirm) {
         $error = 'Passwords do not match.';
+    } elseif (!$userService->roleExists($role)) {
+        $error = 'Selected role does not exist.';
     } else {
         try {
             $result = $userService->createUser([
@@ -125,6 +130,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 </select>
                             </div>
                             <div class="col-12 text-end">
+                                <?php echo csrfInputField(); ?>
                                 <button class="btn btn-primary">Create User</button>
                                 <a href="index.php" class="btn btn-secondary">Cancel</a>
                             </div>

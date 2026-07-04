@@ -8,6 +8,7 @@ if (session_status() === PHP_SESSION_NONE) {
 
 require_once __DIR__ . '/../config/db_connection.php';
 require_once __DIR__ . '/functions.php';
+// RoleService delegation removed during stabilization phase — authorization frozen
 
 class Auth {
     private $db;
@@ -254,7 +255,6 @@ class Auth {
         if ($_SESSION['role'] === 'admin') {
             return true;
         }
-
         $role = $_SESSION['role'];
         $rolePermissions = [
             'manager' => [

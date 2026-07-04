@@ -15,7 +15,7 @@ class UserService
     public function getRoleOptions(): array
     {
         try {
-            $stmt = $this->db->query("SELECT role_name, label FROM roles ORDER BY role_name");
+            $stmt = $this->db->query("SELECT role_name, label FROM roles ORDER BY label");
             $roles = $stmt->fetchAll();
             if (!empty($roles)) {
                 return array_column($roles, 'label', 'role_name');
@@ -33,6 +33,17 @@ class UserService
             'audit' => 'Auditor',
             'viewer' => 'Viewer'
         ];
+    }
+
+    public function roleExists(string $roleName): bool
+    {
+        try {
+            $stmt = $this->db->prepare('SELECT COUNT(*) FROM roles WHERE role_name = ?');
+            $stmt->execute([$roleName]);
+            return (int)$stmt->fetchColumn() > 0;
+        } catch (\Exception $e) {
+            return false;
+        }
     }
 
     public function listUsers(int $page = 1, int $limit = 20, string $search = ''): array
