@@ -45,11 +45,18 @@ try {
 
     <div class="main-content">
         <div class="container-fluid py-4">
-            <div class="d-flex justify-content-between align-items-center mb-4">
+            <div class="page-header">
                 <div>
-                    <h1 class="h3 mb-1">Share Dashboard</h1>
-                    <p class="text-muted mb-0">Central overview of share capital, shareholder holdings, recent activity, and quick actions.</p>
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item"><a href="../dashboard.php">Home</a></li>
+                            <li class="breadcrumb-item active" aria-current="page">Shares</li>
+                        </ol>
+                    </nav>
+                    <h1 class="page-title">Share Dashboard</h1>
+                    <p class="page-subtitle">Central overview of share capital, shareholder holdings, and recent activity.</p>
                 </div>
+                <a href="buy.php" class="btn btn-primary"><i class="bi bi-cart-plus me-2"></i>Buy Shares</a>
             </div>
 
             <?php foreach ($messages as $msg): ?>
@@ -60,28 +67,43 @@ try {
 
             <div class="row g-4 mb-4">
                 <div class="col-md-4">
-                    <div class="card shadow-sm h-100">
+                    <div class="card dashboard-card h-100">
                         <div class="card-body">
-                            <p class="text-uppercase text-muted mb-2">Total SACCO Shares</p>
-                            <h2 class="display-6 mb-0"><?php echo number_format($totalShares); ?></h2>
+                            <div class="d-flex align-items-center justify-content-between mb-3">
+                                <div>
+                                    <p class="text-uppercase text-muted mb-2 small">Total SACCO Shares</p>
+                                    <h2 class="display-6 mb-0"><?php echo number_format($totalShares); ?></h2>
+                                </div>
+                                <div class="rounded-circle bg-primary-subtle p-3 text-primary"><i class="bi bi-diagram-3 fs-4"></i></div>
+                            </div>
                             <p class="text-muted small mb-0">Total shares held by all members.</p>
                         </div>
                     </div>
                 </div>
                 <div class="col-md-4">
-                    <div class="card shadow-sm h-100">
+                    <div class="card dashboard-card h-100">
                         <div class="card-body">
-                            <p class="text-uppercase text-muted mb-2">Total Shareholders</p>
-                            <h2 class="display-6 mb-0"><?php echo number_format($totalShareholders); ?></h2>
+                            <div class="d-flex align-items-center justify-content-between mb-3">
+                                <div>
+                                    <p class="text-uppercase text-muted mb-2 small">Total Shareholders</p>
+                                    <h2 class="display-6 mb-0"><?php echo number_format($totalShareholders); ?></h2>
+                                </div>
+                                <div class="rounded-circle bg-success-subtle p-3 text-success"><i class="bi bi-people-fill fs-4"></i></div>
+                            </div>
                             <p class="text-muted small mb-0">Active members holding shares.</p>
                         </div>
                     </div>
                 </div>
                 <div class="col-md-4">
-                    <div class="card shadow-sm h-100">
+                    <div class="card dashboard-card h-100">
                         <div class="card-body">
-                            <p class="text-uppercase text-muted mb-2">Recent Activity</p>
-                            <h2 class="display-6 mb-0"><?php echo number_format(count($recentShareTransactions)); ?></h2>
+                            <div class="d-flex align-items-center justify-content-between mb-3">
+                                <div>
+                                    <p class="text-uppercase text-muted mb-2 small">Recent Activity</p>
+                                    <h2 class="display-6 mb-0"><?php echo number_format(count($recentShareTransactions)); ?></h2>
+                                </div>
+                                <div class="rounded-circle bg-info-subtle p-3 text-info"><i class="bi bi-clock-history fs-4"></i></div>
+                            </div>
                             <p class="text-muted small mb-0">Transactions in the latest activity feed.</p>
                         </div>
                     </div>
@@ -157,15 +179,15 @@ try {
 
             <div class="row g-4">
                 <div class="col-xl-8">
-                    <div class="card shadow-sm">
-                        <div class="card-header bg-secondary text-white">
+                    <div class="card h-100">
+                        <div class="card-header">
                             <h5 class="mb-0"><i class="bi bi-clock-history me-2"></i> Recent Share Transactions</h5>
                         </div>
                         <div class="card-body">
                             <?php if (!empty($recentShareTransactions)): ?>
                                 <div class="table-responsive">
-                                    <table class="table table-hover table-sm">
-                                        <thead class="table-light">
+                                    <table class="table table-hover align-middle mb-0">
+                                        <thead>
                                             <tr>
                                                 <th>Date</th>
                                                 <th>Member</th>

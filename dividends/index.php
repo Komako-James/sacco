@@ -19,6 +19,50 @@ $auth->requireLogin();
 <body>
     <?php include __DIR__ . '/../includes/navbar.php'; ?>
     <?php include __DIR__ . '/../includes/sidebar.php'; ?>
-    <?php renderPlaceholder('Dividends Dashboard', 'bi bi-cash-stack', 'Coming Soon'); ?>
+
+    <div class="main-content">
+        <div class="container-fluid mt-4">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h2">Dividends Dashboard</h1>
+                <a href="../reports/profitability.php" class="btn btn-outline-secondary"><i class="bi bi-graph-up"></i> View Reports</a>
+            </div>
+
+            <div class="card">
+                <div class="card-body">
+                    <p class="text-muted">Dividend calculations and distribution are available in the accounting module. Use the reports link to review historical dividend figures.</p>
+
+                    <div class="row mt-3">
+                        <div class="col-md-4">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="card-title">Calculate Dividends</h5>
+                                    <p class="text-muted">Run calculations from the backend accounting tools (restricted access).</p>
+                                    <a href="calculate.php" class="btn btn-sm btn-primary">Open</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="card-title">Distribute Dividends</h5>
+                                    <p class="text-muted">Prepare and send dividend distributions once calculations are final.</p>
+                                    <a href="distribute.php" class="btn btn-sm btn-primary">Open</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="card-title">Dividend History</h5>
+                                    <p class="text-muted">Review previously recorded distributions.</p>
+                                    <a href="history.php" class="btn btn-sm btn-primary">Open</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

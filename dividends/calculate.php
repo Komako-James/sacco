@@ -19,6 +19,21 @@ $auth->requireLogin();
 <body>
     <?php include __DIR__ . '/../includes/navbar.php'; ?>
     <?php include __DIR__ . '/../includes/sidebar.php'; ?>
-    <?php renderPlaceholder('Calculate Dividends', 'bi bi-calculator', 'Coming Soon'); ?>
+
+    <div class="main-content">
+        <div class="container-fluid mt-4">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h2">Calculate Dividends</h1>
+                <a href="index.php" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> Back</a>
+            </div>
+
+            <div class="card">
+                <div class="card-body">
+                    <p class="text-muted">This tool prepares dividend calculation runs. For demonstration, calculations are restricted. Use the accounting team tools to run production calculations.</p>
+                    <div class="alert alert-warning">Demo mode: Calculation execution is restricted in this environment.</div>
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

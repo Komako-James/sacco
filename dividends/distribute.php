@@ -19,6 +19,21 @@ $auth->requireLogin();
 <body>
     <?php include __DIR__ . '/../includes/navbar.php'; ?>
     <?php include __DIR__ . '/../includes/sidebar.php'; ?>
-    <?php renderPlaceholder('Distribute Dividends', 'bi bi-send', 'Coming Soon'); ?>
+
+    <div class="main-content">
+        <div class="container-fluid mt-4">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h2">Distribute Dividends</h1>
+                <a href="index.php" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> Back</a>
+            </div>
+
+            <div class="card">
+                <div class="card-body">
+                    <p class="text-muted">Distribute dividends to members using configured payment methods. This action requires review and approvals.</p>
+                    <div class="alert alert-info">No distribution records available in demo mode.</div>
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

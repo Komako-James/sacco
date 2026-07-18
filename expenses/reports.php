@@ -2,9 +2,22 @@
 require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../config/constants.php';
 require_once __DIR__ . '/../includes/functions.php';
-require_once __DIR__ . '/../includes/placeholder.php';
+require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/../config/constants.php';
+require_once __DIR__ . '/../includes/functions.php';
 
 $auth->requireLogin();
+$auth->requireRole(['admin','accountant','manager']);
+$db = getDB();
+
+// Simple recent expenses report
+try {
+    $stmt = $db->prepare('SELECT * FROM expenses ORDER BY expense_date DESC LIMIT 200');
+    $stmt->execute();
+    $rows = $stmt->fetchAll();
+} catch (Exception $e) {
+    $rows = [];
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -19,6 +32,49 @@ $auth->requireLogin();
 <body>
     <?php include __DIR__ . '/../includes/navbar.php'; ?>
     <?php include __DIR__ . '/../includes/sidebar.php'; ?>
-    <?php renderPlaceholder('Expense Reports', 'bi bi-graph-up', 'Coming Soon'); ?>
+
+    <div class="main-content">
+        <div class="container-fluid mt-4">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h2">Expense Reports</h1>
+                <a href="index.php" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> Back</a>
+            </div>
+
+            <div class="card">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Category / Account</th>
+                                    <th class="text-end">Amount</th>
+                                    <th>Description</th>
+                                    <th>Payment</th>
+                                    <th>Reference</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php if (empty($rows)): ?>
+                                    <tr><td colspan="6" class="text-center">No expense records found.</td></tr>
+                                <?php else: ?>
+                                    <?php foreach ($rows as $r): ?>
+                                        <tr>
+                                            <td><?php echo htmlspecialchars($r['expense_date'] ?? $r['created_at'] ?? ''); ?></td>
+                                            <td><?php echo htmlspecialchars($r['category'] ?? ($r['account_code'] ?? '')); ?></td>
+                                            <td class="text-end"><?php echo isset($r['amount']) ? formatMoney($r['amount']) : ''; ?></td>
+                                            <td><?php echo htmlspecialchars($r['description'] ?? ''); ?></td>
+                                            <td><?php echo htmlspecialchars($r['payment_method'] ?? ''); ?></td>
+                                            <td><?php echo htmlspecialchars($r['reference_no'] ?? ''); ?></td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                <?php endif; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

@@ -1,9 +1,15 @@
 <?php
 /**
  * Database Setup & Default User Creation
- * Run this script once to initialize the database with default admin user
- * Then delete this file for security
+ * IMPORTANT: This file should be DELETED after the system is initialized.
+ * Keeping this file is a SECURITY RISK.
  */
+
+// Prevent execution if system is already set up
+$isSetUp = file_exists(__DIR__ . '/.setup_complete');
+if ($isSetUp) {
+    die('System is already set up. Please delete setup.php for security.');
+}
 
 require_once 'config/session_config.php';
 require_once 'config/db_connection.php';
@@ -23,12 +29,12 @@ $stmt->execute();
 $result = $stmt->fetch();
 
 if ($result['count'] > 0) {
-    die('Admin user already exists!');
+    die('Admin user already exists! Please delete this file and use your credentials to login.');
 }
 
 // Default credentials
 $defaultUsername = 'admin';
-$defaultPassword = 'Admin@1234'; // Change this!
+$defaultPassword = 'Admin@1234'; // CHANGE THIS IMMEDIATELY!
 $passwordHash = password_hash($defaultPassword, PASSWORD_BCRYPT);
 
 try {
@@ -46,13 +52,16 @@ try {
     ]);
     
     echo "✅ Default admin user created successfully!<br><br>";
-    echo "<strong>Default Credentials:</strong><br>";
+    echo "<strong>⚠️ IMPORTANT SECURITY STEPS:</strong><br>";
+    echo "1. Change the default password IMMEDIATELY after first login<br>";
+    echo "2. Delete this setup.php file right now for security<br>";
+    echo "3. Go to <a href='login.php'>Login Page</a><br><br>";
+    echo "<strong>Default Credentials (CHANGE IMMEDIATELY):</strong><br>";
     echo "Username: <code>admin</code><br>";
-    echo "Password: <code>Admin@1234</code><br><br>";
-    echo "<strong>⚠️ IMPORTANT:</strong><br>";
-    echo "1. Change the default password immediately after first login<br>";
-    echo "2. Delete this setup.php file for security<br>";
-    echo "3. Go to <a href='login.php'>Login Page</a>";
+    echo "Password: <code>Admin@1234</code><br>";
+    
+    // Create marker file
+    touch(__DIR__ . '/.setup_complete');
     
 } catch (Exception $e) {
     die("Error: " . $e->getMessage());

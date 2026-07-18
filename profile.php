@@ -31,22 +31,63 @@ $user = $auth->getCurrentUser();
 
                 <div class="card shadow-sm">
                     <div class="card-body">
-                        <h1 class="h4 mb-3">Profile</h1>
-                        <p class="text-muted">Module under development.</p>
-
-                        <div class="mb-4">
-                            <span class="badge bg-warning">Status: Planned</span>
-                        </div>
-
-                        <h5>Future Features</h5>
-                        <ul>
-                            <li>View and update personal profile details</li>
-                            <li>Change password and security settings</li>
-                            <li>Manage contact details and notification preferences</li>
-                        </ul>
-
-                        <div class="alert alert-info mt-4">
-                            This placeholder page preserves the profile navigation until more user account features are implemented.
+                        <h1 class="h4 mb-3">User Profile</h1>
+                        
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <h5>Account Information</h5>
+                                <table class="table table-sm">
+                                    <tr>
+                                        <td><strong>Username:</strong></td>
+                                        <td><?php echo htmlspecialchars($user['username']); ?></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Full Name:</strong></td>
+                                        <td><?php echo htmlspecialchars($user['full_name']); ?></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Email:</strong></td>
+                                        <td><?php echo htmlspecialchars($user['email']); ?></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Phone:</strong></td>
+                                        <td><?php echo htmlspecialchars($user['phone'] ?? 'N/A'); ?></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Role:</strong></td>
+                                        <td><span class="badge bg-info"><?php echo ucfirst($user['role']); ?></span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Status:</strong></td>
+                                        <td>
+                                            <?php if ($user['status'] === 'active'): ?>
+                                                <span class="badge bg-success">Active</span>
+                                            <?php else: ?>
+                                                <span class="badge bg-danger"><?php echo ucfirst($user['status']); ?></span>
+                                            <?php endif; ?>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Last Login:</strong></td>
+                                        <td><?php echo $user['last_login'] ? date('M j, Y g:i A', strtotime($user['last_login'])) : 'Never'; ?></td>
+                                    </tr>
+                                </table>
+                            </div>
+                            <div class="col-md-6">
+                                <h5>Security</h5>
+                                <div class="mb-3">
+                                    <a href="admin/users/?action=edit&id=<?php echo $user['user_id']; ?>" class="btn btn-outline-primary btn-sm">
+                                        <i class="bi bi-pencil-square"></i> Edit Profile
+                                    </a>
+                                    <a href="change_admin_password.php" class="btn btn-outline-warning btn-sm">
+                                        <i class="bi bi-shield-lock"></i> Change Password
+                                    </a>
+                                </div>
+                                <div class="alert alert-info">
+                                    <strong>Two-Factor Authentication:</strong> 
+                                    <?php echo $user['two_factor_enabled'] ? '<span class="badge bg-success">Enabled</span>' : '<span class="badge bg-secondary">Disabled</span>'; ?>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>

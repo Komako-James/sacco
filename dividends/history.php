@@ -19,6 +19,21 @@ $auth->requireLogin();
 <body>
     <?php include __DIR__ . '/../includes/navbar.php'; ?>
     <?php include __DIR__ . '/../includes/sidebar.php'; ?>
-    <?php renderPlaceholder('Dividend History', 'bi bi-clock-history', 'Coming Soon'); ?>
+
+    <div class="main-content">
+        <div class="container-fluid mt-4">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h2">Dividend History</h1>
+                <a href="index.php" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> Back</a>
+            </div>
+
+            <div class="card">
+                <div class="card-body">
+                    <p class="text-muted">Historical dividend distributions will appear here. For now, review the accounting reports for payout summaries.</p>
+                    <a href="../reports/profitability.php" class="btn btn-sm btn-primary mt-2">Open Accounting Reports</a>
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

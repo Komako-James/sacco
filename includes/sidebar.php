@@ -30,6 +30,7 @@ function isActiveMenu($path) {
             <div class="brand-text">
                 <h5 class="brand-name">SACCO</h5>
                 <small class="brand-subtitle">Management System</small>
+                <div class="small text-white-50 mt-1">Operations Center</div>
             </div>
         </div>
 
@@ -274,6 +275,7 @@ function isActiveMenu($path) {
                 </ul>
             </li>
 
+            <!-- Dividends & Expenses modules -->
             <li class="menu-item has-submenu">
                 <a href="#" class="menu-link <?php echo isActiveMenu('/dividends') ? 'active' : ''; ?>" data-bs-toggle="collapse" data-bs-target="#dividendsSubmenu">
                     <i class="bi bi-cash-stack"></i>

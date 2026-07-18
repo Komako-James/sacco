@@ -71,10 +71,19 @@ try {
             <?php include '../includes/sidebar.php'; ?>
 
             <main class="col-md-10 ms-sm-auto px-md-4 main-content">
-                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                    <h1 class="h2">Savings Accounts</h1>
+                <div class="page-header">
+                    <div>
+                        <nav aria-label="breadcrumb">
+                            <ol class="breadcrumb">
+                                <li class="breadcrumb-item"><a href="../dashboard.php">Home</a></li>
+                                <li class="breadcrumb-item active" aria-current="page">Savings</li>
+                            </ol>
+                        </nav>
+                        <h1 class="page-title">Savings Accounts</h1>
+                        <p class="page-subtitle">Review account balances and manage member savings activity.</p>
+                    </div>
                     <a href="open.php" class="btn btn-primary">
-                        <i class="bi bi-plus"></i> Open New Account
+                        <i class="bi bi-plus-lg me-2"></i>Open New Account
                     </a>
                 </div>
 
@@ -85,9 +94,9 @@ try {
                 <?php endif; ?>
 
                 <div class="card">
-                    <div class="card-body">
+                    <div class="card-body p-0">
                         <div class="table-responsive">
-                            <table class="table table-striped">
+                            <table class="table table-hover align-middle mb-0">
                                 <thead>
                                     <tr>
                                         <th>Account No</th>
@@ -107,22 +116,22 @@ try {
                                     <?php else: ?>
                                     <?php foreach ($accounts as $account): ?>
                                     <tr>
-                                        <td><?php echo htmlspecialchars($account['account_number']); ?></td>
+                                        <td><strong><?php echo htmlspecialchars($account['account_number']); ?></strong></td>
                                         <td>
                                             <?php echo htmlspecialchars($account['full_name']); ?>
                                             <br><small class="text-muted"><?php echo htmlspecialchars($account['membership_no']); ?></small>
                                         </td>
                                         <td><?php echo htmlspecialchars(ucfirst(str_replace('_', ' ', $account['account_type']))); ?></td>
-                                        <td><?php echo formatMoney($account['balance']); ?></td>
+                                        <td><strong><?php echo formatMoney($account['balance']); ?></strong></td>
                                         <td>
-                                            <span class="badge <?php echo $account['status'] === 'active' ? 'bg-success' : 'bg-danger'; ?>">
+                                            <span class="badge <?php echo $account['status'] === 'active' ? 'badge-active' : 'badge-inactive'; ?>">
                                                 <?php echo htmlspecialchars(ucfirst($account['status'])); ?>
                                             </span>
                                         </td>
                                         <td><?php echo htmlspecialchars(date('M d, Y', strtotime($account['created_at']))); ?></td>
                                         <td>
-                                            <a href="deposit.php?account_id=<?php echo urlencode($account['account_id']); ?>" class="btn btn-sm btn-success">Deposit</a>
-                                            <a href="withdraw.php?account_id=<?php echo urlencode($account['account_id']); ?>" class="btn btn-sm btn-warning">Withdraw</a>
+                                            <a href="deposit.php?account_id=<?php echo urlencode($account['account_id']); ?>" class="btn btn-sm btn-outline-success">Deposit</a>
+                                            <a href="withdraw.php?account_id=<?php echo urlencode($account['account_id']); ?>" class="btn btn-sm btn-outline-warning">Withdraw</a>
                                         </td>
                                     </tr>
                                     <?php endforeach; ?>

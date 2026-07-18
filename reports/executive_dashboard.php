@@ -28,43 +28,70 @@ $dashboard = $dashboardService->getExecutiveDashboard();
                 <?php include '../includes/sidebar.php'; ?>
             </div>
             <main class="col-md-10 ms-sm-auto px-md-4 main-content">
-                <div class="d-flex justify-content-between align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <div class="page-header">
                     <div>
-                        <h1 class="h4 mb-0">Executive Dashboard</h1>
-                        <p class="text-muted mb-0">High-level financial and portfolio KPIs.</p>
+                        <nav aria-label="breadcrumb">
+                            <ol class="breadcrumb">
+                                <li class="breadcrumb-item"><a href="../dashboard.php">Home</a></li>
+                                <li class="breadcrumb-item active" aria-current="page">Reports</li>
+                            </ol>
+                        </nav>
+                        <h1 class="page-title">Executive Dashboard</h1>
+                        <p class="page-subtitle">High-level financial and portfolio KPIs in a banking-style summary.</p>
                     </div>
+                    <a href="../reports/transactions.php" class="btn btn-outline-secondary">Back to Reports</a>
                 </div>
 
                 <div class="row g-3 mb-4">
                     <div class="col-md-3">
-                        <div class="card bg-light h-100">
+                        <div class="card dashboard-card h-100">
                             <div class="card-body">
-                                <h6 class="text-uppercase text-muted">Members</h6>
-                                <p class="display-6 mb-0"><?php echo number_format($dashboard['financial_position']['total_members']); ?></p>
+                                <div class="d-flex align-items-center justify-content-between mb-3">
+                                    <div>
+                                        <h6 class="text-uppercase text-muted small mb-2">Members</h6>
+                                        <p class="display-6 mb-0"><?php echo number_format($dashboard['financial_position']['total_members']); ?></p>
+                                    </div>
+                                    <div class="rounded-circle bg-primary-subtle p-3 text-primary"><i class="bi bi-people-fill"></i></div>
+                                </div>
                             </div>
                         </div>
                     </div>
                     <div class="col-md-3">
-                        <div class="card bg-light h-100">
+                        <div class="card dashboard-card h-100">
                             <div class="card-body">
-                                <h6 class="text-uppercase text-muted">Total Savings</h6>
-                                <p class="display-6 mb-0"><?php echo formatMoney($dashboard['financial_position']['total_savings']); ?></p>
+                                <div class="d-flex align-items-center justify-content-between mb-3">
+                                    <div>
+                                        <h6 class="text-uppercase text-muted small mb-2">Total Savings</h6>
+                                        <p class="display-6 mb-0"><?php echo formatMoney($dashboard['financial_position']['total_savings']); ?></p>
+                                    </div>
+                                    <div class="rounded-circle bg-success-subtle p-3 text-success"><i class="bi bi-piggy-bank"></i></div>
+                                </div>
                             </div>
                         </div>
                     </div>
                     <div class="col-md-3">
-                        <div class="card bg-light h-100">
+                        <div class="card dashboard-card h-100">
                             <div class="card-body">
-                                <h6 class="text-uppercase text-muted">Total Shares</h6>
-                                <p class="display-6 mb-0"><?php echo formatMoney($dashboard['financial_position']['total_shares']); ?></p>
+                                <div class="d-flex align-items-center justify-content-between mb-3">
+                                    <div>
+                                        <h6 class="text-uppercase text-muted small mb-2">Total Shares</h6>
+                                        <p class="display-6 mb-0"><?php echo formatMoney($dashboard['financial_position']['total_shares']); ?></p>
+                                    </div>
+                                    <div class="rounded-circle bg-info-subtle p-3 text-info"><i class="bi bi-diagram-3"></i></div>
+                                </div>
                             </div>
                         </div>
                     </div>
                     <div class="col-md-3">
-                        <div class="card bg-light h-100">
+                        <div class="card dashboard-card h-100">
                             <div class="card-body">
-                                <h6 class="text-uppercase text-muted">Loans Outstanding</h6>
-                                <p class="display-6 mb-0"><?php echo formatMoney($dashboard['financial_position']['total_loans_outstanding']); ?></p>
+                                <div class="d-flex align-items-center justify-content-between mb-3">
+                                    <div>
+                                        <h6 class="text-uppercase text-muted small mb-2">Loans Outstanding</h6>
+                                        <p class="display-6 mb-0"><?php echo formatMoney($dashboard['financial_position']['total_loans_outstanding']); ?></p>
+                                    </div>
+                                    <div class="rounded-circle bg-warning-subtle p-3 text-warning"><i class="bi bi-cash-coin"></i></div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -72,7 +99,7 @@ $dashboard = $dashboardService->getExecutiveDashboard();
 
                 <div class="row g-3 mb-4">
                     <div class="col-md-4">
-                        <div class="card border-primary h-100">
+                        <div class="card dashboard-card h-100">
                             <div class="card-body">
                                 <h5 class="card-title">Revenue MTD</h5>
                                 <p class="display-6 mb-0"><?php echo formatMoney($dashboard['current_month']['revenue_mtd']); ?></p>
@@ -80,7 +107,7 @@ $dashboard = $dashboardService->getExecutiveDashboard();
                         </div>
                     </div>
                     <div class="col-md-4">
-                        <div class="card border-danger h-100">
+                        <div class="card dashboard-card h-100">
                             <div class="card-body">
                                 <h5 class="card-title">Expenses MTD</h5>
                                 <p class="display-6 mb-0"><?php echo formatMoney($dashboard['current_month']['expenses_mtd']); ?></p>
@@ -88,7 +115,7 @@ $dashboard = $dashboardService->getExecutiveDashboard();
                         </div>
                     </div>
                     <div class="col-md-4">
-                        <div class="card border-success h-100">
+                        <div class="card dashboard-card h-100">
                             <div class="card-body">
                                 <h5 class="card-title">Profit MTD</h5>
                                 <p class="display-6 mb-0"><?php echo formatMoney($dashboard['current_month']['profit_mtd']); ?></p>
@@ -99,7 +126,7 @@ $dashboard = $dashboardService->getExecutiveDashboard();
 
                 <div class="row g-3 mb-4">
                     <div class="col-md-4">
-                        <div class="card border-secondary h-100">
+                        <div class="card dashboard-card h-100">
                             <div class="card-body">
                                 <h5 class="card-title">Active Loans</h5>
                                 <p class="display-6 mb-0"><?php echo number_format($dashboard['portfolio']['active_loans']); ?></p>
@@ -107,7 +134,7 @@ $dashboard = $dashboardService->getExecutiveDashboard();
                         </div>
                     </div>
                     <div class="col-md-4">
-                        <div class="card border-secondary h-100">
+                        <div class="card dashboard-card h-100">
                             <div class="card-body">
                                 <h5 class="card-title">Interest Receivable</h5>
                                 <p class="display-6 mb-0"><?php echo formatMoney($dashboard['portfolio']['interest_receivable']); ?></p>
@@ -115,7 +142,7 @@ $dashboard = $dashboardService->getExecutiveDashboard();
                         </div>
                     </div>
                     <div class="col-md-4">
-                        <div class="card border-secondary h-100">
+                        <div class="card dashboard-card h-100">
                             <div class="card-body">
                                 <h5 class="card-title">Loan Portfolio Value</h5>
                                 <p class="display-6 mb-0"><?php echo formatMoney($dashboard['portfolio']['loan_portfolio_value']); ?></p>
@@ -126,7 +153,7 @@ $dashboard = $dashboardService->getExecutiveDashboard();
 
                 <div class="row g-3 mb-4">
                     <div class="col-md-4">
-                        <div class="card bg-white border-success h-100">
+                        <div class="card dashboard-card h-100">
                             <div class="card-body">
                                 <h6 class="text-uppercase text-muted">Revenue Growth</h6>
                                 <p class="display-6 mb-0"><?php echo $dashboard['growth']['revenue_growth_pct']; ?>%</p>
@@ -134,7 +161,7 @@ $dashboard = $dashboardService->getExecutiveDashboard();
                         </div>
                     </div>
                     <div class="col-md-4">
-                        <div class="card bg-white border-danger h-100">
+                        <div class="card dashboard-card h-100">
                             <div class="card-body">
                                 <h6 class="text-uppercase text-muted">Expense Growth</h6>
                                 <p class="display-6 mb-0"><?php echo $dashboard['growth']['expense_growth_pct']; ?>%</p>
@@ -142,17 +169,13 @@ $dashboard = $dashboardService->getExecutiveDashboard();
                         </div>
                     </div>
                     <div class="col-md-4">
-                        <div class="card bg-white border-info h-100">
+                        <div class="card dashboard-card h-100">
                             <div class="card-body">
                                 <h6 class="text-uppercase text-muted">Member Growth</h6>
                                 <p class="display-6 mb-0"><?php echo $dashboard['growth']['member_growth_pct']; ?>%</p>
                             </div>
                         </div>
                     </div>
-                </div>
-
-                <div class="mb-4">
-                    <a href="../reports/transactions.php" class="btn btn-outline-secondary">Back to Reports</a>
                 </div>
             </main>
         </div>

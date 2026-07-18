@@ -42,10 +42,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <div class="container-fluid">
         <div class="row">
             <?php include '../includes/sidebar.php'; ?>
-            <main class="col-md-10 ms-sm-auto px-md-4">
-                <div class="pt-4 pb-3 border-bottom">
-                    <h1 class="h2">System Settings</h1>
-                    <p class="text-muted">Dynamic system configuration for interest rates, fees, SMS templates, and account rules.</p>
+            <main class="col-md-10 ms-sm-auto px-md-4 main-content">
+                <div class="page-header">
+                    <div>
+                        <nav aria-label="breadcrumb">
+                            <ol class="breadcrumb">
+                                <li class="breadcrumb-item"><a href="../dashboard.php">Home</a></li>
+                                <li class="breadcrumb-item active" aria-current="page">Settings</li>
+                            </ol>
+                        </nav>
+                        <h1 class="page-title">System Settings</h1>
+                        <p class="page-subtitle">Dynamic system configuration for interest rates, fees, templates, and account rules.</p>
+                    </div>
                 </div>
 
                 <?php if ($error): ?>
@@ -86,29 +94,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 <div class="card">
                     <div class="card-header">Existing Settings</div>
-                    <div class="card-body table-responsive">
-                        <table class="table table-sm table-hover align-middle">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>Key</th>
-                                    <th>Label</th>
-                                    <th>Group</th>
-                                    <th>Value</th>
-                                    <th>Updated</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php foreach ($settings as $setting): ?>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead>
                                     <tr>
-                                        <td><?php echo htmlspecialchars($setting['setting_key']); ?></td>
-                                        <td><?php echo htmlspecialchars($setting['label']); ?></td>
-                                        <td><?php echo htmlspecialchars($setting['group']); ?></td>
-                                        <td><pre class="m-0 small text-wrap"><?php echo htmlspecialchars($setting['setting_value']); ?></pre></td>
-                                        <td><?php echo htmlspecialchars($setting['updated_at']); ?></td>
+                                        <th>Key</th>
+                                        <th>Label</th>
+                                        <th>Group</th>
+                                        <th>Value</th>
+                                        <th>Updated</th>
                                     </tr>
-                                <?php endforeach; ?>
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                    <?php foreach ($settings as $setting): ?>
+                                        <tr>
+                                            <td><?php echo htmlspecialchars($setting['setting_key']); ?></td>
+                                            <td><?php echo htmlspecialchars($setting['label']); ?></td>
+                                            <td><?php echo htmlspecialchars($setting['group']); ?></td>
+                                            <td><pre class="m-0 small text-wrap"><?php echo htmlspecialchars($setting['setting_value']); ?></pre></td>
+                                            <td><?php echo htmlspecialchars($setting['updated_at']); ?></td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </main>

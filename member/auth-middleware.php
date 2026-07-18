@@ -5,6 +5,7 @@
  */
 
 require_once __DIR__ . '/../config/db_connection.php';
+require_once __DIR__ . '/../config/constants.php';
 require_once __DIR__ . '/../app/Services/MemberAuthenticationService.php';
 
 use SACCO\Services\MemberAuthenticationService;
@@ -31,7 +32,11 @@ function requireMemberLogin()
     if (!isset($_SESSION['member_user_id']) || !isset($_SESSION['session_token'])) {
         // Clear any partial session
         session_destroy();
-        header('Location: ' . str_replace('/member/', '/', $_SERVER['PHP_SELF']) . 'member-login.php');
+        $redirectPath = dirname($_SERVER['PHP_SELF']);
+        if (strpos($redirectPath, '/member') !== false) {
+            $redirectPath = substr($redirectPath, 0, strrpos($redirectPath, '/member')) ?: '';
+        }
+        header('Location: ' . rtrim($redirectPath, '/') . '/member-login.php');
         exit();
     }
 

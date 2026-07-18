@@ -36,6 +36,16 @@ function formatMoney($amount) {
     return 'UGX ' . number_format($amount, 2);
 }
 
+function normalizeCurrencyCode($currency = null): string {
+    $code = strtoupper(trim((string)($currency ?? '')));
+    $validCurrencies = ['UGX', 'USD', 'EUR', 'GBP', 'KES', 'TZS', 'RWF'];
+    if ($code === '') {
+        return 'UGX';
+    }
+
+    return in_array($code, $validCurrencies, true) ? $code : 'UGX';
+}
+
 function calculateLoanSchedule($amount, $interestRate, $periodMonths) {
     $monthlyInterestRate = ($interestRate / 100) / 12;
     $monthlyPayment = ($amount * $monthlyInterestRate * pow(1 + $monthlyInterestRate, $periodMonths)) /
@@ -64,14 +74,12 @@ function calculateLoanSchedule($amount, $interestRate, $periodMonths) {
 function checkMemberEligibility($memberId) {
     $db = getDB();
 
-    $stmt = $db->prepare(
-        'SELECT COUNT(*) as savings_count FROM savings_transactions st JOIN savings_accounts sa ON st.account_id = sa.account_id WHERE sa.member_id = ? AND st.transaction_type = ? AND st.transaction_date >= DATE_SUB(NOW(), INTERVAL 3 MONTH)'
-    );
-    $stmt->execute([$memberId, 'deposit']);
-    $result = $stmt->fetch();
+    $stmt = $db->prepare('SELECT status FROM members WHERE member_id = ?');
+    $stmt->execute([$memberId]);
+    $member = $stmt->fetch();
 
-    if ($result['savings_count'] == 0) {
-        return ['eligible' => false, 'reason' => 'Member must save for at least 3 months before applying for a loan'];
+    if (!$member || $member['status'] !== 'active') {
+        return ['eligible' => false, 'reason' => 'Member is not active'];
     }
 
     $stmt = $db->prepare('SELECT COUNT(*) as active_loans FROM loans WHERE member_id = ? AND status NOT IN (?, ?)');
@@ -185,6 +193,77 @@ function generatePDF($html, $filename) {
             'success' => false,
             'message' => 'Error generating report: ' . $e->getMessage(),
             'filepath' => null
+        ];
+    }
+}
+
+function generateExcelFile(array $rows, array $headers, string $filename): array {
+    try {
+        $uploadDir = __DIR__ . '/../uploads/';
+        if (!is_dir($uploadDir)) {
+            mkdir($uploadDir, 0755, true);
+        }
+
+        $filePath = $uploadDir . $filename . '.xlsx';
+        $tempXml = tempnam(sys_get_temp_dir(), 'sacco_excel');
+        $xml = new XMLWriter();
+        $xml->openMemory();
+        $xml->startDocument('1.0', 'UTF-8');
+        $xml->startElement('worksheet');
+        $xml->writeAttribute('xmlns', 'http://schemas.openxmlformats.org/spreadsheetml/2006/main');
+        $xml->startElement('sheetData');
+
+        $xml->startElement('row');
+        foreach ($headers as $header) {
+            $xml->startElement('c');
+            $xml->writeAttribute('t', 'inlineStr');
+            $xml->startElement('is');
+            $xml->writeElement('t', htmlspecialchars((string) $header));
+            $xml->endElement();
+            $xml->endElement();
+        }
+        $xml->endElement();
+
+        foreach ($rows as $row) {
+            $xml->startElement('row');
+            foreach ($row as $cell) {
+                $xml->startElement('c');
+                $xml->writeAttribute('t', 'inlineStr');
+                $xml->startElement('is');
+                $xml->writeElement('t', htmlspecialchars((string) $cell));
+                $xml->endElement();
+                $xml->endElement();
+            }
+            $xml->endElement();
+        }
+
+        $xml->endElement();
+        $xml->endElement();
+        $content = $xml->outputMemory();
+        file_put_contents($tempXml, $content);
+
+        if (class_exists('ZipArchive')) {
+            $zip = new ZipArchive();
+            if ($zip->open($filePath, ZipArchive::CREATE | ZipArchive::OVERWRITE) === true) {
+                $zip->addFile($tempXml, 'xl/worksheets/sheet1.xml');
+                $zip->addFromString('xl/workbook.xml', '<?xml version="1.0" encoding="UTF-8"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="Sheet1" sheetId="1" r:id="rId1"/></sheets></workbook>');
+                $zip->addFromString('xl/_rels/workbook.xml.rels', '<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/></Relationships>');
+                $zip->addFromString('[Content_Types].xml', '<?xml version="1.0" encoding="UTF-8"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/></Types>');
+                $zip->close();
+            }
+        }
+
+        unlink($tempXml);
+
+        return [
+            'success' => true,
+            'filepath' => $filePath,
+            'download_url' => 'uploads/' . $filename . '.xlsx'
+        ];
+    } catch (Exception $e) {
+        return [
+            'success' => false,
+            'message' => $e->getMessage()
         ];
     }
 }
@@ -364,7 +443,8 @@ function decryptData($encryptedData, $key = null) {
 }
 
 function formatCurrency($amount, $currency = 'UGX') {
-    return $currency . ' ' . number_format($amount, 2);
+    $currencyCode = normalizeCurrencyCode($currency);
+    return $currencyCode . ' ' . number_format((float)$amount, 2);
 }
 
 function validateStrongPassword($password) {

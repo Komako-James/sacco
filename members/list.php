@@ -75,21 +75,33 @@ $members = $stmt->fetchAll();
                 <?php include '../includes/sidebar.php'; ?>
             </div>
             <main class="col-md-10 ms-sm-auto px-md-4 main-content">
-                <div class="d-flex justify-content-between align-items-center pt-3 pb-2 mb-3 border-bottom">
-                    <h1 class="h4 mb-0">Members List</h1>
-                    <a href="register.php" class="btn btn-success">+ New Member</a>
+                <div class="page-header">
+                    <div>
+                        <nav aria-label="breadcrumb">
+                            <ol class="breadcrumb">
+                                <li class="breadcrumb-item"><a href="../dashboard.php">Home</a></li>
+                                <li class="breadcrumb-item active" aria-current="page">Members</li>
+                            </ol>
+                        </nav>
+                        <h1 class="page-title">Members</h1>
+                        <p class="page-subtitle">Manage member records, status, and account activity in one place.</p>
+                    </div>
+                    <a href="register.php" class="btn btn-success"><i class="bi bi-person-plus me-2"></i>New Member</a>
                 </div>
 
                 <div class="card mb-4">
                     <div class="card-body">
-                        <div class="row gy-2">
-                            <div class="col-lg-6">
+                        <div class="row g-3 align-items-end">
+                            <div class="col-lg-7">
+                                <label for="member-search" class="form-label fw-semibold">Search members</label>
                                 <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-search"></i></span>
                                     <input type="text" class="form-control" id="member-search" name="search" placeholder="Search by name, membership no, or phone..." value="<?php echo htmlspecialchars($search); ?>">
-                                    <button class="btn btn-primary" type="button" id="member-search-btn"><i class="bi bi-search"></i> Search</button>
+                                    <button class="btn btn-primary" type="button" id="member-search-btn"><i class="bi bi-search me-2"></i>Search</button>
                                 </div>
                             </div>
                             <div class="col-lg-3">
+                                <label for="status" class="form-label fw-semibold">Status</label>
                                 <select class="form-select" id="status" name="status" onchange="window.location.href='?search=' + encodeURIComponent(document.getElementById('member-search').value) + '&status=' + encodeURIComponent(this.value)">
                                     <option value="">All Status</option>
                                     <option value="active" <?php echo $status === 'active' ? 'selected' : ''; ?>>Active</option>
@@ -102,38 +114,40 @@ $members = $stmt->fetchAll();
                 </div>
 
                 <div class="card">
-                    <div class="table-responsive members-table-wrapper">
-                        <table class="table table-hover mb-0">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>Membership No</th>
-                                    <th>Full Name</th>
-                                    <th>Phone</th>
-                                    <th>Join Date</th>
-                                    <th>Status</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="search-results">
-                                <?php foreach ($members as $member): ?>
-                                <tr>
-                                    <td><?php echo htmlspecialchars($member['membership_no']); ?></td>
-                                    <td><?php echo htmlspecialchars($member['full_name']); ?></td>
-                                    <td><?php echo htmlspecialchars($member['phone']); ?></td>
-                                    <td><?php echo date('M d, Y', strtotime($member['join_date'])); ?></td>
-                                    <td>
-                                        <span class="badge bg-<?php echo $member['status'] === 'active' ? 'success' : 'danger'; ?>">
-                                            <?php echo ucfirst($member['status']); ?>
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <a href="view.php?id=<?php echo $member['member_id']; ?>" class="btn btn-sm btn-info">View</a>
-                                        <a href="statement.php?id=<?php echo $member['member_id']; ?>" class="btn btn-sm btn-secondary">Statement</a>
-                                    </td>
-                                </tr>
-                                <?php endforeach; ?>
-                            </tbody>
-                        </table>
+                    <div class="card-body p-0">
+                        <div class="table-responsive members-table-wrapper">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Membership No</th>
+                                        <th>Full Name</th>
+                                        <th>Phone</th>
+                                        <th>Join Date</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="search-results">
+                                    <?php foreach ($members as $member): ?>
+                                    <tr>
+                                        <td><strong><?php echo htmlspecialchars($member['membership_no']); ?></strong></td>
+                                        <td><?php echo htmlspecialchars($member['full_name']); ?></td>
+                                        <td><?php echo htmlspecialchars($member['phone']); ?></td>
+                                        <td><?php echo date('M d, Y', strtotime($member['join_date'])); ?></td>
+                                        <td>
+                                            <span class="badge <?php echo $member['status'] === 'active' ? 'badge-active' : 'badge-inactive'; ?>">
+                                                <?php echo ucfirst($member['status']); ?>
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <a href="view.php?id=<?php echo $member['member_id']; ?>" class="btn btn-sm btn-outline-primary">View</a>
+                                            <a href="statement.php?id=<?php echo $member['member_id']; ?>" class="btn btn-sm btn-outline-secondary">Statement</a>
+                                        </td>
+                                    </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
 

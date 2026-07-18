@@ -1441,3 +1441,664 @@
     [user_id] => 8
 )
 
+2026-07-09T16:06:24+03:00 validateSession result: Array
+(
+    [valid] => 1
+    [user_id] => 8
+    [member_id] => 16
+    [session] => Array
+        (
+            [session_id] => 7
+            [user_id] => 8
+            [member_id] => 16
+            [session_token] => e2abd2e2627038327df14ad720121cb82307f83067937e6d99421839257982c2
+            [device_id] => 
+            [ip_address] => 127.0.0.1
+            [user_agent] => Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:152.0) Gecko/20100101 Firefox/152.0
+            [location] => 
+            [is_active] => 1
+            [login_at] => 2026-07-09 16:06:22
+            [last_activity] => 2026-07-09 16:06:22
+            [logout_at] => 
+            [expires_at] => 2026-07-09 16:36:21
+            [is_member] => 1
+        )
+
+)
+
+2026-07-09T16:06:24+03:00 SESSION before update: Array
+(
+    [member_user_id] => 8
+    [member_id] => 16
+    [session_token] => e2abd2e2627038327df14ad720121cb82307f83067937e6d99421839257982c2
+    [is_member] => 1
+)
+
+2026-07-09T16:06:33+03:00 validateSession result: Array
+(
+    [valid] => 1
+    [user_id] => 8
+    [member_id] => 16
+    [session] => Array
+        (
+            [session_id] => 7
+            [user_id] => 8
+            [member_id] => 16
+            [session_token] => e2abd2e2627038327df14ad720121cb82307f83067937e6d99421839257982c2
+            [device_id] => 
+            [ip_address] => 127.0.0.1
+            [user_agent] => Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:152.0) Gecko/20100101 Firefox/152.0
+            [location] => 
+            [is_active] => 1
+            [login_at] => 2026-07-09 16:06:22
+            [last_activity] => 2026-07-09 16:06:24
+            [logout_at] => 
+            [expires_at] => 2026-07-09 16:36:21
+            [is_member] => 1
+        )
+
+)
+
+2026-07-09T16:06:33+03:00 SESSION before update: Array
+(
+    [member_user_id] => 8
+    [member_id] => 16
+    [session_token] => e2abd2e2627038327df14ad720121cb82307f83067937e6d99421839257982c2
+    [is_member] => 1
+    [last_activity] => 1783602384
+    [user_id] => 8
+)
+
+2026-07-09T16:06:42+03:00 validateSession result: Array
+(
+    [valid] => 1
+    [user_id] => 8
+    [member_id] => 16
+    [session] => Array
+        (
+            [session_id] => 7
+            [user_id] => 8
+            [member_id] => 16
+            [session_token] => e2abd2e2627038327df14ad720121cb82307f83067937e6d99421839257982c2
+            [device_id] => 
+            [ip_address] => 127.0.0.1
+            [user_agent] => Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:152.0) Gecko/20100101 Firefox/152.0
+            [location] => 
+            [is_active] => 1
+            [login_at] => 2026-07-09 16:06:22
+            [last_activity] => 2026-07-09 16:06:33
+            [logout_at] => 
+            [expires_at] => 2026-07-09 16:36:21
+            [is_member] => 1
+        )
+
+)
+
+2026-07-09T16:06:42+03:00 SESSION before update: Array
+(
+    [member_user_id] => 8
+    [member_id] => 16
+    [session_token] => e2abd2e2627038327df14ad720121cb82307f83067937e6d99421839257982c2
+    [is_member] => 1
+    [last_activity] => 1783602393
+    [user_id] => 8
+)
+
+2026-07-09T16:06:59+03:00 validateSession result: Array
+(
+    [valid] => 1
+    [user_id] => 8
+    [member_id] => 16
+    [session] => Array
+        (
+            [session_id] => 7
+            [user_id] => 8
+            [member_id] => 16
+            [session_token] => e2abd2e2627038327df14ad720121cb82307f83067937e6d99421839257982c2
+            [device_id] => 
+            [ip_address] => 127.0.0.1
+            [user_agent] => Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:152.0) Gecko/20100101 Firefox/152.0
+            [location] => 
+            [is_active] => 1
+            [login_at] => 2026-07-09 16:06:22
+            [last_activity] => 2026-07-09 16:06:42
+            [logout_at] => 
+            [expires_at] => 2026-07-09 16:36:21
+            [is_member] => 1
+        )
+
+)
+
+2026-07-09T16:06:59+03:00 SESSION before update: Array
+(
+    [member_user_id] => 8
+    [member_id] => 16
+    [session_token] => e2abd2e2627038327df14ad720121cb82307f83067937e6d99421839257982c2
+    [is_member] => 1
+    [last_activity] => 1783602402
+    [user_id] => 8
+)
+
+2026-07-09T16:07:12+03:00 validateSession result: Array
+(
+    [valid] => 1
+    [user_id] => 8
+    [member_id] => 16
+    [session] => Array
+        (
+            [session_id] => 7
+            [user_id] => 8
+            [member_id] => 16
+            [session_token] => e2abd2e2627038327df14ad720121cb82307f83067937e6d99421839257982c2
+            [device_id] => 
+            [ip_address] => 127.0.0.1
+            [user_agent] => Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:152.0) Gecko/20100101 Firefox/152.0
+            [location] => 
+            [is_active] => 1
+            [login_at] => 2026-07-09 16:06:22
+            [last_activity] => 2026-07-09 16:06:59
+            [logout_at] => 
+            [expires_at] => 2026-07-09 16:36:21
+            [is_member] => 1
+        )
+
+)
+
+2026-07-09T16:07:12+03:00 SESSION before update: Array
+(
+    [member_user_id] => 8
+    [member_id] => 16
+    [session_token] => e2abd2e2627038327df14ad720121cb82307f83067937e6d99421839257982c2
+    [is_member] => 1
+    [last_activity] => 1783602419
+    [user_id] => 8
+)
+
+2026-07-09T16:07:21+03:00 validateSession result: Array
+(
+    [valid] => 1
+    [user_id] => 8
+    [member_id] => 16
+    [session] => Array
+        (
+            [session_id] => 7
+            [user_id] => 8
+            [member_id] => 16
+            [session_token] => e2abd2e2627038327df14ad720121cb82307f83067937e6d99421839257982c2
+            [device_id] => 
+            [ip_address] => 127.0.0.1
+            [user_agent] => Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:152.0) Gecko/20100101 Firefox/152.0
+            [location] => 
+            [is_active] => 1
+            [login_at] => 2026-07-09 16:06:22
+            [last_activity] => 2026-07-09 16:07:12
+            [logout_at] => 
+            [expires_at] => 2026-07-09 16:36:21
+            [is_member] => 1
+        )
+
+)
+
+2026-07-09T16:07:21+03:00 SESSION before update: Array
+(
+    [member_user_id] => 8
+    [member_id] => 16
+    [session_token] => e2abd2e2627038327df14ad720121cb82307f83067937e6d99421839257982c2
+    [is_member] => 1
+    [last_activity] => 1783602432
+    [user_id] => 8
+)
+
+2026-07-09T16:07:29+03:00 validateSession result: Array
+(
+    [valid] => 1
+    [user_id] => 8
+    [member_id] => 16
+    [session] => Array
+        (
+            [session_id] => 7
+            [user_id] => 8
+            [member_id] => 16
+            [session_token] => e2abd2e2627038327df14ad720121cb82307f83067937e6d99421839257982c2
+            [device_id] => 
+            [ip_address] => 127.0.0.1
+            [user_agent] => Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:152.0) Gecko/20100101 Firefox/152.0
+            [location] => 
+            [is_active] => 1
+            [login_at] => 2026-07-09 16:06:22
+            [last_activity] => 2026-07-09 16:07:21
+            [logout_at] => 
+            [expires_at] => 2026-07-09 16:36:21
+            [is_member] => 1
+        )
+
+)
+
+2026-07-09T16:07:29+03:00 SESSION before update: Array
+(
+    [member_user_id] => 8
+    [member_id] => 16
+    [session_token] => e2abd2e2627038327df14ad720121cb82307f83067937e6d99421839257982c2
+    [is_member] => 1
+    [last_activity] => 1783602441
+    [user_id] => 8
+)
+
+2026-07-09T16:07:46+03:00 validateSession result: Array
+(
+    [valid] => 1
+    [user_id] => 8
+    [member_id] => 16
+    [session] => Array
+        (
+            [session_id] => 7
+            [user_id] => 8
+            [member_id] => 16
+            [session_token] => e2abd2e2627038327df14ad720121cb82307f83067937e6d99421839257982c2
+            [device_id] => 
+            [ip_address] => 127.0.0.1
+            [user_agent] => Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:152.0) Gecko/20100101 Firefox/152.0
+            [location] => 
+            [is_active] => 1
+            [login_at] => 2026-07-09 16:06:22
+            [last_activity] => 2026-07-09 16:07:29
+            [logout_at] => 
+            [expires_at] => 2026-07-09 16:36:21
+            [is_member] => 1
+        )
+
+)
+
+2026-07-09T16:07:46+03:00 SESSION before update: Array
+(
+    [member_user_id] => 8
+    [member_id] => 16
+    [session_token] => e2abd2e2627038327df14ad720121cb82307f83067937e6d99421839257982c2
+    [is_member] => 1
+    [last_activity] => 1783602449
+    [user_id] => 8
+)
+
+2026-07-09T16:08:10+03:00 validateSession result: Array
+(
+    [valid] => 1
+    [user_id] => 8
+    [member_id] => 16
+    [session] => Array
+        (
+            [session_id] => 7
+            [user_id] => 8
+            [member_id] => 16
+            [session_token] => e2abd2e2627038327df14ad720121cb82307f83067937e6d99421839257982c2
+            [device_id] => 
+            [ip_address] => 127.0.0.1
+            [user_agent] => Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:152.0) Gecko/20100101 Firefox/152.0
+            [location] => 
+            [is_active] => 1
+            [login_at] => 2026-07-09 16:06:22
+            [last_activity] => 2026-07-09 16:07:46
+            [logout_at] => 
+            [expires_at] => 2026-07-09 16:36:21
+            [is_member] => 1
+        )
+
+)
+
+2026-07-09T16:08:10+03:00 SESSION before update: Array
+(
+    [member_user_id] => 8
+    [member_id] => 16
+    [session_token] => e2abd2e2627038327df14ad720121cb82307f83067937e6d99421839257982c2
+    [is_member] => 1
+    [last_activity] => 1783602466
+    [user_id] => 8
+)
+
+2026-07-09T16:08:23+03:00 validateSession result: Array
+(
+    [valid] => 1
+    [user_id] => 8
+    [member_id] => 16
+    [session] => Array
+        (
+            [session_id] => 7
+            [user_id] => 8
+            [member_id] => 16
+            [session_token] => e2abd2e2627038327df14ad720121cb82307f83067937e6d99421839257982c2
+            [device_id] => 
+            [ip_address] => 127.0.0.1
+            [user_agent] => Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:152.0) Gecko/20100101 Firefox/152.0
+            [location] => 
+            [is_active] => 1
+            [login_at] => 2026-07-09 16:06:22
+            [last_activity] => 2026-07-09 16:08:10
+            [logout_at] => 
+            [expires_at] => 2026-07-09 16:36:21
+            [is_member] => 1
+        )
+
+)
+
+2026-07-09T16:08:23+03:00 SESSION before update: Array
+(
+    [member_user_id] => 8
+    [member_id] => 16
+    [session_token] => e2abd2e2627038327df14ad720121cb82307f83067937e6d99421839257982c2
+    [is_member] => 1
+    [last_activity] => 1783602490
+    [user_id] => 8
+)
+
+2026-07-09T16:08:42+03:00 validateSession result: Array
+(
+    [valid] => 1
+    [user_id] => 8
+    [member_id] => 16
+    [session] => Array
+        (
+            [session_id] => 7
+            [user_id] => 8
+            [member_id] => 16
+            [session_token] => e2abd2e2627038327df14ad720121cb82307f83067937e6d99421839257982c2
+            [device_id] => 
+            [ip_address] => 127.0.0.1
+            [user_agent] => Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:152.0) Gecko/20100101 Firefox/152.0
+            [location] => 
+            [is_active] => 1
+            [login_at] => 2026-07-09 16:06:22
+            [last_activity] => 2026-07-09 16:08:23
+            [logout_at] => 
+            [expires_at] => 2026-07-09 16:36:21
+            [is_member] => 1
+        )
+
+)
+
+2026-07-09T16:08:42+03:00 SESSION before update: Array
+(
+    [member_user_id] => 8
+    [member_id] => 16
+    [session_token] => e2abd2e2627038327df14ad720121cb82307f83067937e6d99421839257982c2
+    [is_member] => 1
+    [last_activity] => 1783602503
+    [user_id] => 8
+)
+
+2026-07-09T19:33:03+03:00 validateSession result: Array
+(
+    [valid] => 1
+    [user_id] => 8
+    [member_id] => 16
+    [session] => Array
+        (
+            [session_id] => 8
+            [user_id] => 8
+            [member_id] => 16
+            [session_token] => aa77d78992d245127fb47bc9fce20c35df3026f0a04263a86e62b7601ff8c7cf
+            [device_id] => 
+            [ip_address] => 127.0.0.1
+            [user_agent] => Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:152.0) Gecko/20100101 Firefox/152.0
+            [location] => 
+            [is_active] => 1
+            [login_at] => 2026-07-09 19:33:01
+            [last_activity] => 2026-07-09 19:33:01
+            [logout_at] => 
+            [expires_at] => 2026-07-09 20:03:01
+            [is_member] => 1
+        )
+
+)
+
+2026-07-09T19:33:03+03:00 SESSION before update: Array
+(
+    [member_user_id] => 8
+    [member_id] => 16
+    [session_token] => aa77d78992d245127fb47bc9fce20c35df3026f0a04263a86e62b7601ff8c7cf
+    [is_member] => 1
+)
+
+2026-07-09T19:33:10+03:00 validateSession result: Array
+(
+    [valid] => 1
+    [user_id] => 8
+    [member_id] => 16
+    [session] => Array
+        (
+            [session_id] => 8
+            [user_id] => 8
+            [member_id] => 16
+            [session_token] => aa77d78992d245127fb47bc9fce20c35df3026f0a04263a86e62b7601ff8c7cf
+            [device_id] => 
+            [ip_address] => 127.0.0.1
+            [user_agent] => Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:152.0) Gecko/20100101 Firefox/152.0
+            [location] => 
+            [is_active] => 1
+            [login_at] => 2026-07-09 19:33:01
+            [last_activity] => 2026-07-09 19:33:03
+            [logout_at] => 
+            [expires_at] => 2026-07-09 20:03:01
+            [is_member] => 1
+        )
+
+)
+
+2026-07-09T19:33:10+03:00 SESSION before update: Array
+(
+    [member_user_id] => 8
+    [member_id] => 16
+    [session_token] => aa77d78992d245127fb47bc9fce20c35df3026f0a04263a86e62b7601ff8c7cf
+    [is_member] => 1
+    [last_activity] => 1783614783
+    [user_id] => 8
+)
+
+2026-07-09T19:33:16+03:00 validateSession result: Array
+(
+    [valid] => 1
+    [user_id] => 8
+    [member_id] => 16
+    [session] => Array
+        (
+            [session_id] => 8
+            [user_id] => 8
+            [member_id] => 16
+            [session_token] => aa77d78992d245127fb47bc9fce20c35df3026f0a04263a86e62b7601ff8c7cf
+            [device_id] => 
+            [ip_address] => 127.0.0.1
+            [user_agent] => Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:152.0) Gecko/20100101 Firefox/152.0
+            [location] => 
+            [is_active] => 1
+            [login_at] => 2026-07-09 19:33:01
+            [last_activity] => 2026-07-09 19:33:10
+            [logout_at] => 
+            [expires_at] => 2026-07-09 20:03:01
+            [is_member] => 1
+        )
+
+)
+
+2026-07-09T19:33:16+03:00 SESSION before update: Array
+(
+    [member_user_id] => 8
+    [member_id] => 16
+    [session_token] => aa77d78992d245127fb47bc9fce20c35df3026f0a04263a86e62b7601ff8c7cf
+    [is_member] => 1
+    [last_activity] => 1783614790
+    [user_id] => 8
+)
+
+2026-07-09T19:33:31+03:00 validateSession result: Array
+(
+    [valid] => 1
+    [user_id] => 8
+    [member_id] => 16
+    [session] => Array
+        (
+            [session_id] => 8
+            [user_id] => 8
+            [member_id] => 16
+            [session_token] => aa77d78992d245127fb47bc9fce20c35df3026f0a04263a86e62b7601ff8c7cf
+            [device_id] => 
+            [ip_address] => 127.0.0.1
+            [user_agent] => Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:152.0) Gecko/20100101 Firefox/152.0
+            [location] => 
+            [is_active] => 1
+            [login_at] => 2026-07-09 19:33:01
+            [last_activity] => 2026-07-09 19:33:16
+            [logout_at] => 
+            [expires_at] => 2026-07-09 20:03:01
+            [is_member] => 1
+        )
+
+)
+
+2026-07-09T19:33:31+03:00 SESSION before update: Array
+(
+    [member_user_id] => 8
+    [member_id] => 16
+    [session_token] => aa77d78992d245127fb47bc9fce20c35df3026f0a04263a86e62b7601ff8c7cf
+    [is_member] => 1
+    [last_activity] => 1783614796
+    [user_id] => 8
+)
+
+2026-07-09T19:33:44+03:00 validateSession result: Array
+(
+    [valid] => 1
+    [user_id] => 8
+    [member_id] => 16
+    [session] => Array
+        (
+            [session_id] => 8
+            [user_id] => 8
+            [member_id] => 16
+            [session_token] => aa77d78992d245127fb47bc9fce20c35df3026f0a04263a86e62b7601ff8c7cf
+            [device_id] => 
+            [ip_address] => 127.0.0.1
+            [user_agent] => Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:152.0) Gecko/20100101 Firefox/152.0
+            [location] => 
+            [is_active] => 1
+            [login_at] => 2026-07-09 19:33:01
+            [last_activity] => 2026-07-09 19:33:31
+            [logout_at] => 
+            [expires_at] => 2026-07-09 20:03:01
+            [is_member] => 1
+        )
+
+)
+
+2026-07-09T19:33:44+03:00 SESSION before update: Array
+(
+    [member_user_id] => 8
+    [member_id] => 16
+    [session_token] => aa77d78992d245127fb47bc9fce20c35df3026f0a04263a86e62b7601ff8c7cf
+    [is_member] => 1
+    [last_activity] => 1783614811
+    [user_id] => 8
+)
+
+2026-07-09T19:33:49+03:00 validateSession result: Array
+(
+    [valid] => 1
+    [user_id] => 8
+    [member_id] => 16
+    [session] => Array
+        (
+            [session_id] => 8
+            [user_id] => 8
+            [member_id] => 16
+            [session_token] => aa77d78992d245127fb47bc9fce20c35df3026f0a04263a86e62b7601ff8c7cf
+            [device_id] => 
+            [ip_address] => 127.0.0.1
+            [user_agent] => Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:152.0) Gecko/20100101 Firefox/152.0
+            [location] => 
+            [is_active] => 1
+            [login_at] => 2026-07-09 19:33:01
+            [last_activity] => 2026-07-09 19:33:44
+            [logout_at] => 
+            [expires_at] => 2026-07-09 20:03:01
+            [is_member] => 1
+        )
+
+)
+
+2026-07-09T19:33:49+03:00 SESSION before update: Array
+(
+    [member_user_id] => 8
+    [member_id] => 16
+    [session_token] => aa77d78992d245127fb47bc9fce20c35df3026f0a04263a86e62b7601ff8c7cf
+    [is_member] => 1
+    [last_activity] => 1783614824
+    [user_id] => 8
+)
+
+2026-07-09T19:33:52+03:00 validateSession result: Array
+(
+    [valid] => 1
+    [user_id] => 8
+    [member_id] => 16
+    [session] => Array
+        (
+            [session_id] => 8
+            [user_id] => 8
+            [member_id] => 16
+            [session_token] => aa77d78992d245127fb47bc9fce20c35df3026f0a04263a86e62b7601ff8c7cf
+            [device_id] => 
+            [ip_address] => 127.0.0.1
+            [user_agent] => Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:152.0) Gecko/20100101 Firefox/152.0
+            [location] => 
+            [is_active] => 1
+            [login_at] => 2026-07-09 19:33:01
+            [last_activity] => 2026-07-09 19:33:49
+            [logout_at] => 
+            [expires_at] => 2026-07-09 20:03:01
+            [is_member] => 1
+        )
+
+)
+
+2026-07-09T19:33:52+03:00 SESSION before update: Array
+(
+    [member_user_id] => 8
+    [member_id] => 16
+    [session_token] => aa77d78992d245127fb47bc9fce20c35df3026f0a04263a86e62b7601ff8c7cf
+    [is_member] => 1
+    [last_activity] => 1783614829
+    [user_id] => 8
+)
+
+2026-07-09T19:34:08+03:00 validateSession result: Array
+(
+    [valid] => 1
+    [user_id] => 8
+    [member_id] => 16
+    [session] => Array
+        (
+            [session_id] => 8
+            [user_id] => 8
+            [member_id] => 16
+            [session_token] => aa77d78992d245127fb47bc9fce20c35df3026f0a04263a86e62b7601ff8c7cf
+            [device_id] => 
+            [ip_address] => 127.0.0.1
+            [user_agent] => Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:152.0) Gecko/20100101 Firefox/152.0
+            [location] => 
+            [is_active] => 1
+            [login_at] => 2026-07-09 19:33:01
+            [last_activity] => 2026-07-09 19:33:52
+            [logout_at] => 
+            [expires_at] => 2026-07-09 20:03:01
+            [is_member] => 1
+        )
+
+)
+
+2026-07-09T19:34:08+03:00 SESSION before update: Array
+(
+    [member_user_id] => 8
+    [member_id] => 16
+    [session_token] => aa77d78992d245127fb47bc9fce20c35df3026f0a04263a86e62b7601ff8c7cf
+    [is_member] => 1
+    [last_activity] => 1783614832
+    [user_id] => 8
+)
+

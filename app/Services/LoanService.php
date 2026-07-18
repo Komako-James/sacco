@@ -504,7 +504,7 @@ class LoanService
 
     /**
      * Validate member eligibility for loan
-     * Checks: active status, savings requirement, existing loans, biometric
+     * Checks: active status, optional savings requirement, existing loans, biometric
      */
     private function validateMemberEligibility($memberId, $productId)
     {
@@ -521,24 +521,9 @@ class LoanService
             return ['eligible' => false, 'reason' => 'Biometric verification required'];
         }
 
-        // Get product details
-        $product = $this->getLoanProduct($productId);
-
-        // Check savings history
-        $monthsRequired = $product['requires_savings_months'] ?? 3;
-        $stmt = $this->db->prepare("
-            SELECT COUNT(DISTINCT DATE_FORMAT(st.transaction_date, '%Y-%m')) as months
-            FROM savings_transactions st
-            JOIN savings_accounts sa ON st.account_id = sa.savings_account_id
-            WHERE sa.member_id = ? AND st.transaction_type = 'deposit'
-            AND st.transaction_date >= DATE_SUB(NOW(), INTERVAL ? MONTH)
-        ");
-        $stmt->execute([$memberId, $monthsRequired]);
-        $result = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        if ($result['months'] < $monthsRequired) {
-            return ['eligible' => false, 'reason' => "Must have savings for at least {$monthsRequired} months"];
-        }
+        // Product lookup is kept for other product-level checks, but no eligibility
+        // waiting period or savings-history window is enforced here.
+        $this->getLoanProduct($productId);
 
         // Check for active loans
         $stmt = $this->db->prepare("

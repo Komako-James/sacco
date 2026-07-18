@@ -526,6 +526,199 @@ class LedgerService
         self::postJournalEntries($entries, $receiptNumber, "Share Purchase", $postedBy);
     }
 
+    public static function postInvestmentPurchase($investmentId, $amount, $postedBy, $referenceNumber = null)
+    {
+        if ($amount <= 0) {
+            return true;
+        }
+        $referenceNumber = $referenceNumber ?: self::generateReceiptNumber('INV');
+        $entries = [
+            [
+                'ledger_code' => self::COA_CASH,
+                'debit' => 0,
+                'credit' => $amount,
+                'description' => "Investment purchase #{$investmentId}",
+                'transaction_type' => 'INVESTMENT_PURCHASE',
+                'member_id' => null,
+                'payment_method' => 'cash'
+            ],
+            [
+                'ledger_code' => self::COA_RETAINED_EARNINGS,
+                'debit' => $amount,
+                'credit' => 0,
+                'description' => "Investment purchase #{$investmentId}",
+                'transaction_type' => 'INVESTMENT_PURCHASE',
+                'member_id' => null,
+                'payment_method' => 'cash'
+            ]
+        ];
+        return self::postJournalEntries($entries, $referenceNumber, "Investment Purchase", $postedBy);
+    }
+
+    public static function postInvestmentInterest($investmentId, $amount, $postedBy, $description = null)
+    {
+        if ($amount <= 0) {
+            return true;
+        }
+        $referenceNumber = self::generateReceiptNumber('INT');
+        $entries = [
+            [
+                'ledger_code' => self::COA_CASH,
+                'debit' => $amount,
+                'credit' => 0,
+                'description' => $description ?: "Investment interest received #{$investmentId}",
+                'transaction_type' => 'INVESTMENT_INTEREST',
+                'payment_method' => 'cash'
+            ],
+            [
+                'ledger_code' => self::COA_INTEREST_INCOME,
+                'debit' => 0,
+                'credit' => $amount,
+                'description' => $description ?: "Investment interest received #{$investmentId}",
+                'transaction_type' => 'INVESTMENT_INTEREST',
+                'payment_method' => 'cash'
+            ]
+        ];
+        return self::postJournalEntries($entries, $referenceNumber, "Investment Interest", $postedBy);
+    }
+
+    public static function postInvestmentDisposal($investmentId, $amount, $postedBy, $description = null)
+    {
+        if ($amount <= 0) {
+            return true;
+        }
+        $referenceNumber = self::generateReceiptNumber('INV');
+        $entries = [
+            [
+                'ledger_code' => self::COA_CASH,
+                'debit' => $amount,
+                'credit' => 0,
+                'description' => $description ?: "Investment disposal #{$investmentId}",
+                'transaction_type' => 'INVESTMENT_DISPOSAL',
+                'payment_method' => 'cash'
+            ],
+            [
+                'ledger_code' => self::COA_RETAINED_EARNINGS,
+                'debit' => 0,
+                'credit' => $amount,
+                'description' => $description ?: "Investment disposal #{$investmentId}",
+                'transaction_type' => 'INVESTMENT_DISPOSAL',
+                'payment_method' => 'cash'
+            ]
+        ];
+        return self::postJournalEntries($entries, $referenceNumber, "Investment Disposal", $postedBy);
+    }
+
+    public static function postInvestmentGain($investmentId, $amount, $postedBy, $description = null)
+    {
+        if ($amount <= 0) {
+            return true;
+        }
+        $referenceNumber = self::generateReceiptNumber('INV');
+        $entries = [
+            [
+                'ledger_code' => self::COA_CASH,
+                'debit' => $amount,
+                'credit' => 0,
+                'description' => $description ?: "Investment gain #{$investmentId}",
+                'transaction_type' => 'INVESTMENT_GAIN',
+                'payment_method' => 'cash'
+            ],
+            [
+                'ledger_code' => self::COA_OTHER_INCOME,
+                'debit' => 0,
+                'credit' => $amount,
+                'description' => $description ?: "Investment gain #{$investmentId}",
+                'transaction_type' => 'INVESTMENT_GAIN',
+                'payment_method' => 'cash'
+            ]
+        ];
+        return self::postJournalEntries($entries, $referenceNumber, "Investment Gain", $postedBy);
+    }
+
+    public static function postInvestmentLoss($investmentId, $amount, $postedBy, $description = null)
+    {
+        if ($amount <= 0) {
+            return true;
+        }
+        $referenceNumber = self::generateReceiptNumber('INV');
+        $entries = [
+            [
+                'ledger_code' => self::COA_OTHER_INCOME,
+                'debit' => $amount,
+                'credit' => 0,
+                'description' => $description ?: "Investment loss #{$investmentId}",
+                'transaction_type' => 'INVESTMENT_LOSS',
+                'payment_method' => 'cash'
+            ],
+            [
+                'ledger_code' => self::COA_CASH,
+                'debit' => 0,
+                'credit' => $amount,
+                'description' => $description ?: "Investment loss #{$investmentId}",
+                'transaction_type' => 'INVESTMENT_LOSS',
+                'payment_method' => 'cash'
+            ]
+        ];
+        return self::postJournalEntries($entries, $referenceNumber, "Investment Loss", $postedBy);
+    }
+
+    public static function postDividendDeclaration($declarationId, $amount, $postedBy)
+    {
+        if ($amount <= 0) {
+            return true;
+        }
+        $referenceNumber = self::generateReceiptNumber('DIV');
+        $entries = [
+            [
+                'ledger_code' => self::COA_RETAINED_EARNINGS,
+                'debit' => $amount,
+                'credit' => 0,
+                'description' => "Dividend declaration #{$declarationId}",
+                'transaction_type' => 'DIVIDEND_DECLARATION',
+                'payment_method' => 'cash'
+            ],
+            [
+                'ledger_code' => self::COA_CASH,
+                'debit' => 0,
+                'credit' => $amount,
+                'description' => "Dividend declaration #{$declarationId}",
+                'transaction_type' => 'DIVIDEND_DECLARATION',
+                'payment_method' => 'cash'
+            ]
+        ];
+        return self::postJournalEntries($entries, $referenceNumber, "Dividend Declaration", $postedBy);
+    }
+
+    public static function postDividendPayment($declarationId, $memberId, $amount, $postedBy, $method = 'cash')
+    {
+        if ($amount <= 0) {
+            return true;
+        }
+        $referenceNumber = self::generateReceiptNumber('DIV');
+        $entries = [
+            [
+                'ledger_code' => self::COA_CASH,
+                'debit' => $amount,
+                'credit' => 0,
+                'description' => "Dividend payment #{$declarationId} to member {$memberId}",
+                'transaction_type' => 'DIVIDEND_PAYMENT',
+                'member_id' => $memberId,
+                'payment_method' => $method
+            ],
+            [
+                'ledger_code' => self::COA_RETAINED_EARNINGS,
+                'debit' => 0,
+                'credit' => $amount,
+                'description' => "Dividend payment #{$declarationId} to member {$memberId}",
+                'transaction_type' => 'DIVIDEND_PAYMENT',
+                'member_id' => $memberId,
+                'payment_method' => $method
+            ]
+        ];
+        return self::postJournalEntries($entries, $referenceNumber, "Dividend Payment", $postedBy);
+    }
+
     /**
      * Post share purchase funded from savings account
      * Debit: Member Savings (liability reduction)

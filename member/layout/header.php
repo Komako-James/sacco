@@ -39,4 +39,4 @@ $memberName = $member['full_name'] ?? ($_SESSION['full_name'] ?? 'Member');
         </div>
     </nav>
     <?php include __DIR__ . '/sidebar.php'; ?>
-    <div class="main-content">
+    <div class="main-content member-main-content">
